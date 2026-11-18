@@ -1,0 +1,288 @@
+<title>Festivalhangover Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: Statuszeile oben, darunter zwei Ansichten (Entscheidungen, Tests) als Kartenliste in einer Lesespalte. */
+:root {
+  --bg: #f2f4f1;
+  --surface: #ffffff;
+  --ink: #17211d;
+  --muted: #5d6b65;
+  --line: #d6dcd7;
+  --accent: #b3246b;
+  --accent-ink: #ffffff;
+  --ok: #1d7a4c;
+  --warn: #a35f00;
+  --bad: #b3312b;
+  --chip: #e7ebe7;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111715; --surface: #1a2320; --ink: #e9efeb; --muted: #9aa8a1; --line: #2c3833;
+    --accent: #ee6aa7; --accent-ink: #1b0b13; --ok: #5cc48f; --warn: #e2a64a; --bad: #f08079; --chip: #25302c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111715; --surface: #1a2320; --ink: #e9efeb; --muted: #9aa8a1; --line: #2c3833;
+  --accent: #ee6aa7; --accent-ink: #1b0b13; --ok: #5cc48f; --warn: #e2a64a; --bad: #f08079; --chip: #25302c;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+}
+.wrap {
+  max-width: 860px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 24px;
+}
+header.top { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--font-display); font-size: 30px; line-height: 1.15; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--font-display); font-size: 19px; line-height: 1.25; margin: 0; text-wrap: balance; }
+h3 { font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
+p { margin: 0; }
+.status { border-top: 3px solid var(--accent); background: var(--surface); padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+.status .phase { font-family: var(--font-display); font-size: 17px; font-weight: 700; }
+.status ul { margin: 0; padding-left: 18px; }
+.meta { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tab {
+  font: 600 14px var(--font-body); color: var(--ink); background: transparent;
+  border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer;
+}
+.tab[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tab .n { font-family: var(--font-mono); font-weight: 400; margin-left: 6px; opacity: .8; }
+.list { display: flex; flex-direction: column; gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card.open { border-left: 4px solid var(--accent); }
+.head { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; }
+.head > div { min-width: 0; flex: 1 1 260px; display: flex; flex-direction: column; gap: 4px; }
+.pill { font: 600 12px var(--font-mono); padding: 3px 9px; border-radius: 999px; background: var(--chip); color: var(--muted); white-space: nowrap; }
+.pill.offen, .pill.bereit { background: var(--accent); color: var(--accent-ink); }
+.pill.freigegeben, .pill.bestanden { color: var(--ok); box-shadow: inset 0 0 0 1px var(--ok); background: transparent; }
+.pill.abgelehnt, .pill.fehlgeschlagen { color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad); background: transparent; }
+.pill.rueckfrage { color: var(--warn); box-shadow: inset 0 0 0 1px var(--warn); background: transparent; }
+.block { display: flex; flex-direction: column; gap: 6px; overflow-wrap: anywhere; }
+.opts { display: flex; flex-direction: column; gap: 8px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; }
+.opt.rec { border-color: var(--accent); }
+.opt input { margin-top: 4px; accent-color: var(--accent); }
+.opt b { font-weight: 600; }
+.opt .tag { font: 600 11px var(--font-mono); color: var(--accent); margin-left: 6px; text-transform: uppercase; letter-spacing: .06em; }
+.opt span.d { display: block; color: var(--muted); }
+ol.steps { margin: 0; padding-left: 20px; }
+textarea {
+  width: 100%; box-sizing: border-box; min-height: 64px; resize: vertical;
+  font: 14px/1.5 var(--font-body); color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 9px 11px;
+}
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { font: 600 14px var(--font-body); padding: 8px 14px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; }
+.btn.go { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.btn.no { color: var(--bad); border-color: var(--bad); }
+.btn.ask { color: var(--warn); border-color: var(--warn); }
+.btn:disabled { opacity: .5; cursor: default; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: var(--accent); }
+.empty { border: 1px dashed var(--line); border-radius: 6px; padding: 22px 18px; color: var(--muted); }
+.note { color: var(--warn); font-size: 13px; }
+.answer { border-left: 3px solid var(--line); padding-left: 12px; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Entwickler-Board</span>
+    <h1>Festivalhangover</h1>
+    <p class="meta" id="conn">Verbinde mit dem Board-Speicher ...</p>
+  </header>
+
+  <section class="status" id="status" aria-live="polite">
+    <span class="phase">Noch kein Status eingetragen</span>
+    <p>Hier steht, woran gerade gearbeitet wird und was als Nächstes ansteht.</p>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" id="tab-entscheidungen" role="tab" aria-selected="true" data-view="entscheidungen">Entscheidungen<span class="n" id="n-dec">0</span></button>
+    <button class="tab" id="tab-tests" role="tab" aria-selected="false" data-view="tests">Tests<span class="n" id="n-test">0</span></button>
+  </nav>
+
+  <section class="list" id="view-entscheidungen"></section>
+  <section class="list" id="view-tests" hidden></section>
+</div>
+
+<script>
+(function () {
+  var S = { dec: [], tests: [], status: null, db: null, canWrite: true, drafts: {}, picks: {}, loaded: { dec: false, tests: false } };
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+  function fmt(iso) { if (!iso) return ""; var d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
+  var LABEL = { offen: "offen", freigegeben: "freigegeben", abgelehnt: "abgelehnt", rueckfrage: "Rückfrage", bereit: "bereit zum Testen", bestanden: "bestanden", fehlgeschlagen: "fehlgeschlagen" };
+  function block(title, body) { var b = el("div", "block"); b.appendChild(el("h3", null, title)); if (typeof body === "string") b.appendChild(el("p", null, body)); else b.appendChild(body); return b; }
+
+  function setView(v) {
+    ["entscheidungen", "tests"].forEach(function (k) {
+      $("view-" + k).hidden = k !== v;
+      $("tab-" + k).setAttribute("aria-selected", String(k === v));
+    });
+    try { localStorage.setItem("fh-view", v); } catch (e) {}
+  }
+  document.querySelectorAll(".tab").forEach(function (t) { t.addEventListener("click", function () { setView(t.dataset.view); location.hash = t.dataset.view; }); });
+  function route() { var h = location.hash.replace("#", ""); var v = null; try { v = localStorage.getItem("fh-view"); } catch (e) {} setView(h === "tests" || h === "entscheidungen" ? h : (v === "tests" ? "tests" : "entscheidungen")); }
+  window.addEventListener("hashchange", route); route();
+
+  function save(coll, id, patch, btns) {
+    if (!S.db) return;
+    btns.forEach(function (b) { b.disabled = true; });
+    S.db.collection(coll).doc(id).update(patch).then(function () { delete S.drafts[coll + id]; })
+      .catch(function (e) {
+        if (e && e.code === "invalid_argument") { S.canWrite = false; render(); }
+        else btns.forEach(function (b) { b.disabled = false; });
+      });
+  }
+
+  function answerBox(coll, d, field, placeholder) {
+    var t = el("textarea"); t.id = "note-" + coll + "-" + d.id; t.placeholder = placeholder;
+    var key = coll + d.id; t.value = S.drafts[key] != null ? S.drafts[key] : (d[field] || "");
+    t.addEventListener("input", function () { S.drafts[key] = t.value; });
+    return t;
+  }
+
+  function decCard(d) {
+    var open = d.status === "offen" || d.status === "rueckfrage" || !d.status;
+    var c = el("article", "card" + (open ? " open" : ""));
+    var head = el("div", "head"); var hl = el("div");
+    hl.appendChild(el("span", "meta", d.id + (d.created ? " · " + fmt(d.created) : "")));
+    hl.appendChild(el("h2", null, d.title || "Ohne Titel"));
+    head.appendChild(hl); head.appendChild(el("span", "pill " + (d.status || "offen"), LABEL[d.status || "offen"] || d.status));
+    c.appendChild(head);
+    if (d.context) c.appendChild(block("Worum es geht", d.context));
+    var opts = Array.isArray(d.options) ? d.options : [];
+    if (opts.length) {
+      var ow = el("div", "opts"); var pick = S.picks[d.id] != null ? S.picks[d.id] : (d.choice != null ? d.choice : d.recommended);
+      opts.forEach(function (o, i) {
+        var key = o.key || String(i);
+        var lab = el("label", "opt" + (d.recommended === key ? " rec" : ""));
+        var r = el("input"); r.type = "radio"; r.name = "opt-" + d.id; r.id = "opt-" + d.id + "-" + key; r.value = key;
+        r.checked = pick === key; r.disabled = !S.canWrite;
+        r.addEventListener("change", function () { S.picks[d.id] = key; });
+        var tx = el("div"); var b = el("b", null, o.label || key); tx.appendChild(b);
+        if (d.recommended === key) tx.appendChild(el("span", "tag", "Empfehlung"));
+        if (o.detail) tx.appendChild(el("span", "d", o.detail));
+        lab.appendChild(r); lab.appendChild(tx); ow.appendChild(lab);
+      });
+      c.appendChild(block("Optionen", ow));
+    }
+    if (d.recommendation) c.appendChild(block("Empfehlung des Lead Dev", d.recommendation));
+    if (d.risks) c.appendChild(block("Risiken", d.risks));
+    if (S.canWrite) {
+      var ta = answerBox("decisions", d, "note", "Anmerkung oder Rückfrage (optional)");
+      c.appendChild(block("Deine Antwort", ta));
+      var act = el("div", "actions");
+      var mk = function (txt, cls, status) {
+        var b = el("button", "btn " + cls, txt); b.type = "button";
+        b.addEventListener("click", function () {
+          var sel = c.querySelector('input[type="radio"]:checked');
+          save("decisions", d.id, { status: status, choice: sel ? sel.value : null, note: ta.value.trim(), decidedAt: new Date().toISOString() }, Array.prototype.slice.call(act.children));
+        });
+        return b;
+      };
+      act.appendChild(mk("Freigeben", "go", "freigegeben"));
+      act.appendChild(mk("Rückfrage", "ask", "rueckfrage"));
+      act.appendChild(mk("Ablehnen", "no", "abgelehnt"));
+      c.appendChild(act);
+    } else if (d.note) { var a = block("Antwort", d.note); a.classList.add("answer"); c.appendChild(a); }
+    if (d.decidedAt) c.appendChild(el("span", "meta", "Zuletzt beantwortet: " + fmt(d.decidedAt)));
+    return c;
+  }
+
+  function testCard(t) {
+    var open = !t.status || t.status === "bereit";
+    var c = el("article", "card" + (open ? " open" : ""));
+    var head = el("div", "head"); var hl = el("div");
+    hl.appendChild(el("span", "meta", t.id + (t.created ? " · " + fmt(t.created) : "")));
+    hl.appendChild(el("h2", null, t.title || "Ohne Titel"));
+    head.appendChild(hl); head.appendChild(el("span", "pill " + (t.status || "bereit"), LABEL[t.status || "bereit"] || t.status));
+    c.appendChild(head);
+    if (t.goal) c.appendChild(block("Was geprüft wird", t.goal));
+    if (t.link && /^https:\/\//.test(t.link)) { var a = el("a", null, t.linkLabel || t.link); a.href = t.link; a.target = "_blank"; a.rel = "noopener"; c.appendChild(block("Build oder Vorschau", a)); }
+    if (t.branch) { var m = el("p", "meta", t.branch); c.appendChild(block("Branch / Commit", m)); }
+    var steps = Array.isArray(t.steps) ? t.steps : [];
+    if (steps.length) { var ol = el("ol", "steps"); steps.forEach(function (s) { ol.appendChild(el("li", null, s)); }); c.appendChild(block("Schritte", ol)); }
+    if (t.expected) c.appendChild(block("Erwartetes Ergebnis", t.expected));
+    if (S.canWrite) {
+      var ta = answerBox("tests", t, "feedback", "Was ist dir aufgefallen?");
+      c.appendChild(block("Dein Feedback", ta));
+      var act = el("div", "actions");
+      var mk = function (txt, cls, status) {
+        var b = el("button", "btn " + cls, txt); b.type = "button";
+        b.addEventListener("click", function () { save("tests", t.id, { status: status, feedback: ta.value.trim(), testedAt: new Date().toISOString() }, Array.prototype.slice.call(act.children)); });
+        return b;
+      };
+      act.appendChild(mk("Bestanden", "go", "bestanden"));
+      act.appendChild(mk("Fehlgeschlagen", "no", "fehlgeschlagen"));
+      c.appendChild(act);
+    } else if (t.feedback) { var f = block("Feedback", t.feedback); f.classList.add("answer"); c.appendChild(f); }
+    if (t.testedAt) c.appendChild(el("span", "meta", "Zuletzt getestet: " + fmt(t.testedAt)));
+    return c;
+  }
+
+  function order(list, openStates) {
+    return list.slice().sort(function (a, b) {
+      var ao = openStates.indexOf(a.status || openStates[0]) >= 0 ? 0 : 1, bo = openStates.indexOf(b.status || openStates[0]) >= 0 ? 0 : 1;
+      if (ao !== bo) return ao - bo;
+      return String(b.created || "").localeCompare(String(a.created || ""));
+    });
+  }
+
+  function render() {
+    var keep = document.activeElement && document.activeElement.id;
+    var st = $("status"); st.textContent = "";
+    if (S.status) {
+      st.appendChild(el("span", "phase", S.status.phase || "Status"));
+      if (S.status.summary) st.appendChild(el("p", null, S.status.summary));
+      if (Array.isArray(S.status.next) && S.status.next.length) { var ul = el("ul"); S.status.next.forEach(function (n) { ul.appendChild(el("li", null, n)); }); st.appendChild(block("Als Nächstes", ul)); }
+      if (S.status.updated) st.appendChild(el("span", "meta", "Stand: " + fmt(S.status.updated)));
+    } else {
+      st.appendChild(el("span", "phase", "Noch kein Status eingetragen"));
+      st.appendChild(el("p", null, "Hier steht, woran gerade gearbeitet wird und was als Nächstes ansteht."));
+    }
+    var dv = $("view-entscheidungen"); dv.textContent = "";
+    var decs = order(S.dec, ["offen", "rueckfrage"]);
+    if (!decs.length) dv.appendChild(el("div", "empty", S.loaded.dec ? "Keine Entscheidungen offen. Neue Pitches legt der Lead Dev hier an, du gibst sie frei, lehnst ab oder stellst eine Rückfrage." : "Entscheidungen werden geladen ..."));
+    decs.forEach(function (d) { dv.appendChild(decCard(d)); });
+    var tv = $("view-tests"); tv.textContent = "";
+    var tests = order(S.tests, ["bereit"]);
+    if (!tests.length) tv.appendChild(el("div", "empty", S.loaded.tests ? "Noch keine Tests bereitgestellt. Sobald ein Build testbar ist, erscheinen hier die Schritte und ein Feld für dein Feedback." : "Tests werden geladen ..."));
+    tests.forEach(function (t) { tv.appendChild(testCard(t)); });
+    $("n-dec").textContent = S.dec.filter(function (d) { return !d.status || d.status === "offen" || d.status === "rueckfrage"; }).length;
+    $("n-test").textContent = S.tests.filter(function (t) { return !t.status || t.status === "bereit"; }).length;
+    if (keep && $(keep)) { try { $(keep).focus(); } catch (e) {} }
+  }
+  render();
+
+  function start() {
+    var use = window.claude && window.claude.use ? window.claude.use : null;
+    if (!use) { $("conn").textContent = "Board-Speicher in dieser Ansicht nicht verfügbar."; S.canWrite = false; S.loaded.dec = S.loaded.tests = true; render(); return; }
+    Promise.all([use("db"), use("user")]).then(function (r) {
+      var db = r[0], user = r[1];
+      if (!db) { $("conn").textContent = "Board-Speicher nicht erreichbar. Bitte angemeldet öffnen."; S.canWrite = false; S.loaded.dec = S.loaded.tests = true; render(); return; }
+      S.db = db;
+      if (user) Promise.resolve(user.can("data.write")).then(function (ok) { if (ok === false) { S.canWrite = false; render(); } });
+      var timer = setTimeout(function () { $("conn").textContent = "Daten noch nicht erreichbar, Anzeige kann veraltet sein."; $("conn").classList.add("note"); }, 10000);
+      var live = function (snap) { if (!snap.metadata || !snap.metadata.fromCache) { clearTimeout(timer); $("conn").classList.remove("note"); $("conn").textContent = "Live verbunden"; } };
+      var fail = function () { clearTimeout(timer); $("conn").textContent = "Verbindung zum Board-Speicher beendet. Seite neu öffnen."; $("conn").classList.add("note"); S.loaded.dec = S.loaded.tests = true; render(); };
+      var rows = function (snap) { return snap.docs.map(function (d) { var o = Object.assign({}, d.data()); o.id = d.id; return o; }); };
+      db.collection("decisions").onSnapshot(function (s) { live(s); S.dec = rows(s); S.loaded.dec = true; render(); }, fail);
+      db.collection("tests").onSnapshot(function (s) { live(s); S.tests = rows(s); S.loaded.tests = true; render(); }, fail);
+      db.doc("meta/status").onSnapshot(function (s) { S.status = s.exists ? s.data() : null; render(); }, function () {});
+    });
+  }
+  start();
+})();
+</script>
