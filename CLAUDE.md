@@ -58,6 +58,11 @@ bewusst und nach Freigabe aendern.
 
 - `main` ist geschuetzt: kein direkter Push, Aenderungen nur per Pull Request,
   gemergt wird per Squash.
+- Till hat am 18.11.2026 dauerhaft freigegeben, dass der Lead Dev Pull Requests
+  selbst anlegt und per Squash mergt. Voraussetzung: Rauchtest gruen und der Stand
+  ist geprueft. Entscheidungen mit Tragweite laufen weiterhin vorher ueber das Board.
+- Nach dem Merge loescht GitHub den Arbeitsbranch. Fuer die naechste Aufgabe den
+  Branch frisch von `origin/main` aufsetzen.
 
 ## Rollen und Modelle
 
