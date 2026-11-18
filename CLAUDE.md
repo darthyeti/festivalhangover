@@ -12,23 +12,47 @@ bewusst und nach Freigabe aendern.
 ## Technik
 
 - Vanilla JS, Canvas 2D, keine Frameworks, kein Build-Schritt. Auslieferung
-  statisch ueber GitHub Pages.
-- Das ganze Spiel liegt derzeit in `index.html` (rund 530 dichte Zeilen, sieben
-  kommentierte Abschnitte: Konstanten, Zustand, Welt, Logik, Bauen, Grafik, Eingabe).
-- Logik und Grafik sind getrennt und bleiben es. Der Testzugang `window.__G`
-  bleibt erhalten: `__G.step(sekunden)` spult ohne Bild vor, dazu `build`,
-  `setBelt`, `demolish`, `buyUp`, `clear`.
+  statisch ueber GitHub Pages: https://darthyeti.github.io/festivalhangover/
+- `index.html` enthaelt nur Canvas und Stil und laedt `js/eingabe.js` als ES-Modul.
+- Module in `js/`, in Abhaengigkeitsrichtung:
+  - `konstanten.js`: Kartengroesse, Sorten `TY`, Gebaeudetypen `BT` mit Rezepten,
+    Verbesserungen `UPS`. Importiert nichts.
+  - `zustand.js`: Spielstand `st`, Bedienzustand `ui` (Werkzeug, Drehung, Auswahl),
+    Kamera `cam`. Importiert nur `konstanten.js`.
+  - `welt.js`: `genWorld()`, Weltdaten (`grid`, `belts`, `blds`, `items`, `cells`,
+    `blocked`), raeumliche Suche `near()`.
+  - `logik.js`: Spielregeln (Baender, Maschinen, Stationen, Spielfigur), `update(dt)`.
+  - `bauen.js`: `build`, `setBelt`, `demolish`, `buyUp`, `save`, `load`.
+  - `grafik.js`: Ebenen, Sprites, Zeichnen, Oberflaeche. Mit Abstand das groesste Modul.
+  - `eingabe.js`: Einstiegspunkt mit Zeigerereignissen, Tastatur, Spielschleife und `__G`.
+- Regeln fuer Module:
+  - Importierte Variablen sind schreibgeschuetzt. `st` wird nur in `zustand.js`
+    neu zugewiesen (`resetState()`), Weltdaten nur in `welt.js`. Veraenderlicher
+    Zustand, den mehrere Module schreiben, gehoert als Feld in ein Objekt wie `ui`.
+  - `konstanten.js` und `zustand.js` duerfen nichts aus den anderen Modulen
+    importieren. Die uebrigen Module haengen zyklisch voneinander ab und duerfen
+    einander deshalb nur innerhalb von Funktionen benutzen, nicht beim Laden.
+  - `logik.js` importiert nichts aus `grafik.js`. Logik zeichnet nichts.
+- Der Testzugang `window.__G` bleibt erhalten: `__G.step(sekunden)` spult ohne
+  Bild vor, dazu `build`, `setBelt`, `demolish`, `buyUp`, `clear`, `setTool`, `setRot`.
 - Die Welt ist deterministisch (feste Zufallssamen). Spielstand lokal in
   `localStorage`, Schluessel `montagmorgen2-v1`.
 - Alle Grafiken entstehen per Code, es gibt keine Bilddateien.
 - Texte im Spiel auf Deutsch, keine Gedankenstriche als Satzzeichen.
 - Tablet und Desktop gleichwertig, Zielgroesse ab 1180 x 820.
+- Der Code ist sehr dicht geschrieben (lange Zeilen, kurze Namen). Beim Aendern
+  den Stil der Umgebung beibehalten, nicht nebenbei umformatieren.
 
 ## Befehle
 
-- Starten: `index.html` im Browser oeffnen, kein Server noetig.
-- Rauchtest: `node tests/smoke.js` (Playwright mit Chromium). Vor jedem Commit
-  an Spielcode ausfuehren.
+- Starten: ES-Module laden nicht per Doppelklick von der Festplatte. Lokal
+  `python3 -m http.server 8000` im Repo-Wurzelverzeichnis starten und
+  `http://localhost:8000/` oeffnen, oder die Pages-Adresse nutzen.
+- Rauchtest: `node tests/smoke.js` (Playwright mit Chromium, startet selbst einen
+  Server). Vor jedem Commit an Spielcode ausfuehren.
+- Bei Umbauten ohne gewollte Verhaltensaenderung zusaetzlich alt gegen neu
+  vergleichen: `Math.random` und `requestAnimationFrame` per Init-Skript
+  festlegen, dieselben Eingaben abspielen, Zustand und Canvas-Bild vergleichen.
 
 ## Git
 
