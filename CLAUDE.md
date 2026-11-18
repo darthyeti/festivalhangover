@@ -1,8 +1,39 @@
-# Festivalhangover
+# Festivalhangover (Arbeitstitel des Spiels: Montagmorgen)
 
-Stand: Projektstart, der Prototyp wird extern gebaut und kommt noch ins Repo.
-Diese Datei beschreibt die Arbeitsweise, nicht den Code. Sobald der Prototyp da ist,
-Tech-Stack, Build- und Testbefehle hier ergaenzen.
+Inkrementell-Spiel mit Fabrikbau: Am Montagmorgen nach einem Festival wird ein
+Campingplatz voller Pfandgut leergeraeumt, erst von Hand, spaeter mit Baendern,
+Sortierern und Pressen. Auftraggeber und Tester ist Till.
+
+`BRIEFING.md` ist die Uebergabe aus der Prototyp-Phase und die Referenz fuer
+Spielregeln, Zahlen, bekannte Schwaechen und Meilensteine (M0 bis M5). Vor
+Aenderungen an Regeln oder Zahlen dort nachlesen. Die Regeln in Abschnitt 3 nur
+bewusst und nach Freigabe aendern.
+
+## Technik
+
+- Vanilla JS, Canvas 2D, keine Frameworks, kein Build-Schritt. Auslieferung
+  statisch ueber GitHub Pages.
+- Das ganze Spiel liegt derzeit in `index.html` (rund 530 dichte Zeilen, sieben
+  kommentierte Abschnitte: Konstanten, Zustand, Welt, Logik, Bauen, Grafik, Eingabe).
+- Logik und Grafik sind getrennt und bleiben es. Der Testzugang `window.__G`
+  bleibt erhalten: `__G.step(sekunden)` spult ohne Bild vor, dazu `build`,
+  `setBelt`, `demolish`, `buyUp`, `clear`.
+- Die Welt ist deterministisch (feste Zufallssamen). Spielstand lokal in
+  `localStorage`, Schluessel `montagmorgen2-v1`.
+- Alle Grafiken entstehen per Code, es gibt keine Bilddateien.
+- Texte im Spiel auf Deutsch, keine Gedankenstriche als Satzzeichen.
+- Tablet und Desktop gleichwertig, Zielgroesse ab 1180 x 820.
+
+## Befehle
+
+- Starten: `index.html` im Browser oeffnen, kein Server noetig.
+- Rauchtest: `node tests/smoke.js` (Playwright mit Chromium). Vor jedem Commit
+  an Spielcode ausfuehren.
+
+## Git
+
+- `main` ist geschuetzt: kein direkter Push, Aenderungen nur per Pull Request,
+  gemergt wird per Squash.
 
 ## Rollen und Modelle
 
