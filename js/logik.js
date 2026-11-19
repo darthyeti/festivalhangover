@@ -75,4 +75,4 @@ function update(dt){if(st.done)return;st.t+=dt;updBelts(dt);for(const b of blds)
   if(st.hint===0&&st.earned>=600)st.hint=1;if(st.hint===1&&hasSt)st.hint=2;if(st.hint===2&&st.earned>=4000)st.hint=3;if(st.hint===3&&hasM)st.hint=4;
   if(st.left[0]+st.left[1]+st.left[2]+st.left[3]===0&&!st.player.bag.length&&!AUTO.q.length&&belts.every(t=>t.item<0)&&blds.every(b=>b.k!=='station'||(!b.buf.length&&b.helpers.every(h=>!h.load.length))))st.done=true}
 
-export {jam,msg,tryPush,update};
+export {jam,msg,pop,tryPush,update};

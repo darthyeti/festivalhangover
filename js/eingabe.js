@@ -40,7 +40,7 @@ cv.addEventListener('pointermove',e=>{const p=toL(e);if(pts.has(e.pointerId))pts
   else if(act.type==='mini')miniTo(p)
   else if(act.type==='walk'){st.player.tx=Math.max(8,Math.min(WW-8,w.x));st.player.ty=Math.max(8,Math.min(WH-8,w.y))}
   else if(act.type==='belt')beltTo(Math.floor(w.x/T),Math.floor(w.y/T))
-  else if(act.type==='demo')demolish(Math.floor(w.x/T),Math.floor(w.y/T))});
+  else if(act.type==='demo')demolish(Math.floor(w.x/T),Math.floor(w.y/T),true)});
 function pUp(e){const had=pts.has(e.pointerId);pts.delete(e.pointerId);if(pts.size<2)gest=null;if(!act||!had)return;const a=act;act=null;
   if(a.type==='belt'){if(a.moved){ui.planA=null;ui.plan=null;setBelt(a.lx,a.ly,a.dir)}else beltTap(a.lx,a.ly)}
   else if(a.type==='place'&&ptr.inView){const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;const g=ghostPos(),o=g.x>=0&&g.y>=0&&g.x<MW&&g.y<MH?grid[g.y*MW+g.x]:null;
@@ -53,7 +53,7 @@ const keys={};window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();
 window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(resize,120)});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
-function start(fresh){resetState();dropItemLayer();ui.tool='walk';ui.sel=null;ui.undo=[];ui.step=null;ui.move=null;ui.planA=null;ui.plan=null;ui.menu=false;ui.resetArm=0;genWorld();if(!fresh)load();cam.x=st.player.x+200;cam.y=st.player.y;cam.follow=true;resize();if(!spr.length)buildSprites();if(!groundL)buildGround();buildItemLayer();buildMini();ui.topoDirty=true}
+function start(fresh){resetState();dropItemLayer();ui.tool='walk';ui.sel=null;ui.undo=[];ui.step=null;ui.move=null;ui.planA=null;ui.plan=null;ui.menu=false;ui.resetArm=0;genWorld();if(!fresh)load();cam.x=st.player.x+200;cam.y=st.player.y;cam.follow=true;resize();if(!spr.length)buildSprites();ui.groundDirty=false;buildGround();buildItemLayer();buildMini();ui.topoDirty=true}
 let last=0,saveT=0;function frame(t){const dt=Math.min(0.05,(t-last)/1000||0);last=t;
   const pv=260*dt/cam.z;if(keys.a||keys.arrowleft){cam.x-=pv;cam.follow=false}if(keys.d||keys.arrowright){cam.x+=pv;cam.follow=false}if(keys.w||keys.arrowup){cam.y-=pv;cam.follow=false}if(keys.s||keys.arrowdown){cam.y+=pv;cam.follow=false}
   if(!ui.menu)update(dt);draw();saveT+=dt;if(saveT>15){saveT=0;save()}requestAnimationFrame(frame)}
