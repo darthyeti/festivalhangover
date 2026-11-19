@@ -34,7 +34,14 @@ bewusst und nach Freigabe aendern.
     einander deshalb nur innerhalb von Funktionen benutzen, nicht beim Laden.
   - `logik.js` importiert nichts aus `grafik.js`. Logik zeichnet nichts.
 - Der Testzugang `window.__G` bleibt erhalten: `__G.step(sekunden)` spult ohne
-  Bild vor, dazu `build`, `setBelt`, `demolish`, `buyUp`, `clear`, `setTool`, `setRot`.
+  Bild vor, dazu `build`, `setBelt`, `demolish`, `buyUp`, `clear`, `setTool`, `setRot`,
+  `undo`, `moveTo(gebaeude,x,y)` und `jam(gebaeude)`.
+- Rueckgaengig (`bauen.js`): Jede Aenderung am Aufbau meldet sich ueber `rec()`.
+  Eine Zeigergeste klammert ihre Aenderungen mit `stepBegin()` und `stepEnd()` zu
+  einem Schritt. Neue Bauaktionen muessen `rec()` aufrufen, sonst fehlen sie im Stapel.
+  Der Stapel liegt in `ui.undo`, fasst 40 Schritte und wird nicht gespeichert.
+- Stauanzeige: `jam(b)` in `logik.js` liefert den Grund als Text oder einen leeren
+  String und aendert nichts am Zustand. Die Grafik zeichnet daraus das Warnzeichen.
 - Die Welt ist deterministisch (feste Zufallssamen). Spielstand lokal in
   `localStorage`, Schluessel `montagmorgen2-v1`.
 - Alle Grafiken entstehen per Code, es gibt keine Bilddateien.

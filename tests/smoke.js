@@ -57,6 +57,29 @@ function serve() {
     G.demolish(3, 25);
     out.refund = G.st.money - m0;
 
+    // Rueckgaengig: Bau, Abriss und Versetzen lassen sich zuruecknehmen, das Geld stimmt danach wieder.
+    const cell = (x, y) => G.grid[y * G.MW + x];
+    const m1 = G.st.money;
+    const press = G.build('pd', 4, 22);
+    out.undoBuild = !!press && G.st.money === m1 - 4000 && G.undo() && cell(4, 22) === null && G.st.money === m1;
+    const st2 = G.blds.find(b => b.k === 'station');
+    G.demolish(st2.x, st2.y);
+    const gone = cell(6, 25) === null;
+    out.undoDemolish = gone && G.undo() && cell(6, 25) === st2 && cell(7, 26) === st2 && G.st.money === m1;
+    out.move = G.moveTo(st2, 6, 22) && cell(6, 22) === st2 && cell(7, 23) === st2 && cell(6, 25) === null && G.st.money === m1;
+    out.moveBlocked = G.moveTo(st2, 1, 25) === false && st2.x === 6 && st2.y === 22;
+    out.undoMove = G.undo() && st2.x === 6 && st2.y === 25 && cell(6, 22) === null;
+
+    // Stauanzeige: Presse ohne Ausgang meldet sich, mit Ausgangsband nicht mehr.
+    const pd = G.build('pd', 4, 22);
+    out.jamIdle = G.jam(pd) === '';
+    pd.out = 2;
+    out.jamNoOut = G.jam(pd).startsWith('Kein Ausgang');
+    G.setBelt(6, 22, 0);
+    out.jamBlocked = G.jam(pd) === 'Stau am Ausgang';
+    pd.out = 0;
+    out.jamClear = G.jam(pd) === '';
+
     G.clear(0, 0, G.MW - 1, G.MH - 1);
     out.leftAfterClear = sum();
     return out;
@@ -75,6 +98,12 @@ function serve() {
     ['Sammler raeumen den Umkreis', r.collected > 0, String(r.collected)],
     ['Annahme zaehlt und bezahlt Rohware', r.soldRaw > 0 && r.earned > 0, `${r.soldRaw} Stueck, ${r.earned} Cent`],
     ['Abriss eines Bandfelds erstattet 50 Cent', r.refund === 50, String(r.refund)],
+    ['Rueckgaengig nimmt einen Bau zurueck und erstattet', r.undoBuild, String(r.undoBuild)],
+    ['Rueckgaengig stellt ein abgerissenes Gebaeude wieder her', r.undoDemolish, String(r.undoDemolish)],
+    ['Versetzen verschiebt ein Gebaeude kostenlos', r.move, String(r.move)],
+    ['Versetzen auf belegte Felder wird abgelehnt', r.moveBlocked, String(r.moveBlocked)],
+    ['Rueckgaengig nimmt ein Versetzen zurueck', r.undoMove, String(r.undoMove)],
+    ['Stauanzeige: ruhig, kein Ausgang, Stau, wieder ruhig', r.jamIdle && r.jamNoOut && r.jamBlocked && r.jamClear, [r.jamIdle, r.jamNoOut, r.jamBlocked, r.jamClear].join('/')],
     ['clear() raeumt die ganze Wiese', r.leftAfterClear === 0, String(r.leftAfterClear)],
   ];
   let failed = 0;
