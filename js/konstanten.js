@@ -13,6 +13,7 @@ const RAW=4,TENT_COST=500; // Zelt oder Pavillon abbauen, in Cent
 const BT={
  belt:{name:'Band',cost:50,w:1,h:1,info:['Trägt 3 Stück/s.','Ziehen legt eine Strecke.']},
  split:{name:'Verteiler',cost:300,w:1,h:1,info:['Verteilt reihum auf alle','Bänder, die wegführen.']},
+ cross:{name:'Kreuzung',cost:400,w:1,h:1,info:['Zwei Bänder kreuzen sich,','ohne sich zu mischen.','Es geht nur geradeaus','weiter, nie um die Ecke.']},
  sort:{name:'Sortierer',cost:500,w:1,h:1,info:['Wirft seine Sorte in','Pfeilrichtung aus, der','Rest läuft weiter. Ist der','Auswurf voll, läuft auch','die Sorte weiter.']},
  station:{name:'Sammelstation',cost:1500,w:2,h:2,info:['Sammler räumen den','Umkreis leer und geben','bis 3 Stück/s aufs Band.']},
  pd:{name:'Dosenpresse',cost:4000,w:2,h:2,inp:{0:12},out:4,time:6,col:'#7d8a93'},
@@ -21,7 +22,7 @@ const BT={
  pal:{name:'Palettierer',cost:15000,w:2,h:2,inp:{4:8,5:3},out:7,time:24,col:'#c98a2a'},
  auto:{name:'Leergutannahme',w:2,h:3}
 };
-const TOOLS=['walk','belt','split','sort','station','pd','pp','kp','pal','demo','rot'];
+const TOOLS=['walk','belt','split','sort','cross','station','pd','pp','kp','pal','demo','rot'];
 const UPS=[
  {k:'bag',name:'Größere Tüte',base:400,g:1.6,max:6,sub:l=>'fasst '+(25+10*l)},
  {k:'shoe',name:'Laufschuhe',base:500,g:1.6,max:5,sub:l=>'Tempo '+(110+18*l)},

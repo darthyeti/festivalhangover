@@ -57,6 +57,12 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 - Überlauf: Ist der Auswurf länger als 0,5 Sekunden blockiert, läuft auch die eigene Sorte weiter. Ohne diese Regel blockieren überschüssige Leerkästen jede Linie.
 - Sortierer und Verteiler dürfen direkt aneinander stehen und reichen dann ohne Band weiter, aber nie zurück in die Richtung, aus der das Stück kam.
 
+**Kreuzung (1 Feld, Entscheidung E-007)**
+
+- Zwei Bänder queren sich, ohne sich zu mischen. Jede Achse hat einen Platz, ein Stück fährt geradeaus weiter und biegt nie ab.
+- Preis 4 €. Auf ein vorhandenes Bandfeld gesetzt, ersetzt sie es (das Band wird erstattet).
+- Der Bandplaner setzt Kreuzungen selbst, aber nur auf geraden Bandfeldern ohne seitlichen Zulauf und nur rechtwinklig. Der Schalter "Kreuzen" stellt das ab.
+
 **Sammelstation (2 x 2)**
 
 - Drei Sammler (mit Verbesserung bis sechs) räumen einen Umkreis von 8 Feldern.
