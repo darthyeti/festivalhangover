@@ -36,6 +36,12 @@ bewusst und nach Freigabe aendern.
 - Der Testzugang `window.__G` bleibt erhalten: `__G.step(sekunden)` spult ohne
   Bild vor, dazu `build`, `setBelt`, `demolish`, `buyUp`, `clear`, `setTool`, `setRot`,
   `undo`, `moveTo(gebaeude,x,y)` und `jam(gebaeude)`.
+  `planBelt(ax,ay,bx,by)` liefert einen Bandvorschlag, `buildPlan(plan)` baut ihn.
+- Bandplaner (`bauen.js`): `planEnds()` bestimmt, wo ein Band an einem freien Feld,
+  Band oder Gebaeude beginnen oder enden darf (an Gebaeuden nur rechtwinklig),
+  `planBelt()` sucht den kuerzesten freien Weg mit den wenigsten Knicken. Die
+  Eingabe haelt Start und Vorschlag in `ui.planA` und `ui.plan`.
+- `ui.menu` haelt das Spiel an: Die Schleife ruft `update()` dann nicht auf.
 - Rueckgaengig (`bauen.js`): Jede Aenderung am Aufbau meldet sich ueber `rec()`.
   Eine Zeigergeste klammert ihre Aenderungen mit `stepBegin()` und `stepEnd()` zu
   einem Schritt. Neue Bauaktionen muessen `rec()` aufrufen, sonst fehlen sie im Stapel.
