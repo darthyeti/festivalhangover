@@ -1,6 +1,6 @@
 // Montagmorgen: Grafik
 // Vorgerenderte Ebenen, Sprites, Zeichenfunktionen, Oberflaeche.
-import {AUTO_CAP,BSPD,BT,DX,DY,FONT,H,LS,MH,MW,PS,RAW,SAVE_KEY,ST_CAP,ST_R,T,TOOLS,TY,UPS,VIEW,W,WH,WW,euro,rng} from './konstanten.js';
+import {AUTO_CAP,BSPD,BT,DX,DY,FONT,H,LS,MH,MW,PS,RAW,SAVE_KEY,ST_CAP,ST_R,T,TENT_COST,TOOLS,TY,UPS,VIEW,W,WH,WW,euro,rng} from './konstanten.js';
 import {cam,st,ui,upPrice} from './zustand.js';
 import {belts,blds,blocked,camps,cells,grid,items,near,pathDist,pathX,pathY} from './welt.js';
 import {buyUp,canBuild,canMove,confirmPlan,demolish,freeTile,price,save,topo,undo} from './bauen.js';
@@ -78,7 +78,8 @@ function drawGrill(g,o){g.save();g.translate(o.x,o.y);g.fillStyle='rgba(20,40,12
   g.fillStyle='#1c1f21';g.beginPath();g.ellipse(0,-4,8,4,0,0,6.3);g.fill();g.fillStyle='#4a4f52';g.beginPath();g.ellipse(0,-5,6.5,2.8,0,0,6.3);g.fill();g.restore()}
 function drawFire(g,o,r){g.save();g.translate(o.x,o.y);g.fillStyle='rgba(40,34,28,.55)';g.beginPath();g.ellipse(0,0,11,6,0,0,6.3);g.fill();g.fillStyle='#1d1a17';g.beginPath();g.ellipse(0,0,7,3.6,0,0,6.3);g.fill();
   for(let k=0;k<9;k++){const a=k/9*6.28;g.fillStyle=shade('#8d8a84',(r()-0.5)*0.4);g.beginPath();g.ellipse(Math.cos(a)*9,Math.sin(a)*5,2.4,1.8,0,0,6.3);g.fill()}g.restore()}
-function buildGround(){groundL=mk(WW*LS,WH*LS);const g=groundL.getContext('2d');g.setTransform(LS,0,0,LS,0,0);const r=rng(99);
+// R begrenzt den Neuaufbau auf ein Rechteck (nach dem Abbau eines Zelts). Die Zufallsfolge bleibt dieselbe, der Rest der Ebene bleibt unberuehrt.
+function buildGround(R){if(!groundL)groundL=mk(WW*LS,WH*LS);const g=groundL.getContext('2d');g.setTransform(LS,0,0,LS,0,0);g.globalAlpha=1;g.save();if(R){g.beginPath();g.rect(R.x,R.y,R.w,R.h);g.clip()}const r=rng(99);
   g.fillStyle=lg(g,0,0,WW,WH,['#7aa64a','#679a41','#5a8c3b']);g.fillRect(0,0,WW,WH);
   for(let k=0;k<700;k++){const x=r()*WW,y=r()*WH,R=30+r()*100,c=r()<0.5?'rgba(154,178,84,':'rgba(60,112,46,';const gr=g.createRadialGradient(x,y,0,x,y,R);gr.addColorStop(0,c+(0.1+r()*0.16)+')');gr.addColorStop(1,c+'0)');g.fillStyle=gr;g.fillRect(x-R,y-R,2*R,2*R)}
   for(const c of camps){const gr=g.createRadialGradient(c.x,c.y,10,c.x,c.y,95);gr.addColorStop(0,'rgba(176,160,96,.42)');gr.addColorStop(1,'rgba(176,160,96,0)');g.fillStyle=gr;g.save();g.translate(c.x,c.y);g.scale(1.25,0.8);g.translate(-c.x,-c.y);g.fillRect(c.x-100,c.y-100,200,200);g.restore()}
@@ -97,8 +98,8 @@ function buildGround(){groundL=mk(WW*LS,WH*LS);const g=groundL.getContext('2d');
   g.fillStyle='rgba(150,146,134,.95)';g.fillRect(0,y0,yx-60,y1-y0);g.fillStyle=gy;g.fillRect(yx-60,y0,60,y1-y0);
   for(let k=0;k<2600;k++){const x=r()*(yx-10),y=y0+r()*(y1-y0);g.fillStyle=shade('#9a968b',(r()-0.5)*0.5);g.globalAlpha=x>yx-70?0.4:1;g.fillRect(x,y,1.7,1.3)}g.globalAlpha=1;
   const objs=[];camps.forEach(c=>c.objs.forEach(o=>objs.push(o)));objs.sort((a,b)=>a.y-b.y);
-  for(const o of objs){if(o.t==='tent')drawTent(g,o);else if(o.t==='pav')drawPav(g,o);else if(o.t==='chair')drawChair(g,o);else if(o.t==='grill')drawGrill(g,o);else drawFire(g,o,r)}
-  const li=g.createLinearGradient(0,0,WW*0.7,WH);li.addColorStop(0,'rgba(255,226,150,.18)');li.addColorStop(0.6,'rgba(255,226,150,0)');li.addColorStop(1,'rgba(20,40,70,.16)');g.fillStyle=li;g.fillRect(0,0,WW,WH)}
+  for(const o of objs){if(o.gone)continue;if(o.t==='tent')drawTent(g,o);else if(o.t==='pav')drawPav(g,o);else if(o.t==='chair')drawChair(g,o);else if(o.t==='grill')drawGrill(g,o);else drawFire(g,o,r)}
+  const li=g.createLinearGradient(0,0,WW*0.7,WH);li.addColorStop(0,'rgba(255,226,150,.18)');li.addColorStop(0.6,'rgba(255,226,150,0)');li.addColorStop(1,'rgba(20,40,70,.16)');g.fillStyle=li;g.fillRect(0,0,WW,WH);g.restore()}
 function buildMini(){if(!mmL)mmL=mk(MW*2,MH*2);const g=mmL.getContext('2d');
   for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const i=y*MW+x,o=grid[i],n=cells[i].length;
     g.fillStyle=o?(o.k==='belt'?'#1c2124':o.k==='auto'?'#57d06a':'#f0c21c'):blocked[i]?'#b9b4a4':n?(n>3?'#6e5f52':n>1?'#77705a':'#738552'):'#7fb04c';g.fillRect(x*2,y*2,2,2)}}
@@ -300,12 +301,13 @@ function drawMenu(){if(!ui.menu)return;btns=[];ctx.fillStyle='rgba(10,16,14,.72)
   txt('Der Spielstand wird alle 15 Sekunden automatisch gespeichert.',W/2,y+h-20,10.5,'#8f9aa0','center')}
 function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#161b1a';ctx.fillRect(0,0,cv.width,cv.height);ctx.setTransform(S*DPR,0,0,S*DPR,offX*DPR,offY*DPR);btns=[];
   if(ui.tool!=='belt'&&(ui.planA||ui.plan)){ui.planA=null;ui.plan=null}
+  if(ui.groundDirty){const R=ui.groundDirty;ui.groundDirty=false;buildGround(R===true?null:R)}
   if(ui.topoDirty)topo();if(st.t-ui.mmT>0.6||st.t<ui.mmT){ui.mmT=st.t;buildMini()}
   if(cam.follow&&ui.tool==='walk'){cam.x+=(st.player.x-cam.x)*0.08;cam.y+=(st.player.y-cam.y)*0.08}clampCam();
   const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;
   drawWorld();
   ctx.font='600 12px '+FONT;const ht=HINTS[st.hint],hw=ctx.measureText(ht).width+28;rr(ctx,20,VIEW.y+10,hw,24,12);ctx.fillStyle='rgba(16,22,20,.8)';ctx.fill();txt(ht,34,VIEW.y+26.5,12,'#f3efe2','left',true);
-  if(ui.move||ui.tool!=='walk'){const tip=ui.move?'Neuen Platz antippen · Laufen oder Esc bricht ab':ui.tool==='belt'?(ui.plan?'Vorschlag prüfen und bestätigen · ein anderes Ziel antippen ändert den Weg':ui.planA?'Ziel antippen · den Start nochmal antippen setzt ein einzelnes Feld oder dreht ein Band':'Start antippen, dann Ziel antippen · Ziehen legt das Band direkt'):ui.tool==='demo'?'Tippen oder ziehen reißt ab':ui.tool==='sort'?'Tippen setzt · auf vorhandenen Sortierer tippen wechselt die Sorte':'Tippen setzt · Karte mit zwei Fingern, rechter Maustaste oder WASD verschieben';
+  if(ui.move||ui.tool!=='walk'){const tip=ui.move?'Neuen Platz antippen · Laufen oder Esc bricht ab':ui.tool==='belt'?(ui.plan?'Vorschlag prüfen und bestätigen · ein anderes Ziel antippen ändert den Weg':ui.planA?'Ziel antippen · den Start nochmal antippen setzt ein einzelnes Feld oder dreht ein Band':'Start antippen, dann Ziel antippen · Ziehen legt das Band direkt'):ui.tool==='demo'?'Tippen oder ziehen reißt ab · Zelt antippen baut es für '+euro(TENT_COST)+' ab':ui.tool==='sort'?'Tippen setzt · auf vorhandenen Sortierer tippen wechselt die Sorte':'Tippen setzt · Karte mit zwei Fingern, rechter Maustaste oder WASD verschieben';
     ctx.font='11px '+FONT;const tw=ctx.measureText(tip).width+24;rr(ctx,20,VIEW.y+VIEW.h-32,tw,22,11);ctx.fillStyle='rgba(16,22,20,.8)';ctx.fill();txt(tip,32,VIEW.y+VIEW.h-17,11,'#cfd8dc')}
   drawMiniMap();drawPanel();drawTop();drawToolbar();drawPlanBar();
   if(st.done){ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);rr(ctx,W/2-250,H/2-120,500,240,16);ctx.fillStyle='#22302a';ctx.fill();ctx.strokeStyle='#a4c964';ctx.lineWidth=2;ctx.stroke();

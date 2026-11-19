@@ -102,6 +102,22 @@ function serve() {
     out.planUndo = G.undo() && G.belts.length === 0 && G.st.money === m2;
     out.planFrontal = (() => { G.setBelt(10, 24, 0); const q = G.planBelt(13, 24, 10, 24); return !q || !(q.path[q.path.length - 1].d === 2 && q.path[q.path.length - 1].y === 24 && q.path[q.path.length - 1].x === 11); })();
 
+    // Zelte abbauen: kostet 5 Euro, gibt die Felder frei, Rueckgaengig stellt das Zelt wieder her.
+    let tent = -1;
+    for (let i = 0; i < G.MW * G.MH && tent < 0; i++) if (G.blocked[i]) tent = i;
+    const tx = tent % G.MW, ty = (tent / G.MW) | 0;
+    const blockedCount = () => G.blocked.reduce((a, b) => a + b, 0);
+    const b0 = blockedCount(), m3 = G.st.money;
+    G.demolish(tx, ty, true);
+    out.tentDragSafe = blockedCount() === b0 && G.st.money === m3;
+    G.demolish(tx, ty);
+    out.tentRemoved = G.blocked[tent] === 0 && blockedCount() < b0 && G.st.money === m3 - 500;
+    out.tentUndo = G.undo() && blockedCount() === b0 && G.st.money === m3;
+    G.st.money = 100;
+    G.demolish(tx, ty);
+    out.tentNoMoney = blockedCount() === b0 && G.st.money === 100;
+    G.st.money = 100000;
+
     G.clear(0, 0, G.MW - 1, G.MH - 1);
     out.leftAfterClear = sum();
     return out;
@@ -133,6 +149,10 @@ function serve() {
     ['Ueber das geplante Band kommt Ware in der Presse an', r.planFlows, String(r.planFlows)],
     ['Ein Rueckgaengig nimmt die ganze geplante Strecke zurueck', r.planUndo, String(r.planUndo)],
     ['Bandplaner muendet nie frontal in ein Band', r.planFrontal, String(r.planFrontal)],
+    ['Zelt abbauen kostet 5 Euro und gibt Felder frei', r.tentRemoved, String(r.tentRemoved)],
+    ['Ziehen mit dem Abriss baut kein Zelt ab', r.tentDragSafe, String(r.tentDragSafe)],
+    ['Rueckgaengig stellt das Zelt wieder her und erstattet', r.tentUndo, String(r.tentUndo)],
+    ['Ohne Geld bleibt das Zelt stehen', r.tentNoMoney, String(r.tentNoMoney)],
     ['clear() raeumt die ganze Wiese', r.leftAfterClear === 0, String(r.leftAfterClear)],
   ];
   let failed = 0;

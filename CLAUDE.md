@@ -42,6 +42,11 @@ bewusst und nach Freigabe aendern.
   `planBelt()` sucht den kuerzesten freien Weg mit den wenigsten Knicken. Die
   Eingabe haelt Start und Vorschlag in `ui.planA` und `ui.plan`.
 - `ui.menu` haelt das Spiel an: Die Schleife ruft `update()` dann nicht auf.
+- Zelte abbauen: `welt.js` haelt die Fussabdruecke (`foot`, mit Verweis auf das
+  gezeichnete Objekt) und berechnet `blocked` daraus neu (`setTentGone`). Abgebaute
+  Zelte tragen `gone` und stehen im Spielstand als Indexliste `tents`. Die Bodenebene
+  wird nur im Rechteck um das Zelt neu aufgebaut (`ui.groundDirty`), ein voller
+  Neuaufbau dauert rund eine halbe Sekunde.
 - Rueckgaengig (`bauen.js`): Jede Aenderung am Aufbau meldet sich ueber `rec()`.
   Eine Zeigergeste klammert ihre Aenderungen mit `stepBegin()` und `stepEnd()` zu
   einem Schritt. Neue Bauaktionen muessen `rec()` aufrufen, sonst fehlen sie im Stapel.

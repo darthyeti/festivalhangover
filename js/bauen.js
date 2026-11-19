@@ -1,9 +1,9 @@
 // Montagmorgen: Bauen
 // Bauen, Abriss, Verbesserungen, Speichern und Laden.
-import {BT,DX,DY,MH,MW,SAVE_KEY,T,UPS} from './konstanten.js';
+import {BT,DX,DY,MH,MW,SAVE_KEY,T,TENT_COST,UPS,euro} from './konstanten.js';
 import {cam,st,ui,upPrice} from './zustand.js';
-import {belts,blds,blocked,cells,grid,items} from './welt.js';
-import {msg} from './logik.js';
+import {belts,blds,blocked,cells,goneTents,grid,items,loadTents,setTentGone,tentAt,tentTiles} from './welt.js';
+import {msg,pop} from './logik.js';
 
 function price(k){if(k==='station')return Math.round(1500*Math.pow(1.12,blds.filter(b=>b.k==='station').length)/10)*10;return BT[k].cost}
 function freeTile(x,y){if(x<0||y<0||x>=MW||y>=MH)return false;const i=y*MW+x;return!grid[i]&&!blocked[i]&&!cells[i].length}
@@ -20,7 +20,9 @@ function blockReason(x,y,w,h,ign){for(let j=0;j<h;j++)for(let i=0;i<w;i++){const
 function setBelt(x,y,d){if(x<0||y<0||x>=MW||y>=MH)return false;const o=grid[y*MW+x];if(o){if(o.k==='belt'&&o.dir!==d){rec({t:'dir',o,d:o.dir});o.dir=d;ui.topoDirty=true}return o.k==='belt'}
   if(!freeTile(x,y)){msg(blockReason(x,y,1,1),x*T+16,y*T-4);return false}if(st.money<50){msg('Zu wenig Geld',x*T+16,y*T-4);return false}
   st.money-=50;const t={k:'belt',x,y,dir:d,item:-1,prog:0,from:d,feed:[d]};grid[y*MW+x]=t;belts.push(t);ui.topoDirty=true;rec({t:'add',o:t});return true}
-function demolish(x,y){if(x<0||y<0||x>=MW||y>=MH)return;const o=grid[y*MW+x];if(!o||o.k==='auto')return;
+// Zelt oder Pavillon abbauen: kostet TENT_COST, keine Erstattung, gibt die Felder frei. Nur beim Antippen, nicht beim Ziehen.
+function removeTent(f,x,y){if(st.money<TENT_COST){msg('Abbauen kostet '+euro(TENT_COST),x*T+16,y*T-4);return false}st.money-=TENT_COST;setTentGone(f,true);pop(f.x,f.y-20,'−'+euro(TENT_COST),'#ff9a7a');rec({t:'tent',o:f});return true}
+function demolish(x,y,noTent){if(x<0||y<0||x>=MW||y>=MH)return;const o=grid[y*MW+x];if(!o){const f=noTent?null:tentAt(x,y);if(f)removeTent(f,x,y);return}if(o.k==='auto')return;
   if(o.k==='belt'){grid[y*MW+x]=null;belts.splice(belts.indexOf(o),1);st.money+=50}
   else{for(let j=0;j<o.h;j++)for(let i=0;i<o.w;i++)grid[(o.y+j)*MW+o.x+i]=null;blds.splice(blds.indexOf(o),1);st.money+=o.paid;
     if(o.k==='station')for(const h of o.helpers)if(h.target)h.target.claimed=false}
@@ -36,7 +38,9 @@ function restore(o){const px=(o.x+(o.w||1)/2)*T,py=o.y*T-4;
   if(!canBuild(o.x,o.y,o.w,o.h)){msg('Platz ist nicht mehr frei',px,py);return}if(st.money<o.paid){msg('Zu wenig Geld',px,py);return}
   st.money-=o.paid;if(o.k==='station')for(const h of o.helpers){h.target=null;if(h.state==='walk'||h.state==='pick')h.state='seek'}placeB(o)}
 function undo(){stepEnd();const s=ui.undo.pop();if(!s)return false;ui.undoing=true;
-  for(let i=s.length-1;i>=0;i--){const e=s[i],o=e.o,here=grid[o.y*MW+o.x]===o;
+  for(let i=s.length-1;i>=0;i--){const e=s[i],o=e.o;
+    if(e.t==='tent'){if(tentTiles(o).some(q=>grid[q]))msg('Platz ist nicht mehr frei',o.x,o.y-20);else{setTentGone(o,false);st.money+=TENT_COST}continue}
+    const here=grid[o.y*MW+o.x]===o;
     if(e.t==='add'){if(here)demolish(o.x,o.y)}else if(e.t==='dir'){if(here){o.dir=e.d;ui.topoDirty=true}}else if(e.t==='del'){if(!here)restore(o)}else if(e.t==='move'){if(here)moveB(o,e.x,e.y)}}
   ui.undoing=false;return true}
 // Versetzen: Gebaeude behaelt Inhalt und Einstellungen, kostet nichts. Baender und die Annahme lassen sich nicht versetzen.
@@ -78,11 +82,11 @@ function topo(){ui.topoDirty=false;for(const t of belts){t.feed=[];for(let d=0;d
       if(o&&((o.k==='belt'&&o.dir===d)||(o.k!=='belt'&&t.dir===d)))t.feed.push(d)}if(!t.feed.length)t.feed.push(t.dir)}}
 function buyUp(i){const u=UPS[i],p=upPrice(u);if(st.up[u.k]>=u.max||st.money<p)return false;st.money-=p;st.up[u.k]++;return true}
 function save(){try{const bits=new Uint8Array(Math.ceil(items.length/8));items.forEach((it,i)=>{if(!it.alive)bits[i>>3]|=1<<(i&7)});let s='';for(let i=0;i<bits.length;i++)s+=String.fromCharCode(bits[i]);
-  localStorage.setItem(SAVE_KEY,JSON.stringify({v:1,money:st.money,earned:st.earned,t:st.t,up:st.up,sold:st.sold,hint:st.hint,px:st.player.x,py:st.player.y,bag:st.player.bag,dead:btoa(s),
+  localStorage.setItem(SAVE_KEY,JSON.stringify({v:1,money:st.money,earned:st.earned,t:st.t,up:st.up,sold:st.sold,hint:st.hint,px:st.player.x,py:st.player.y,bag:st.player.bag,dead:btoa(s),tents:goneTents(),
     belts:belts.map(t=>[t.x,t.y,t.dir]),blds:blds.filter(b=>b.k!=='auto').map(b=>({k:b.k,x:b.x,y:b.y,dir:b.dir,filter:b.filter,paid:b.paid,buf:b.buf,out:b.out,made:b.made}))}))}catch(e){}}
 function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;const d=JSON.parse(raw);if(d.v!==1)return;
   st.money=d.money;st.earned=d.earned;st.t=d.t;Object.assign(st.up,d.up);st.sold=d.sold;st.hint=d.hint||0;const p=st.player;p.x=p.tx=d.px;p.y=p.ty=d.py;p.bag=d.bag||[];
-  const s=atob(d.dead);items.forEach((it,i)=>{if(s.charCodeAt(i>>3)&(1<<(i&7))){it.alive=false;const c=cells[it.c];c.splice(c.indexOf(it),1);st.left[it.m]--}});
+  loadTents(d.tents);const s=atob(d.dead);items.forEach((it,i)=>{if(s.charCodeAt(i>>3)&(1<<(i&7))){it.alive=false;const c=cells[it.c];c.splice(c.indexOf(it),1);st.left[it.m]--}});
   for(const t of d.belts){const o={k:'belt',x:t[0],y:t[1],dir:t[2],item:-1,prog:0,from:t[2],feed:[t[2]]};grid[o.y*MW+o.x]=o;belts.push(o)}
   for(const q of d.blds){const b=mkB(q.k,q.x,q.y,q.paid);if(q.dir!=null)b.dir=q.dir;if(q.filter!=null)b.filter=q.filter;if(q.k==='station')b.buf=q.buf||[];else if(BT[q.k].inp){Object.assign(b.buf,q.buf);b.out=q.out||0;b.made=q.made||0}placeB(b)}
   cam.x=p.x;cam.y=p.y}catch(e){}}
