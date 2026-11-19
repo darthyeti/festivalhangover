@@ -5,7 +5,7 @@ import {st,ui} from './zustand.js';
 import {AUTO,belts,blds,grid,near,nearestIn,removeItem} from './welt.js';
 
 function pop(x,y,txt,col,big){st.pops.push({x,y,txt,col:col||'#ffe27a',t:0,big:!!big})}
-function msg(txt){if(st.t-st.lastMsg>1){st.lastMsg=st.t;st.pops.push({x:st.player.x,y:st.player.y-34,txt,col:'#ff9a7a',t:0})}}
+function msg(txt,x,y){if(st.t-st.lastMsg>1){st.lastMsg=st.t;st.pops.push({x:x==null?st.player.x:x,y:y==null?st.player.y-34:y,txt,col:'#ff9a7a',t:0})}}
 function pay(c,x,y,col,big){st.money+=c;st.earned+=c;if(x!=null)pop(x,y,'+'+euro(c),col,big)}
 function fly(ty,x0,y0,x1,y1,d){st.fly.push({ty,x0,y0,x1,y1,t:0,d:d||0.3,rot:Math.random()*6.28})}
 // Ein Stueck kommt in Fahrtrichtung dir auf Feld x,y an
@@ -21,6 +21,16 @@ function pushOut(b,ty,ex){const c=[],pass=b.k==='split'||b.k==='sort';
   for(let d=0;d<4;d++){if(d===ex)continue;const n=d%2?b.w:b.h;for(let k=0;k<n;k++){const x=d===0?b.x+b.w:d===2?b.x-1:b.x+k,y=d===1?b.y+b.h:d===3?b.y-1:b.y+k;
     if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];if(o&&((o.k==='belt'&&o.dir===d)||(pass&&(o.k==='split'||o.k==='sort')&&d!==(b.from+2)%4)))c.push(x,y,d)}}
   const n=c.length/3;for(let i=0;i<n;i++){const j=((b.rr+i)%n)*3;if(tryPush(c[j],c[j+1],ty,c[j+2])){b.rr=(b.rr+i+1)%n;return true}}return false}
+// Zahl der moeglichen Ausgaenge eines Gebaeudes, gleiche Nachbarschaft wie pushOut
+function outCount(b){let c=0;const pass=b.k==='split'||b.k==='sort';
+  for(let d=0;d<4;d++){const n=d%2?b.w:b.h;for(let k=0;k<n;k++){const x=d===0?b.x+b.w:d===2?b.x-1:b.x+k,y=d===1?b.y+b.h:d===3?b.y-1:b.y+k;
+    if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];if(o&&((o.k==='belt'&&o.dir===d)||(pass&&(o.k==='split'||o.k==='sort'))))c++}}return c}
+// Warum ein Gebaeude gerade nicht weiterkommt, leer wenn alles laeuft. Aendert nichts am Zustand.
+function jam(b){const stuck=()=>outCount(b)?'Stau am Ausgang':'Kein Ausgang: Band wegführen';
+  if(b.k==='auto')return b.q.length>=AUTO_CAP?'Warteschlange voll':'';
+  if(b.k==='station')return b.buf.length>=ST_CAP?stuck():'';
+  if(b.k==='split'||b.k==='sort')return b.item>=0&&b.wait<-1?stuck():'';
+  return BT[b.k].inp&&b.out>=2?stuck():''}
 function updBelts(dt){for(const t of belts){if(t.item<0)continue;if(t.prog<1)t.prog=Math.min(1,t.prog+BSPD*dt);
   if(t.prog>=1&&tryPush(t.x+DX[t.dir],t.y+DY[t.dir],t.item,t.dir))t.item=-1}}
 function updBld(b,dt){
@@ -65,4 +75,4 @@ function update(dt){if(st.done)return;st.t+=dt;updBelts(dt);for(const b of blds)
   if(st.hint===0&&st.earned>=600)st.hint=1;if(st.hint===1&&hasSt)st.hint=2;if(st.hint===2&&st.earned>=4000)st.hint=3;if(st.hint===3&&hasM)st.hint=4;
   if(st.left[0]+st.left[1]+st.left[2]+st.left[3]===0&&!st.player.bag.length&&!AUTO.q.length&&belts.every(t=>t.item<0)&&blds.every(b=>b.k!=='station'||(!b.buf.length&&b.helpers.every(h=>!h.load.length))))st.done=true}
 
-export {msg,tryPush,update};
+export {jam,msg,tryPush,update};
