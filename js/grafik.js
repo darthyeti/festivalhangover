@@ -3,7 +3,7 @@
 import {AUTO_CAP,BSPD,BT,DX,DY,FONT,H,LS,MH,MW,PS,RAW,SAVE_KEY,ST_CAP,ST_R,T,TOOLS,TY,UPS,VIEW,W,WH,WW,euro,rng} from './konstanten.js';
 import {cam,st,ui,upPrice} from './zustand.js';
 import {belts,blds,blocked,camps,cells,grid,items,near,pathDist,pathX,pathY} from './welt.js';
-import {buyUp,canBuild,canMove,demolish,freeTile,price,topo,undo} from './bauen.js';
+import {buyUp,canBuild,canMove,confirmPlan,demolish,freeTile,price,save,topo,undo} from './bauen.js';
 import {jam} from './logik.js';
 import {start} from './eingabe.js';
 
@@ -223,6 +223,9 @@ function drawWorld(){ctx.save();ctx.beginPath();ctx.rect(VIEW.x,VIEW.y,VIEW.w,VI
     ctx.fillStyle=ok?'rgba(110,230,120,.35)':'rgba(255,80,60,.4)';ctx.fillRect(g.x*T,g.y*T,D.w*T,D.h*T);ctx.strokeStyle=ok?'#9be28a':'#ff7a6b';ctx.lineWidth=2/cam.z;ctx.strokeRect(g.x*T,g.y*T,D.w*T,D.h*T);
     if(ui.tool==='belt'||ui.tool==='sort')arrow(g.x*T+16,g.y*T+16,ui.rot,9,'#fff');
     if(ui.tool==='station'){ctx.strokeStyle='rgba(255,255,255,.7)';ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc((g.x+1)*T,(g.y+1)*T,ST_R,0,6.3);ctx.stroke();ctx.setLineDash([])}}
+  if(ui.tool==='belt'){const A=ui.planA,P=ui.plan;
+    if(P)for(const t of P.path){ctx.fillStyle='rgba(255,226,122,.42)';ctx.fillRect(t.x*T+2,t.y*T+2,T-4,T-4);ctx.strokeStyle='rgba(255,240,170,.9)';ctx.lineWidth=1.2/cam.z;ctx.strokeRect(t.x*T+2,t.y*T+2,T-4,T-4);arrow(t.x*T+16,t.y*T+16,t.d,8,'#fff')}
+    if(A){const o=grid[A.y*MW+A.x],b=o&&o.k!=='belt'?o:{x:A.x,y:A.y,w:1,h:1};ctx.strokeStyle='#ffe27a';ctx.lineWidth=2.5/cam.z;ctx.setLineDash([6,4]);ctx.strokeRect(b.x*T+1,b.y*T+1,b.w*T-2,b.h*T-2);ctx.setLineDash([])}}
   if(ui.tool==='demo'&&ptr.inView){const tx=(ptr.wx/T)|0,ty=(ptr.wy/T)|0;ctx.strokeStyle='#ff7a6b';ctx.lineWidth=2/cam.z;ctx.strokeRect(tx*T,ty*T,T,T)}
   for(const p of st.pops){const k=p.t/1.3;ctx.globalAlpha=k<0.7?1:1-(k-0.7)/0.3;const fs=(p.big?15:11.5)/Math.max(0.7,cam.z);ctx.font='700 '+fs+'px '+FONT;ctx.textAlign='center';ctx.lineWidth=3/cam.z;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.strokeText(p.txt,p.x,p.y-k*26);ctx.fillStyle=p.col;ctx.fillText(p.txt,p.x,p.y-k*26);ctx.globalAlpha=1}
   ctx.restore()}
@@ -251,6 +254,7 @@ function drawToolbar(){ctx.fillStyle=lg(ctx,0,726,0,800,['#232a2c','#161b1a']);c
     button(x,y,w,h,()=>{if(id==='rot')ui.rot=(ui.rot+1)%4;else{ui.tool=id;ui.move=null;if(id!=='walk')ui.sel=null}})})}
 function drawTop(){ctx.fillStyle=lg(ctx,0,0,0,46,['#232a2c','#161b1a']);ctx.fillRect(0,0,W,46);
   txt('MONTAGMORGEN 2',14,22,16,'#f3efe2','left',true);txt('Prototyp Fabrikbau',14,38,10.5,'#8f9aa0');
+  rr(ctx,176,8,56,30,6);ctx.fillStyle='#2c3338';ctx.fill();txt('Menü',204,28,11.5,'#e6ecef','center',true);button(176,8,56,30,()=>{ui.menu=true;ui.saved=false;ui.resetArm=0});
   const left=st.left[0]+st.left[1]+st.left[2]+st.left[3],pr=st.total?(st.total-left)/st.total:0,bx=240,bw=300;
   rr(ctx,bx,13,bw,12,6);ctx.fillStyle='#0d1011';ctx.fill();if(pr>0){rr(ctx,bx,13,Math.max(12,bw*pr),12,6);ctx.fillStyle=lg(ctx,bx,0,bx+bw,0,['#6fa544','#a4c964']);ctx.fill()}
   txt('Wiese '+(pr*100).toFixed(1).replace('.',',')+' % sauber',bx+bw/2,39,11,'#cfd8cf','center');
@@ -266,11 +270,10 @@ const MM={x:1112,y:VIEW.y+8,w:160,h:104};
 function panelBtn(x,y,w,label,cb,col,on){rr(ctx,x,y,w,28,6);ctx.fillStyle=on===false?'#3c454b':col||'#3f7a8a';ctx.fill();txt(label,x+w/2,y+18.5,11.5,on===false?'#8a949a':'#fff','center',true);button(x,y,w,28,cb,on)}
 let panelRect=null;
 function drawPanel(){panelRect=null;const b=ui.sel;if(!b)return;const x=1052,y=VIEW.y+124,w=220,D=BT[b.k];let lines=[],h;
-  if(b.k==='auto'){h=64+UPS.length*52+40;rr(ctx,x,y,w,h,8);ctx.fillStyle='rgba(22,28,30,.94)';ctx.fill();ctx.strokeStyle='#4a5257';ctx.lineWidth=1;ctx.stroke();
+  if(b.k==='auto'){h=64+UPS.length*52+6;rr(ctx,x,y,w,h,8);ctx.fillStyle='rgba(22,28,30,.94)';ctx.fill();ctx.strokeStyle='#4a5257';ctx.lineWidth=1;ctx.stroke();
     txt('Leergutannahme',x+12,y+22,14,'#fff','left',true);txt('zählt '+(1.5+st.up.auto).toFixed(1).replace('.',',')+' Stück/s · Ballen,',x+12,y+40,10.5,'#aeb7bc');txt('Kästen und Paletten sofort',x+12,y+53,10.5,'#aeb7bc');
     UPS.forEach((u,i)=>{const by=y+64+i*52,l=st.up[u.k],mx=l>=u.max,p=upPrice(u),can=!mx&&st.money>=p;rr(ctx,x+10,by,w-20,46,6);ctx.fillStyle=can?'#2a5561':'#2c3338';ctx.fill();ctx.strokeStyle=can?'#7fd0e2':'#3c454b';ctx.stroke();
-      txt(u.name,x+20,by+19,12,can?'#fff':'#aeb7bc','left',true);txt(u.sub(l),x+20,by+35,10.5,'#8f9aa0');txt(mx?'max.':euro(p),x+w-20,by+28,12.5,mx?'#7d878d':can?'#ffe27a':'#8a949a','right',true);button(x+10,by,w-20,46,()=>buyUp(i),can)});
-    panelBtn(x+10,y+h-36,w-20,ui.resetArm>0?'Wirklich neu starten?':'Spiel neu starten',()=>{if(ui.resetArm>0){try{localStorage.removeItem(SAVE_KEY)}catch(e){}start(true)}else ui.resetArm=3},ui.resetArm>0?'#a8553a':'#3c454b')}
+      txt(u.name,x+20,by+19,12,can?'#fff':'#aeb7bc','left',true);txt(u.sub(l),x+20,by+35,10.5,'#8f9aa0');txt(mx?'max.':euro(p),x+w-20,by+28,12.5,mx?'#7d878d':can?'#ffe27a':'#8a949a','right',true);button(x+10,by,w-20,46,()=>buyUp(i),can)})}
   else{if(D.inp){const rate=k=>(D.inp[k]/D.time).toFixed(2).replace('.',',');lines.push(Object.keys(D.inp).map(k=>D.inp[k]+' '+TY[k].n).join(' + '));lines.push('→ 1 '+TY[D.out].n+' in '+D.time+' s');
       lines.push('Bedarf: '+Object.keys(D.inp).map(k=>rate(k)+' '+TY[k].n+'/s').join(', '));lines.push('Wert: '+euro(TY[D.out].val)+' · gefertigt: '+b.made)}
     else lines=D.info.slice();
@@ -283,19 +286,33 @@ function drawPanel(){panelRect=null;const b=ui.sel;if(!b)return;const x=1052,y=V
     panelBtn(x+10,by,w-20,ui.move===b?'Versetzen abbrechen':'Versetzen',()=>{ui.move=ui.move===b?null:b;ui.tool='walk'},ui.move===b?'#8a6a2a':undefined);by+=34;
     panelBtn(x+10,by,w-20,'Abreißen (+'+euro(b.paid)+')',()=>demolish(b.x,b.y),'#6a4a44')}
   panelRect={x,y,w,h}}
+function drawPlanBar(){const P=ui.plan;if(!P||ui.tool!=='belt')return;const n=P.path.length,can=st.money>=P.cost,y=VIEW.y+VIEW.h-48,x=W/2-170;
+  rr(ctx,x-8,y-7,356,48,11);ctx.fillStyle='rgba(16,22,20,.9)';ctx.fill();
+  rr(ctx,x,y,210,34,7);ctx.fillStyle=can?'#3f8f4f':'#3c454b';ctx.fill();txt('Bauen · '+n+(n===1?' Feld':' Felder')+' · '+euro(P.cost),x+105,y+22,12.5,can?'#fff':'#9aa4aa','center',true);button(x,y,210,34,()=>confirmPlan());
+  rr(ctx,x+220,y,120,34,7);ctx.fillStyle='#6a4a44';ctx.fill();txt('Abbrechen',x+280,y+22,12.5,'#fff','center',true);button(x+220,y,120,34,()=>{ui.plan=null;ui.planA=null})}
+function drawMenu(){if(!ui.menu)return;btns=[];ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);const w=340,h=306,x=W/2-w/2,y=H/2-h/2;
+  rr(ctx,x,y,w,h,14);ctx.fillStyle='#222b2d';ctx.fill();ctx.strokeStyle='#4a5257';ctx.lineWidth=1.5;ctx.stroke();
+  txt('Menü',W/2,y+42,22,'#f3efe2','center',true);txt('Das Spiel ist angehalten.',W/2,y+64,11.5,'#8f9aa0','center');
+  const mb=(k,label,col,cb)=>{const by=y+84+k*60;rr(ctx,x+30,by,w-60,48,9);ctx.fillStyle=col;ctx.fill();txt(label,W/2,by+30,14.5,'#fff','center',true);button(x+30,by,w-60,48,cb)};
+  mb(0,'Weiterspielen','#3f7a8a',()=>{ui.menu=false;ui.resetArm=0});
+  mb(1,ui.saved?'Gespeichert':'Jetzt speichern','#3c5a48',()=>{save();ui.saved=true});
+  mb(2,ui.resetArm>0?'Wirklich? Der Spielstand wird gelöscht':'Spiel neu starten',ui.resetArm>0?'#a8553a':'#4a3f3c',()=>{if(ui.resetArm>0){try{localStorage.removeItem(SAVE_KEY)}catch(e){}start(true)}else ui.resetArm=3});
+  txt('Der Spielstand wird alle 15 Sekunden automatisch gespeichert.',W/2,y+h-20,10.5,'#8f9aa0','center')}
 function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#161b1a';ctx.fillRect(0,0,cv.width,cv.height);ctx.setTransform(S*DPR,0,0,S*DPR,offX*DPR,offY*DPR);btns=[];
+  if(ui.tool!=='belt'&&(ui.planA||ui.plan)){ui.planA=null;ui.plan=null}
   if(ui.topoDirty)topo();if(st.t-ui.mmT>0.6||st.t<ui.mmT){ui.mmT=st.t;buildMini()}
   if(cam.follow&&ui.tool==='walk'){cam.x+=(st.player.x-cam.x)*0.08;cam.y+=(st.player.y-cam.y)*0.08}clampCam();
   const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;
   drawWorld();
   ctx.font='600 12px '+FONT;const ht=HINTS[st.hint],hw=ctx.measureText(ht).width+28;rr(ctx,20,VIEW.y+10,hw,24,12);ctx.fillStyle='rgba(16,22,20,.8)';ctx.fill();txt(ht,34,VIEW.y+26.5,12,'#f3efe2','left',true);
-  if(ui.move||ui.tool!=='walk'){const tip=ui.move?'Neuen Platz antippen · Laufen oder Esc bricht ab':ui.tool==='belt'?'Ziehen legt Band · Tippen auf ein Band dreht es':ui.tool==='demo'?'Tippen oder ziehen reißt ab':ui.tool==='sort'?'Tippen setzt · auf vorhandenen Sortierer tippen wechselt die Sorte':'Tippen setzt · Karte mit zwei Fingern, rechter Maustaste oder WASD verschieben';
+  if(ui.move||ui.tool!=='walk'){const tip=ui.move?'Neuen Platz antippen · Laufen oder Esc bricht ab':ui.tool==='belt'?(ui.plan?'Vorschlag prüfen und bestätigen · ein anderes Ziel antippen ändert den Weg':ui.planA?'Ziel antippen · den Start nochmal antippen setzt ein einzelnes Feld oder dreht ein Band':'Start antippen, dann Ziel antippen · Ziehen legt das Band direkt'):ui.tool==='demo'?'Tippen oder ziehen reißt ab':ui.tool==='sort'?'Tippen setzt · auf vorhandenen Sortierer tippen wechselt die Sorte':'Tippen setzt · Karte mit zwei Fingern, rechter Maustaste oder WASD verschieben';
     ctx.font='11px '+FONT;const tw=ctx.measureText(tip).width+24;rr(ctx,20,VIEW.y+VIEW.h-32,tw,22,11);ctx.fillStyle='rgba(16,22,20,.8)';ctx.fill();txt(tip,32,VIEW.y+VIEW.h-17,11,'#cfd8dc')}
-  drawMiniMap();drawPanel();drawTop();drawToolbar();
+  drawMiniMap();drawPanel();drawTop();drawToolbar();drawPlanBar();
   if(st.done){ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);rr(ctx,W/2-250,H/2-120,500,240,16);ctx.fillStyle='#22302a';ctx.fill();ctx.strokeStyle='#a4c964';ctx.lineWidth=2;ctx.stroke();
     txt('Die Wiese ist sauber.',W/2,H/2-60,28,'#f3efe2','center',true);const mm=Math.floor(st.t/60),ss=Math.floor(st.t%60);
     txt('Zeit '+mm+':'+(ss<10?'0':'')+ss+'   ·   eingenommen '+euro(st.earned),W/2,H/2-20,15,'#cfd8cf','center');
     txt('Paletten '+st.sold[7]+' · Ballen '+(st.sold[4]+st.sold[5])+' · volle Kästen '+st.sold[6],W/2,H/2+8,13,'#9be28a','center');
-    rr(ctx,W/2-90,H/2+40,180,46,10);ctx.fillStyle='#58b765';ctx.fill();txt('Nochmal',W/2,H/2+69,17,'#fff','center',true);button(W/2-90,H/2+40,180,46,()=>{try{localStorage.removeItem(SAVE_KEY)}catch(e){}start(true)})}}
+    rr(ctx,W/2-90,H/2+40,180,46,10);ctx.fillStyle='#58b765';ctx.fill();txt('Nochmal',W/2,H/2+69,17,'#fff','center',true);button(W/2-90,H/2+40,180,46,()=>{try{localStorage.removeItem(SAVE_KEY)}catch(e){}start(true)})}
+  drawMenu()}
 
 export {MM,S,movePos,btns,buildGround,buildItemLayer,buildMini,buildSprites,cv,draw,dropItemLayer,eraseItem,ghostPos,groundL,offX,offY,panelRect,ptr,resize,spr,toW};

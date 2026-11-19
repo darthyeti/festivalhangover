@@ -44,6 +44,36 @@ function canMove(b,x,y){return b.k!=='belt'&&b.k!=='auto'&&blockReason(x,y,b.w,b
 function moveB(b,x,y){if(!canMove(b,x,y))return false;for(let j=0;j<b.h;j++)for(let i=0;i<b.w;i++)grid[(b.y+j)*MW+b.x+i]=null;b.x=x;b.y=y;
   for(let j=0;j<b.h;j++)for(let i=0;i<b.w;i++)grid[(y+j)*MW+x+i]=b;ui.topoDirty=true;return true}
 function moveTo(b,x,y){const ox=b.x,oy=b.y;if(ox===x&&oy===y)return false;if(!moveB(b,x,y)){msg(blockReason(x,y,b.w,b.h,b)||'Lässt sich nicht versetzen',(x+b.w/2)*T,y*T-4);return false}rec({t:'move',o:b,x:ox,y:oy});return true}
+// Bandplaner. Ein Ende ist ein freies Feld, ein Band oder ein Gebaeude. planEnds liefert die moeglichen ersten bzw. letzten
+// Bandfelder, d ist die dort erzwungene Bandrichtung (-1 = frei). An Gebaeuden schliessen Baender nur im rechten Winkel an.
+function planEnds(x,y,start){if(x<0||y<0||x>=MW||y>=MH)return[];const o=grid[y*MW+x],r=[];
+  if(!o){if(freeTile(x,y))r.push({x,y,d:-1});return r}
+  if(o.k==='belt'){if(start){const nx=x+DX[o.dir],ny=y+DY[o.dir];if(freeTile(nx,ny))r.push({x:nx,y:ny,d:-1})}
+    else for(let d=0;d<4;d++){if(d===(o.dir+2)%4)continue;const nx=x-DX[d],ny=y-DY[d];if(freeTile(nx,ny))r.push({x:nx,y:ny,d})}return r}
+  if(start&&o.k==='auto')return r;
+  for(let d=0;d<4;d++){const n=d%2?o.w:o.h;for(let k=0;k<n;k++){const nx=d===0?o.x+o.w:d===2?o.x-1:o.x+k,ny=d===1?o.y+o.h:d===3?o.y-1:o.y+k;
+    if(freeTile(nx,ny))r.push({x:nx,y:ny,d:start?d:(d+2)%4})}}return r}
+// Kuerzester freier Weg, bei gleicher Laenge der mit den wenigsten Knicken. Zustand = Feld*9+h:
+// h 0..3 Fahrtrichtung, 4..7 erzwungener erster Schritt (Ausgang eines Gebaeudes), 8 freier Start.
+function planBelt(ax,ay,bx,by){const S=planEnds(ax,ay,true),G=planEnds(bx,by,false);if(!S.length||!G.length)return null;
+  const goal=new Map();for(const g of G){const i=g.y*MW+g.x;if(!goal.has(i))goal.set(i,[]);goal.get(i).push(g.d)}
+  const dist=new Float64Array(MW*MH*9).fill(1e18),par=new Int32Array(MW*MH*9).fill(-1),hc=[],hn=[];
+  const put=(n,c)=>{let i=hc.length;hc.push(c);hn.push(n);while(i>0){const p=(i-1)>>1;if(hc[p]<=c)break;hc[i]=hc[p];hn[i]=hn[p];i=p}hc[i]=c;hn[i]=n};
+  const take=()=>{const n=hn[0],c=hc.pop(),m=hn.pop(),L=hc.length;if(L){let i=0;for(;;){let k=2*i+1;if(k>=L)break;if(k+1<L&&hc[k+1]<hc[k])k++;if(hc[k]>=c)break;hc[i]=hc[k];hn[i]=hn[k];i=k}hc[i]=c;hn[i]=m}return n};
+  for(const s of S){const n=(s.y*MW+s.x)*9+(s.d<0?8:4+s.d);dist[n]=0;put(n,0)}
+  let end=-1,endDir=-1,best=1e18;
+  while(hc.length){const c=hc[0],n=take();if(c>dist[n])continue;if(c>=best)break;const i=(n/9)|0,h=n%9,x=i%MW,y=(i/MW)|0,gs=goal.get(i);
+    if(gs)for(const e of gs){let ok=true,extra=0,dir=e;if(e<0)dir=h<4?h:h<8?h-4:ui.rot;else if(h<4){if(e===(h+2)%4)ok=false;else if(e!==h)extra=1}else if(h<8&&e!==h-4)ok=false;
+      if(ok&&c+extra<best){best=c+extra;end=n;endDir=dir}}
+    for(let d=0;d<4;d++){if(h<4&&d===(h+2)%4)continue;if(h>=4&&h<8&&d!==h-4)continue;const nx=x+DX[d],ny=y+DY[d];if(!freeTile(nx,ny))continue;
+      const m=(ny*MW+nx)*9+d,nc=c+1000+(h<4&&d!==h?1:0);if(nc<dist[m]){dist[m]=nc;par[m]=n;put(m,nc)}}}
+  if(end<0)return null;const path=[];for(let n=end,d=endDir;n>=0;){const i=(n/9)|0;path.push({x:i%MW,y:(i/MW)|0,d});d=n%9;n=par[n]}
+  path.reverse();return{ax,ay,bx,by,path,cost:path.length*50}}
+// Baut den Vorschlag als einen Rueckgaengig-Schritt. 'stale' heisst: Ein Feld des Wegs ist inzwischen belegt.
+function buildPlan(p){const e=p.path[p.path.length-1];if(!p.path.every(t=>freeTile(t.x,t.y)))return'stale';if(st.money<p.cost){msg('Zu wenig Geld',e.x*T+16,e.y*T-4);return'money'}
+  stepBegin();for(const t of p.path)setBelt(t.x,t.y,t.d);stepEnd();return'ok'}
+function confirmPlan(){const p=ui.plan;if(!p)return;const r=buildPlan(p);if(r==='ok'){ui.plan=null;ui.planA=null}
+  else if(r==='stale'){ui.plan=planBelt(p.ax,p.ay,p.bx,p.by);msg(ui.plan?'Weg neu berechnet':'Kein freier Weg mehr',p.bx*T+16,p.by*T-4)}}
 function topo(){ui.topoDirty=false;for(const t of belts){t.feed=[];for(let d=0;d<4;d++){if(d===(t.dir+2)%4)continue;const x=t.x-DX[d],y=t.y-DY[d];if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];
       if(o&&((o.k==='belt'&&o.dir===d)||(o.k!=='belt'&&t.dir===d)))t.feed.push(d)}if(!t.feed.length)t.feed.push(t.dir)}}
 function buyUp(i){const u=UPS[i],p=upPrice(u);if(st.up[u.k]>=u.max||st.money<p)return false;st.money-=p;st.up[u.k]++;return true}
@@ -57,4 +87,4 @@ function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;cons
   for(const q of d.blds){const b=mkB(q.k,q.x,q.y,q.paid);if(q.dir!=null)b.dir=q.dir;if(q.filter!=null)b.filter=q.filter;if(q.k==='station')b.buf=q.buf||[];else if(BT[q.k].inp){Object.assign(b.buf,q.buf);b.out=q.out||0;b.made=q.made||0}placeB(b)}
   cam.x=p.x;cam.y=p.y}catch(e){}}
 
-export {build,buyUp,canBuild,canMove,demolish,freeTile,load,moveTo,placeB,price,rec,save,setBelt,stepBegin,stepEnd,topo,undo};
+export {build,buildPlan,buyUp,canBuild,canMove,confirmPlan,planBelt,planEnds,demolish,freeTile,load,moveTo,placeB,price,rec,save,setBelt,stepBegin,stepEnd,topo,undo};

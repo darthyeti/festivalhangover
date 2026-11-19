@@ -80,6 +80,28 @@ function serve() {
     pd.out = 0;
     out.jamClear = G.jam(pd) === '';
 
+    // Bandplaner: Vorschlag von Gebaeude zu Gebaeude, rechtwinklig angeschlossen, ein Rueckgaengig-Schritt.
+    while (G.undo()) {}
+    G.st.money = 100000;
+    const sA = G.build('station', 3, 22);
+    const pB = G.build('pd', 6, 29);
+    const plan = G.planBelt(sA.x, sA.y, pB.x, pB.y);
+    const path = plan ? plan.path : [];
+    const adj = (t, b) => { const nx = t.x + [1, 0, -1, 0][t.d], ny = t.y + [0, 1, 0, -1][t.d]; return nx >= b.x && nx < b.x + b.w && ny >= b.y && ny < b.y + b.h; };
+    const away = (t, b) => { const px = t.x - [1, 0, -1, 0][t.d], py = t.y - [0, 1, 0, -1][t.d]; return px >= b.x && px < b.x + b.w && py >= b.y && py < b.y + b.h; };
+    out.planFound = path.length > 0;
+    out.planChain = path.every((t, i) => i === path.length - 1 || (t.x + [1, 0, -1, 0][t.d] === path[i + 1].x && t.y + [0, 1, 0, -1][t.d] === path[i + 1].y));
+    out.planEnds = path.length > 0 && away(path[0], sA) && adj(path[path.length - 1], pB);
+    out.planLen = path.length;
+    const turns = path.filter((t, i) => i > 0 && t.d !== path[i - 1].d).length;
+    out.planTurns = turns;
+    const m2 = G.st.money;
+    out.planBuilt = !!plan && G.buildPlan(plan) === 'ok' && G.belts.length === path.length && G.st.money === m2 - plan.cost;
+    G.step(240);
+    out.planFlows = Object.values(pB.buf).some(v => v > 0) || pB.made > 0;
+    out.planUndo = G.undo() && G.belts.length === 0 && G.st.money === m2;
+    out.planFrontal = (() => { G.setBelt(10, 24, 0); const q = G.planBelt(13, 24, 10, 24); return !q || !(q.path[q.path.length - 1].d === 2 && q.path[q.path.length - 1].y === 24 && q.path[q.path.length - 1].x === 11); })();
+
     G.clear(0, 0, G.MW - 1, G.MH - 1);
     out.leftAfterClear = sum();
     return out;
@@ -104,6 +126,13 @@ function serve() {
     ['Versetzen auf belegte Felder wird abgelehnt', r.moveBlocked, String(r.moveBlocked)],
     ['Rueckgaengig nimmt ein Versetzen zurueck', r.undoMove, String(r.undoMove)],
     ['Stauanzeige: ruhig, kein Ausgang, Stau, wieder ruhig', r.jamIdle && r.jamNoOut && r.jamBlocked && r.jamClear, [r.jamIdle, r.jamNoOut, r.jamBlocked, r.jamClear].join('/')],
+    ['Bandplaner findet einen zusammenhaengenden Weg', r.planFound && r.planChain, `${r.planFound}/${r.planChain}, ${r.planLen} Felder`],
+    ['Bandplaner schliesst rechtwinklig an Ausgang und Eingang an', r.planEnds, String(r.planEnds)],
+    ['Bandplaner nimmt den Weg mit hoechstens zwei Knicken', r.planTurns <= 2, String(r.planTurns)],
+    ['Vorschlag bauen kostet 50 Cent je Feld', r.planBuilt, String(r.planBuilt)],
+    ['Ueber das geplante Band kommt Ware in der Presse an', r.planFlows, String(r.planFlows)],
+    ['Ein Rueckgaengig nimmt die ganze geplante Strecke zurueck', r.planUndo, String(r.planUndo)],
+    ['Bandplaner muendet nie frontal in ein Band', r.planFrontal, String(r.planFrontal)],
     ['clear() raeumt die ganze Wiese', r.leftAfterClear === 0, String(r.leftAfterClear)],
   ];
   let failed = 0;
