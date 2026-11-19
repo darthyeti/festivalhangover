@@ -58,8 +58,21 @@ bewusst und nach Freigabe aendern.
   Der Stapel liegt in `ui.undo`, fasst 40 Schritte und wird nicht gespeichert.
 - Stauanzeige: `jam(b)` in `logik.js` liefert den Grund als Text oder einen leeren
   String und aendert nichts am Zustand. Die Grafik zeichnet daraus das Warnzeichen.
-- Die Welt ist deterministisch (feste Zufallssamen). Spielstand lokal in
-  `localStorage`, Schluessel `montagmorgen2-v1`.
+- Die Welt ist deterministisch (`WORLD_SEED`). Spielstand lokal in `localStorage`,
+  Schluessel `montagmorgen2-v1` (der Name bleibt, sonst gingen Staende verloren).
+  Format Version 2 (`v:2`): enthaelt auch Ware auf Baendern, in Sortierern,
+  Verteilern, Kreuzungen, Maschinen und in der Annahme. Version 1 laedt weiterhin.
+  Neue Felder so ergaenzen, dass aeltere Staende ohne sie laden.
+- Beim Verlassen der Seite speichert das Spiel. Tests, die neu laden, brauchen
+  deshalb einen frischen Browser-Kontext oder muessen das beruecksichtigen.
+- Baender (`logik.js`): `updBelts` arbeitet jede Kette vom Ende her ab (`beltOrder`),
+  neu berechnet bei `ui.orderDirty`. Wer `ui.topoDirty` setzt, setzt auch `ui.orderDirty`.
+- Abriss verliert keine Ware: `unloadTo()` legt alles, was ein Bauteil traegt, in die
+  Tuete der Spielfigur.
+- Auslieferung ohne gemischte Dateien: `VERSION` in `konstanten.js` und die
+  Importtabelle in `index.html` tragen dieselbe Nummer (`?v=N` an jedem Modul).
+  Bei jedem Pull Request mit Spielcode beide um eins erhoehen. Der Rauchtest prueft,
+  dass sie zusammenpassen und kein Modul fehlt. Das Menue zeigt die Version an.
 - Alle Grafiken entstehen per Code, es gibt keine Bilddateien.
 - Texte im Spiel auf Deutsch, keine Gedankenstriche als Satzzeichen.
 - Tablet und Desktop gleichwertig, Zielgroesse ab 1180 x 820.

@@ -142,6 +142,23 @@ function serve() {
     const pk = G.planBelt(5, 29, 8, 29);
     out.planNoCorner = !pk || !pk.path.some(t => t.cross && t.x === 6 && t.y === 29);
 
+    // Baender ruecken dicht auf, egal in welcher Reihenfolge sie gebaut wurden.
+    const dense = (rev) => {
+      while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
+      G.st.player.bag.length = 0;
+      const tiles = [[8, 26, 2], [7, 26, 2], [6, 26, 2], [5, 26, 2], [4, 26, 2], [3, 26, 2]];
+      if (rev) tiles.reverse();
+      tiles.forEach(t => G.setBelt(...t));
+      let occ = 0, n = 0;
+      for (let i = 0; i < 600; i++) { G.tryPush(8, 26, 4, 2); G.step(1 / 60); if (i > 300) { occ += G.belts.filter(t => t.item >= 0).length; n++; } }
+      return occ / n;
+    };
+    const dA = dense(false), dB = dense(true);
+    out.beltDense = dA > 5.9 && dB > 5.9 && Math.abs(dA - dB) < 0.01;
+    out.beltDenseDetail = dA.toFixed(2) + '/' + dB.toFixed(2);
+    while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
+    G.st.player.bag.length = 0;
+
     // Zelte abbauen: kostet 5 Euro, gibt die Felder frei, Rueckgaengig stellt das Zelt wieder her.
     let tent = -1;
     for (let i = 0; i < G.MW * G.MH && tent < 0; i++) if (G.blocked[i]) tent = i;
@@ -162,6 +179,66 @@ function serve() {
     out.leftAfterClear = sum();
     return out;
   });
+  // Zweiter Durchgang: Spielstand. Anlage mit Ware an allen Stellen aufbauen, speichern, neu laden, vergleichen.
+  // Eigener Browser-Kontext: Beim Verlassen der Seite speichert das Spiel, der erste Durchgang endet mit leerer Wiese.
+  const url = page.url();
+  await page.close();
+  const ctx2 = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  // Ohne Bildschleife laeuft das Spiel nur ueber __G.step weiter. Sonst vergeht zwischen Speichern und Vergleich echte Zeit.
+  await ctx2.addInitScript(() => { window.requestAnimationFrame = () => 0; });
+  const page2 = await ctx2.newPage();
+  page2.on('pageerror', e => errors.push(e.message));
+  page2.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  await page2.goto(url);
+  await page2.waitForFunction(() => window.__G && window.__G.st, null, { timeout: 10000 });
+  const carried = () => page2.evaluate(() => {
+    const G = window.__G;
+    return JSON.stringify({
+      belts: G.belts.map(t => [t.x, t.y, t.dir, t.item, Math.round(t.prog * 1000)]),
+      blds: G.blds.filter(b => b.k !== 'auto').map(b => [b.k, b.x, b.y, b.item, b.it, b.buf, b.out, b.made, b.t == null ? null : Math.round(b.t * 1000), b.filter, b.dir]),
+      auto: [G.AUTO.q, Math.round(G.AUTO.acc * 1000)], bag: G.st.player.bag, money: G.st.money, left: G.st.left,
+    });
+  });
+  const s1 = await page2.evaluate(() => {
+    const G = window.__G, o = {};
+    G.st.money = 100000;
+    for (let x = 3; x <= 8; x++) G.setBelt(x, 23, 0);
+    G.crossOver(5, 23);
+    G.setRot(1); G.build('sort', 4, 28); G.build('split', 6, 28);
+    const pd = G.build('pd', 4, 30) || G.build('pd', 5, 29);
+    for (let x = 3; x <= 7; x++) G.setBelt(x, 26, 2);            // laeuft nach links in die Annahme
+    G.tryPush(3, 23, 0, 0); G.tryPush(4, 28, 1, 0); G.tryPush(6, 28, 2, 0);
+    for (let i = 0; i < 14; i++) G.tryPush(pd.x, pd.y, 0, 0);
+    G.tryPush(7, 26, 0, 2); G.step(0.4); G.tryPush(7, 26, 1, 2); G.step(0.4); G.tryPush(7, 26, 2, 2);
+    G.step(1.3);
+    // Abriss ohne Verlust: Band mit Stueck abreissen, das Stueck landet in der Tuete, Rueckgaengig bringt ein leeres Band.
+    const loaded = G.belts.find(t => t.item >= 0 && t.y === 26);
+    o.hadLoaded = !!loaded;
+    const bag0 = G.st.player.bag.length, lx = loaded.x, ly = loaded.y, kind = loaded.item;
+    G.demolish(lx, ly);
+    o.toBag = G.st.player.bag.length === bag0 + 1 && G.st.player.bag[bag0] === kind;
+    G.undo();
+    const back = G.grid[ly * G.MW + lx];
+    o.restoredEmpty = !!back && back.k === 'belt' && back.item === -1;
+    o.pdRunning = pd.t >= 0 || pd.out > 0;
+    G.tryPush(3, 23, 1, 0); G.step(0.1);                          // ein Stueck mitten auf dem Band
+    G.save();
+    return o;
+  });
+  const before = await carried();
+  await page2.reload();
+  await page2.waitForFunction(() => window.__G && window.__G.st, null, { timeout: 10000 });
+  const after = await carried();
+  const parts = JSON.parse(before);
+  const onBelts = parts.belts.filter(t => t[3] >= 0).length;
+  const inSmall = parts.blds.filter(b => (b[3] != null && b[3] >= 0) || (b[4] && b[4].some(v => v >= 0))).length;
+
+  // Versionsnummer: index.html und konstanten.js muessen zusammenpassen, jedes Modul steht in der Importtabelle.
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const version = (fs.readFileSync(path.join(ROOT, 'js', 'konstanten.js'), 'utf8').match(/const VERSION=(\d+)/) || [])[1];
+  const mods = fs.readdirSync(path.join(ROOT, 'js')).filter(f => f.endsWith('.js'));
+  const versionOk = !!version && html.includes(`src="js/eingabe.js?v=${version}"`) && mods.every(m => html.includes(`"./js/${m}":"./js/${m}?v=${version}"`)) && (html.match(/\?v=/g) || []).length === mods.length + 1;
+
   await browser.close();
   server.close();
 
@@ -196,11 +273,17 @@ function serve() {
     ['Geplante Kreuzung ersetzt das Bandfeld, Ware laeuft auf beiden Linien', r.planCrossBuilt && r.planCrossFlows, `${r.planCrossBuilt}/${r.planCrossFlows}`],
     ['Rueckgaengig macht aus der Kreuzung wieder das Band', r.planCrossUndo, String(r.planCrossUndo)],
     ['Planer quert kein Band an einem Knick', r.planNoCorner, String(r.planNoCorner)],
+    ['Volles Band rueckt dicht auf, unabhaengig von der Baureihenfolge', r.beltDense, r.beltDenseDetail],
     ['Zelt abbauen kostet 5 Euro und gibt Felder frei', r.tentRemoved, String(r.tentRemoved)],
     ['Ziehen mit dem Abriss baut kein Zelt ab', r.tentDragSafe, String(r.tentDragSafe)],
     ['Rueckgaengig stellt das Zelt wieder her und erstattet', r.tentUndo, String(r.tentUndo)],
     ['Ohne Geld bleibt das Zelt stehen', r.tentNoMoney, String(r.tentNoMoney)],
     ['clear() raeumt die ganze Wiese', r.leftAfterClear === 0, String(r.leftAfterClear)],
+    ['Abriss legt getragene Ware in die Tuete', s1.hadLoaded && s1.toBag, `${s1.hadLoaded}/${s1.toBag}`],
+    ['Rueckgaengig nach Abriss bringt ein leeres Band, nichts verdoppelt sich', s1.restoredEmpty, String(s1.restoredEmpty)],
+    ['Testanlage traegt Ware auf Baendern, in Kleinteilen und in der Presse', onBelts >= 2 && inSmall >= 2 && s1.pdRunning, `${onBelts}/${inSmall}/${s1.pdRunning}`],
+    ['Neuladen mitten im Betrieb verliert nichts', before === after, (() => { let i = 0; while (i < before.length && before[i] === after[i]) i++; return 'ab Zeichen ' + i + ': vorher ' + before.slice(Math.max(0, i - 60), i + 120) + ' | nachher ' + after.slice(Math.max(0, i - 60), i + 120); })()],
+    ['Versionsnummer in index.html und konstanten.js stimmt ueberein', versionOk, String(version)],
   ];
   let failed = 0;
   for (const [name, ok, detail] of checks) {

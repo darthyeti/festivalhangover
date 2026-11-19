@@ -38,6 +38,7 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 - Ein Feld ist bebaubar, wenn dort kein Stück liegt, kein Zelt steht und nichts gebaut ist.
 - Zelte und Pavillons sind Hindernisse. Das Abriss-Werkzeug baut sie für 5 € je Stück ab, ohne Erstattung (Entscheidung E-005, Preis ist ein Startwert).
 - Abriss erstattet den gezahlten Preis vollständig. Das soll Ausprobieren billig machen.
+- Was ein abgerissenes Bauteil gerade trägt, landet in der Tüte der Spielfigur, auch über ihr Fassungsvermögen hinaus (seit M2).
 
 **Bänder**
 
