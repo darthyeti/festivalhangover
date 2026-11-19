@@ -9,6 +9,7 @@ const BSPD=3,AUTO_CAP=40,ST_CAP=30,ST_R=8*T,N_ITEMS=8000,N_CRATES=260,SAVE_KEY='
 // Sorten: 0-3 liegen auf der Wiese, 4-7 entstehen in Maschinen
 const TY=[{n:'Dosen',val:25,col:'#c9d2d8'},{n:'PET',val:25,col:'#7fc4e8'},{n:'Glas',val:8,col:'#a8712f'},{n:'Leerkästen',val:150,col:'#d14b3c'},
  {n:'Dosenballen',val:450,col:'#e4eaed'},{n:'PET-Ballen',val:300,col:'#8fd0f0'},{n:'Volle Kästen',val:465,col:'#b23a2e'},{n:'Paletten',val:6750,col:'#c9a16a'}];
+const VERSION=7,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
 const RAW=4,TENT_COST=500; // Zelt oder Pavillon abbauen, in Cent
 const BT={
  belt:{name:'Band',cost:50,w:1,h:1,info:['Trägt 3 Stück/s.','Ziehen legt eine Strecke.']},
@@ -32,4 +33,4 @@ const UPS=[
 const euro=c=>(c/100).toFixed(2).replace('.',',')+' €';
 function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 
-export {AUTO_CAP,BSPD,BT,DX,DY,FONT,H,LS,MH,MW,N_CRATES,N_ITEMS,PS,RAW,SAVE_KEY,ST_CAP,ST_R,T,TENT_COST,TOOLS,TY,UPS,VIEW,W,WH,WW,euro,rng};
+export {AUTO_CAP,BSPD,BT,DX,DY,FONT,H,LS,MH,MW,N_CRATES,N_ITEMS,PS,RAW,SAVE_KEY,ST_CAP,ST_R,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WORLD_SEED,WW,euro,rng};

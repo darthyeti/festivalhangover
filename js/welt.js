@@ -1,6 +1,6 @@
 // Montagmorgen: Welt
 // Erzeugt Lager, Hindernisse und Stuecke aus festen Zufallssamen. Haelt die Weltdaten und die raeumliche Suche.
-import {MH,MW,N_CRATES,N_ITEMS,T,WH,WW,rng} from './konstanten.js';
+import {MH,MW,N_CRATES,N_ITEMS,T,WH,WORLD_SEED,WW,rng} from './konstanten.js';
 import {st,ui} from './zustand.js';
 import {placeB} from './bauen.js';
 import {eraseItem} from './grafik.js';
@@ -11,7 +11,7 @@ const pathY=(k,x)=>PYS[k]+26*Math.sin(x/160+k*2),pathX=(k,y)=>PXS[k]+20*Math.sin
 function pathDist(x,y){let d=1e9;for(let k=0;k<2;k++)d=Math.min(d,Math.abs(y-pathY(k,x)));for(let k=0;k<3;k++)d=Math.min(d,Math.abs(x-pathX(k,y)));return d}
 const inYard=(x,y)=>x<9.5*T&&y>21.5*T&&y<31.5*T;
 function genWorld(){
-  const r=rng(11);camps=[];foot=[];let tries=0;
+  const r=rng(WORLD_SEED);camps=[];foot=[];let tries=0;
   const HUES=['#d9482b','#2f7fc1','#e2a21d','#4d9b54','#7b4fa8','#d8d2c0','#1f9c9c','#e06a9a'];
   while(camps.length<105&&tries++<40000){
     const x=80+r()*(WW-160),y=70+r()*(WH-140);

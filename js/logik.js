@@ -33,7 +33,13 @@ function jam(b){const stuck=()=>outCount(b)?'Stau am Ausgang':'Kein Ausgang: Ban
   if(b.k==='split'||b.k==='sort')return b.item>=0&&b.wait<-1?stuck():'';
   if(b.k==='cross')return(b.it[0]>=0&&b.wt[0]<-1)||(b.it[1]>=0&&b.wt[1]<-1)?'Stau hinter der Kreuzung':'';
   return BT[b.k].inp&&b.out>=2?stuck():''}
-function updBelts(dt){for(const t of belts){if(t.item<0)continue;if(t.prog<1)t.prog=Math.min(1,t.prog+BSPD*dt);
+// Baender werden vom Ende jeder Kette her abgearbeitet. So rueckt eine volle Strecke im selben Takt dicht auf,
+// unabhaengig davon, in welcher Reihenfolge sie gebaut wurde.
+let order=[];
+function beltOrder(){ui.orderDirty=false;order=[];const seen=new Set(),stack=[];
+  for(const t0 of belts){let t=t0;while(t&&!seen.has(t)){seen.add(t);stack.push(t);const x=t.x+DX[t.dir],y=t.y+DY[t.dir],o=x<0||y<0||x>=MW||y>=MH?null:grid[y*MW+x];t=o&&o.k==='belt'?o:null}
+    while(stack.length)order.push(stack.pop())}}
+function updBelts(dt){if(ui.orderDirty||order.length!==belts.length)beltOrder();for(const t of order){if(t.item<0)continue;if(t.prog<1)t.prog=Math.min(1,t.prog+BSPD*dt);
   if(t.prog>=1&&tryPush(t.x+DX[t.dir],t.y+DY[t.dir],t.item,t.dir))t.item=-1}}
 function updBld(b,dt){
   // Kreuzung: je Achse ein Platz, das Stueck faehrt in seiner Richtung geradeaus weiter

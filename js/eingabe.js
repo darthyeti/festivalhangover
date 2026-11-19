@@ -13,7 +13,7 @@ const pts=new Map();let act=null,gest=null;
 function beltTo(nx,ny){const a=act;let n=0;while((a.lx!==nx||a.ly!==ny)&&n++<200){const dx=nx-a.lx,dy=ny-a.ly,d=Math.abs(dx)>=Math.abs(dy)?(dx>0?0:2):(dy>0?1:3);setBelt(a.lx,a.ly,d);a.lx+=DX[d];a.ly+=DY[d];a.dir=d;a.moved=true}}
 // Bandwerkzeug, Tippen: erster Tipp setzt den Start, zweiter das Ziel und holt einen Vorschlag.
 // Derselbe Punkt nochmal: einzelnes Feld setzen oder vorhandenes Band drehen.
-function beltSingle(x,y){const o=grid[y*MW+x];if(o&&o.k==='belt'){rec({t:'dir',o,d:o.dir});o.dir=(o.dir+1)%4;ui.topoDirty=true}else setBelt(x,y,ui.rot)}
+function beltSingle(x,y){const o=grid[y*MW+x];if(o&&o.k==='belt'){rec({t:'dir',o,d:o.dir});o.dir=(o.dir+1)%4;ui.topoDirty=ui.orderDirty=true}else setBelt(x,y,ui.rot)}
 function beltTap(x,y){if(x<0||y<0||x>=MW||y>=MH)return;const A=ui.planA,o=grid[y*MW+x],same=A&&((A.x===x&&A.y===y)||(o&&o.k!=='belt'&&o===grid[A.y*MW+A.x]));
   if(same){ui.planA=null;ui.plan=null;if(!o||o.k==='belt')beltSingle(x,y);return}
   if(!A){if(planEnds(x,y,true).length)ui.planA={x,y};else msg('Hier kann kein Band beginnen',x*T+16,y*T-4);return}
@@ -53,12 +53,12 @@ const keys={};window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();
 window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(resize,120)});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
-function start(fresh){resetState();dropItemLayer();ui.tool='walk';ui.sel=null;ui.undo=[];ui.step=null;ui.move=null;ui.planA=null;ui.plan=null;ui.menu=false;ui.resetArm=0;genWorld();if(!fresh)load();cam.x=st.player.x+200;cam.y=st.player.y;cam.follow=true;resize();if(!spr.length)buildSprites();ui.groundDirty=false;buildGround();buildItemLayer();buildMini();ui.topoDirty=true}
+function start(fresh){resetState();dropItemLayer();ui.tool='walk';ui.sel=null;ui.undo=[];ui.step=null;ui.move=null;ui.planA=null;ui.plan=null;ui.menu=false;ui.resetArm=0;genWorld();if(!fresh)load();cam.x=st.player.x+200;cam.y=st.player.y;cam.follow=true;resize();if(!spr.length)buildSprites();ui.groundDirty=false;buildGround();buildItemLayer();buildMini();ui.topoDirty=ui.orderDirty=true}
 let last=0,saveT=0;function frame(t){const dt=Math.min(0.05,(t-last)/1000||0);last=t;
   const pv=260*dt/cam.z;if(keys.a||keys.arrowleft){cam.x-=pv;cam.follow=false}if(keys.d||keys.arrowright){cam.x+=pv;cam.follow=false}if(keys.w||keys.arrowup){cam.y-=pv;cam.follow=false}if(keys.s||keys.arrowdown){cam.y+=pv;cam.follow=false}
   if(!ui.menu)update(dt);draw();saveT+=dt;if(saveT>15){saveT=0;save()}requestAnimationFrame(frame)}
 start(false);requestAnimationFrame(frame);
-window.__G={get st(){return st},get ui(){return ui},crossOver,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,
+window.__G={get st(){return st},get ui(){return ui},crossOver,save,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,
   step(sec,dt){dt=dt||1/60;for(let t=0;t<sec;t+=dt)update(dt)},build,setBelt,demolish,buyUp,tryPush,undo,moveTo,jam,planBelt,buildPlan,setTool(t){ui.tool=t},setRot(r){ui.rot=r},
   clear(x0,y0,x1,y1){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)for(const it of cells[y*MW+x].slice())removeItem(it)}};
 

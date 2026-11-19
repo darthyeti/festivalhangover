@@ -1,6 +1,6 @@
 // Montagmorgen: Grafik
 // Vorgerenderte Ebenen, Sprites, Zeichenfunktionen, Oberflaeche.
-import {AUTO_CAP,BSPD,BT,DX,DY,FONT,H,LS,MH,MW,PS,RAW,SAVE_KEY,ST_CAP,ST_R,T,TENT_COST,TOOLS,TY,UPS,VIEW,W,WH,WW,euro,rng} from './konstanten.js';
+import {AUTO_CAP,BSPD,BT,DX,DY,FONT,H,LS,MH,MW,PS,RAW,SAVE_KEY,ST_CAP,ST_R,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WW,euro,rng} from './konstanten.js';
 import {cam,st,ui,upPrice} from './zustand.js';
 import {belts,blds,blocked,camps,cells,grid,items,near,pathDist,pathX,pathY} from './welt.js';
 import {buyUp,canBuild,canMove,confirmPlan,demolish,freeTile,price,save,toggleCross,topo,undo} from './bauen.js';
@@ -306,7 +306,7 @@ function drawMenu(){if(!ui.menu)return;btns=[];ctx.fillStyle='rgba(10,16,14,.72)
   mb(0,'Weiterspielen','#3f7a8a',()=>{ui.menu=false;ui.resetArm=0});
   mb(1,ui.saved?'Gespeichert':'Jetzt speichern','#3c5a48',()=>{save();ui.saved=true});
   mb(2,ui.resetArm>0?'Wirklich? Der Spielstand wird gelöscht':'Spiel neu starten',ui.resetArm>0?'#a8553a':'#4a3f3c',()=>{if(ui.resetArm>0){try{localStorage.removeItem(SAVE_KEY)}catch(e){}start(true)}else ui.resetArm=3});
-  txt('Der Spielstand wird alle 15 Sekunden automatisch gespeichert.',W/2,y+h-20,10.5,'#8f9aa0','center')}
+  txt('Der Spielstand wird alle 15 Sekunden automatisch gespeichert.',W/2,y+h-26,10.5,'#8f9aa0','center');txt('Version '+VERSION,W/2,y+h-11,10,'#6f7a80','center')}
 function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#161b1a';ctx.fillRect(0,0,cv.width,cv.height);ctx.setTransform(S*DPR,0,0,S*DPR,offX*DPR,offY*DPR);btns=[];
   if(ui.tool!=='belt'&&(ui.planA||ui.plan)){ui.planA=null;ui.plan=null}
   if(ui.groundDirty){const R=ui.groundDirty;ui.groundDirty=false;buildGround(R===true?null:R)}
