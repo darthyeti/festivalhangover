@@ -37,10 +37,15 @@ bewusst und nach Freigabe aendern.
   Bild vor, dazu `build`, `setBelt`, `demolish`, `buyUp`, `clear`, `setTool`, `setRot`,
   `undo`, `moveTo(gebaeude,x,y)` und `jam(gebaeude)`.
   `planBelt(ax,ay,bx,by)` liefert einen Bandvorschlag, `buildPlan(plan)` baut ihn.
+  `__G.ui` gibt den Bedienzustand heraus, `crossOver(x,y)` setzt eine Kreuzung auf ein Band.
 - Bandplaner (`bauen.js`): `planEnds()` bestimmt, wo ein Band an einem freien Feld,
   Band oder Gebaeude beginnen oder enden darf (an Gebaeuden nur rechtwinklig),
   `planBelt()` sucht den kuerzesten freien Weg mit den wenigsten Knicken. Die
   Eingabe haelt Start und Vorschlag in `ui.planA` und `ui.plan`.
+- Kreuzung (`cross`, 1 Feld): je Achse ein Platz (`it`, `dr`, `wt`), ein Stueck faehrt in
+  seiner Richtung geradeaus weiter. `crossOver(x,y)` ersetzt ein Bandfeld durch eine
+  Kreuzung. Der Planer quert mit `ui.planCross` nur gerade Baender rechtwinklig
+  (`straightBelt`, braucht aktuelles `topo()`), eine Kreuzung zaehlt wie sieben Bandfelder.
 - `ui.menu` haelt das Spiel an: Die Schleife ruft `update()` dann nicht auf.
 - Zelte abbauen: `welt.js` haelt die Fussabdruecke (`foot`, mit Verweis auf das
   gezeichnete Objekt) und berechnet `blocked` daraus neu (`setTentGone`). Abgebaute

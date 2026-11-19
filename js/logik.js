@@ -14,6 +14,7 @@ function tryPush(x,y,ty,dir){if(x<0||y<0||x>=MW||y>=MH)return false;const o=grid
   return accept(o,ty,dir)}
 function accept(b,ty,dir){
   if(b.k==='auto'){if(ty>=RAW){st.sold[ty]++;pay(TY[ty].val,b.x*T+50,b.y*T+20,'#ffd23e',true);return true}if(b.q.length<AUTO_CAP){b.q.push(ty);return true}return false}
+  if(b.k==='cross'){const a=dir%2;if(b.it[a]>=0)return false;b.it[a]=ty;b.dr[a]=dir;b.wt[a]=0.15;return true}
   if(b.k==='split'||b.k==='sort'){if(b.item>=0)return false;b.item=ty;b.wait=0.15;b.from=dir;return true}
   const R=BT[b.k].inp;if(R&&R[ty]!=null&&b.buf[ty]<R[ty]*2){b.buf[ty]++;return true}return false}
 // Ausgang = angrenzendes Band, das vom Gebaeude wegfuehrt
@@ -30,10 +31,13 @@ function jam(b){const stuck=()=>outCount(b)?'Stau am Ausgang':'Kein Ausgang: Ban
   if(b.k==='auto')return b.q.length>=AUTO_CAP?'Warteschlange voll':'';
   if(b.k==='station')return b.buf.length>=ST_CAP?stuck():'';
   if(b.k==='split'||b.k==='sort')return b.item>=0&&b.wait<-1?stuck():'';
+  if(b.k==='cross')return(b.it[0]>=0&&b.wt[0]<-1)||(b.it[1]>=0&&b.wt[1]<-1)?'Stau hinter der Kreuzung':'';
   return BT[b.k].inp&&b.out>=2?stuck():''}
 function updBelts(dt){for(const t of belts){if(t.item<0)continue;if(t.prog<1)t.prog=Math.min(1,t.prog+BSPD*dt);
   if(t.prog>=1&&tryPush(t.x+DX[t.dir],t.y+DY[t.dir],t.item,t.dir))t.item=-1}}
 function updBld(b,dt){
+  // Kreuzung: je Achse ein Platz, das Stueck faehrt in seiner Richtung geradeaus weiter
+  if(b.k==='cross'){for(let a=0;a<2;a++){if(b.it[a]<0)continue;b.wt[a]-=dt;if(b.wt[a]<=0&&tryPush(b.x+DX[b.dr[a]],b.y+DY[b.dr[a]],b.it[a],b.dr[a]))b.it[a]=-1}return}
   if(b.k==='split'||b.k==='sort'){if(b.item<0)return;b.wait-=dt;if(b.wait>0)return;
     if(b.k==='sort'&&b.item===b.filter){if(tryPush(b.x+DX[b.dir],b.y+DY[b.dir],b.item,b.dir))b.item=-1;else if(b.wait<-0.5&&pushOut(b,b.item,b.dir))b.item=-1}
     else if(pushOut(b,b.item,b.k==='sort'?b.dir:-1))b.item=-1;return}

@@ -102,6 +102,46 @@ function serve() {
     out.planUndo = G.undo() && G.belts.length === 0 && G.st.money === m2;
     out.planFrontal = (() => { G.setBelt(10, 24, 0); const q = G.planBelt(13, 24, 10, 24); return !q || !(q.path[q.path.length - 1].d === 2 && q.path[q.path.length - 1].y === 24 && q.path[q.path.length - 1].x === 11); })();
 
+    // Kreuzung: zwei Linien queren sich, ohne sich zu mischen.
+    while (G.undo()) {}
+    G.st.money = 100000;
+    const yard = [];
+    for (let x = 3; x <= 8; x++) yard.push([x, 23, 0]);          // waagerecht nach rechts, y=23
+    yard.forEach(b => G.setBelt(...b));
+    for (let y = 22; y <= 24; y++) if (y !== 23) G.setBelt(5, y, 1); // senkrecht nach unten, x=5, Luecke bei y=23
+    const mBefore = G.st.money;
+    const cx = G.build('cross', 5, 23);                           // belegt: dort liegt schon Band
+    out.crossNeedsFree = cx === null;
+    G.demolish(5, 23);
+    const cr = G.build('cross', 5, 23);
+    out.crossBuilt = !!cr && G.st.money === mBefore + 50 - 400;
+    G.tryPush(3, 23, 0, 0); G.tryPush(5, 22, 1, 1);               // Dose von links, PET von oben
+    G.step(4);
+    const at = (x, y) => { const o = G.grid[y * G.MW + x]; return o && o.k === 'belt' ? o.item : -2; };
+    out.crossKeepsLines = at(8, 23) === 0 && at(5, 24) === 1;
+    out.crossJam = G.jam(cr) === '';
+    // Planer: quert das gerade Band bei eingeschaltetem Kreuzen, sonst nicht.
+    G.belts.filter(t => t.item >= 0).forEach(t => { t.item = -1; });
+    for (let y = 25; y <= 30; y++) G.setBelt(6, y, 1);            // Band quer durch den Hof, x=6, nach unten
+    G.ui.planCross = true;
+    const pc = G.planBelt(5, 28, 8, 28);
+    out.planCrosses = !!pc && pc.crosses === 1 && pc.path.some(t => t.cross && t.x === 6 && t.y === 28) && pc.cost === 3 * 50 + 350;
+    G.ui.planCross = false;
+    const pn = G.planBelt(5, 28, 8, 28);
+    out.planNoCross = !pn || pn.crosses === 0;
+    G.ui.planCross = true;
+    const m4 = G.st.money, nb = G.belts.length;
+    out.planCrossBuilt = !!pc && G.buildPlan(pc) === 'ok' && G.grid[28 * G.MW + 6].k === 'cross' && G.st.money === m4 - pc.cost;
+    G.tryPush(6, 25, 2, 1); G.tryPush(5, 28, 0, 0);
+    G.step(6);
+    out.planCrossFlows = at(6, 30) === 2 && at(8, 28) === 0;
+    G.belts.filter(t => t.item >= 0).forEach(t => { t.item = -1; });
+    out.planCrossUndo = G.undo() && G.grid[28 * G.MW + 6].k === 'belt' && G.belts.length === nb && G.st.money === m4;
+    // Ein Bandfeld mit seitlichem Zulauf laesst sich nicht queren.
+    G.setBelt(7, 29, 2);
+    const pk = G.planBelt(5, 29, 8, 29);
+    out.planNoCorner = !pk || !pk.path.some(t => t.cross && t.x === 6 && t.y === 29);
+
     // Zelte abbauen: kostet 5 Euro, gibt die Felder frei, Rueckgaengig stellt das Zelt wieder her.
     let tent = -1;
     for (let i = 0; i < G.MW * G.MH && tent < 0; i++) if (G.blocked[i]) tent = i;
@@ -149,6 +189,13 @@ function serve() {
     ['Ueber das geplante Band kommt Ware in der Presse an', r.planFlows, String(r.planFlows)],
     ['Ein Rueckgaengig nimmt die ganze geplante Strecke zurueck', r.planUndo, String(r.planUndo)],
     ['Bandplaner muendet nie frontal in ein Band', r.planFrontal, String(r.planFrontal)],
+    ['Kreuzung laesst sich nur auf freiem Feld setzen und kostet 4 Euro', r.crossNeedsFree && r.crossBuilt, `${r.crossNeedsFree}/${r.crossBuilt}`],
+    ['Kreuzung haelt beide Linien getrennt', r.crossKeepsLines && r.crossJam, `${r.crossKeepsLines}/${r.crossJam}`],
+    ['Planer quert ein gerades Band mit einer Kreuzung', r.planCrosses, String(r.planCrosses)],
+    ['Planer quert nicht, wenn Kreuzen ausgeschaltet ist', r.planNoCross, String(r.planNoCross)],
+    ['Geplante Kreuzung ersetzt das Bandfeld, Ware laeuft auf beiden Linien', r.planCrossBuilt && r.planCrossFlows, `${r.planCrossBuilt}/${r.planCrossFlows}`],
+    ['Rueckgaengig macht aus der Kreuzung wieder das Band', r.planCrossUndo, String(r.planCrossUndo)],
+    ['Planer quert kein Band an einem Knick', r.planNoCorner, String(r.planNoCorner)],
     ['Zelt abbauen kostet 5 Euro und gibt Felder frei', r.tentRemoved, String(r.tentRemoved)],
     ['Ziehen mit dem Abriss baut kein Zelt ab', r.tentDragSafe, String(r.tentDragSafe)],
     ['Rueckgaengig stellt das Zelt wieder her und erstattet', r.tentUndo, String(r.tentUndo)],
