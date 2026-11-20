@@ -60,6 +60,9 @@ function moveTo(b,x,y){const ox=b.x,oy=b.y;if(ox===x&&oy===y)return false;if(!mo
 // Ersetzt ein Bandfeld durch eine Kreuzung. Das Band laeuft geradeaus durch, ein Stueck darauf faehrt mit.
 function crossOver(x,y){const o=grid[y*MW+x];if(!o||o.k!=='belt')return null;if(st.money<BT.cross.cost-50){msg('Zu wenig Geld',x*T+16,y*T-4);return null}
   const own=!ui.step,it=o.item,d=o.dir;o.item=-1;if(own)stepBegin();demolish(x,y);const b=build('cross',x,y);if(b){b.dr[d%2]=d;if(it>=0){b.it[d%2]=it;b.wt[d%2]=0.15}}if(own)stepEnd();return b}
+// Setzt einen Verteiler oder Sortierer direkt auf ein Bandfeld: Das Band wird erstattet, ein Stueck darauf wandert ins neue Bauteil.
+function beltSwap(k,x,y){const o=grid[y*MW+x];if(!o||o.k!=='belt')return null;if(st.money<BT[k].cost-50){msg('Zu wenig Geld',x*T+16,y*T-4);return null}
+  const own=!ui.step,it=o.item,d=o.dir;o.item=-1;if(own)stepBegin();demolish(x,y);const b=build(k,x,y);if(b&&it>=0){b.item=it;b.from=d;b.wait=0.15}if(own)stepEnd();return b}
 // Ein Band laesst sich queren, wenn der neue Weg rechtwinklig kommt und das Band dort gerade laeuft (kein Knick, kein seitlicher Zulauf).
 function straightBelt(o,d){return!!o&&o.k==='belt'&&o.dir%2!==d%2&&o.feed.every(f=>f===o.dir)}
 function toggleCross(){ui.planCross=!ui.planCross;const p=ui.plan;if(p)ui.plan=planBelt(p.ax,p.ay,p.bx,p.by)}
@@ -101,10 +104,11 @@ function buyUp(i){const u=UPS[i],p=upPrice(u);if(st.up[u.k]>=u.max||st.money<p)r
 // Spielstand Version 2: merkt sich auch, was auf Baendern, in Sortierern, Verteilern, Kreuzungen, Maschinen und in der
 // Warteschlange der Annahme liegt. Was Sammler gerade tragen, wird ins Lager ihrer Station gelegt. Version 1 laedt weiterhin.
 function save(){try{const bits=new Uint8Array(Math.ceil(items.length/8));items.forEach((it,i)=>{if(!it.alive)bits[i>>3]|=1<<(i&7)});let s='';for(let i=0;i<bits.length;i++)s+=String.fromCharCode(bits[i]);
-  localStorage.setItem(SAVE_KEY,JSON.stringify({v:2,seed:WORLD_SEED,money:st.money,earned:st.earned,t:st.t,up:st.up,sold:st.sold,ph:st.ph,viaBelt:st.viaBelt,rest:st.rest,px:st.player.x,py:st.player.y,bag:st.player.bag,dead:btoa(s),tents:goneTents(),
+  localStorage.setItem(SAVE_KEY,JSON.stringify({v:2,seed:WORLD_SEED,n:items.length,money:st.money,earned:st.earned,t:st.t,up:st.up,sold:st.sold,ph:st.ph,viaBelt:st.viaBelt,rest:st.rest,px:st.player.x,py:st.player.y,bag:st.player.bag,dead:btoa(s),tents:goneTents(),
     auto:{q:AUTO.q,acc:AUTO.acc},belts:belts.map(t=>[t.x,t.y,t.dir,t.item,t.prog,t.from]),
     blds:blds.filter(b=>b.k!=='auto').map(b=>({k:b.k,x:b.x,y:b.y,dir:b.dir,filter:b.filter,paid:b.paid,buf:b.k==='station'?b.buf.concat(...b.helpers.map(h=>h.load)):b.buf,out:b.out,made:b.made,t:b.t,item:b.item,from:b.from,it:b.it,dr:b.dr}))}))}catch(e){}}
 function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;const d=JSON.parse(raw);if(d.v!==1&&d.v!==2)return;if(d.seed!=null&&d.seed!==WORLD_SEED)return;
+  if((d.n||8260)!==items.length){toast('Die Wiese ist neu angelegt. Der alte Spielstand passt nicht mehr.');return}
   st.money=d.money;st.earned=d.earned;st.t=d.t;Object.assign(st.up,d.up);st.sold=d.sold;st.ph=d.ph==null?GOALS.length-1:d.ph;st.viaBelt=d.viaBelt||0;st.rest=d.rest||null;
   // Die Verbesserung der Annahme gibt es nicht mehr (die Annahme soll der Engpass bleiben). Bezahlte Stufen werden erstattet.
   if(st.up.auto){let r=0;for(let l=0;l<st.up.auto;l++)r+=Math.round(500*Math.pow(1.6,l)/10)*10;st.money+=r;toast('Ausbau der Annahme erstattet: '+euro(r))}delete st.up.auto;
@@ -118,4 +122,4 @@ function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;cons
     else if(BT[q.k].inp){Object.assign(b.buf,q.buf);b.out=q.out||0;b.made=q.made||0;if(q.t!=null)b.t=q.t}placeB(b)}
   cam.x=p.x;cam.y=p.y}catch(e){}}
 
-export {build,buildPlan,buyUp,canBuild,canMove,confirmPlan,crossOver,toggleCross,planBelt,planEnds,demolish,freeTile,load,moveTo,placeB,price,rec,save,setBelt,stepBegin,stepEnd,topo,undo};
+export {beltSwap,build,buildPlan,buyUp,canBuild,canMove,confirmPlan,crossOver,toggleCross,planBelt,planEnds,demolish,freeTile,load,moveTo,placeB,price,rec,save,setBelt,stepBegin,stepEnd,topo,undo};

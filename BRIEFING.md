@@ -22,7 +22,7 @@ Vorbilder für das Gefühl: Moon Sweepers und Find The Needle (winzig anfangen, 
 Eine einzelne Datei, Vanilla JS, Canvas 2D, keine Abhängigkeiten, kein Build.
 
 - Karte 80 x 52 Felder zu je 32 px, Kamera mit Verschieben, Zoom und Übersichtskarte
-- 8.000 Stück Pfandgut (Dosen, PET, Glas) plus 260 Leerkästen, verteilt um rund 100 Zeltlager und entlang der Wege
+- 12.000 Stück Pfandgut (Dosen, PET, Glas) plus 390 Leerkästen (seit Version 11, vorher 8.000 und 260, Entscheidung E-013), verteilt um rund 100 Zeltlager und entlang der Wege
 - Spielfigur: läuft zum Zeigerziel, sammelt im Umkreis, begrenzte Tüte, gibt an Annahme oder Sammelstation ab
 - Bauen im Raster: Band (ziehen), Verteiler, Sortierer, Sammelstation, vier Maschinen, Abriss mit voller Erstattung
 - Leergutannahme als fester Verkaufspunkt mit vier Verbesserungen
@@ -37,6 +37,7 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 
 - Ein Feld ist bebaubar, wenn dort kein Stück liegt, kein Zelt steht und nichts gebaut ist.
 - Zelte und Pavillons sind Hindernisse. Das Abriss-Werkzeug baut sie für 5 € je Stück ab, ohne Erstattung (Entscheidung E-005, Preis ist ein Startwert).
+- Verteiler und Sortierer lassen sich direkt auf ein Bandfeld setzen. Das Band wird dabei erstattet, ein Stück darauf bleibt erhalten.
 - Abriss erstattet den gezahlten Preis vollständig. Das soll Ausprobieren billig machen.
 - Was ein abgerissenes Bauteil gerade trägt, landet in der Tüte der Spielfigur, auch über ihr Fassungsvermögen hinaus (seit M2).
 
@@ -85,14 +86,15 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 
 **Ziele und Freischaltungen (seit M3)**
 
-- Sieben Ziele nacheinander. Jedes erreichte Ziel schaltet Bauteile frei:
+- Acht Ziele nacheinander. Jedes erreichte Ziel schaltet Bauteile frei:
   1. 6 € von Hand einnehmen: Band, Sammelstation
   2. 40 Stück per Band anliefern: Sortierer, Dosenpresse (dazu Verbesserungen Sammler und Umkreis)
   3. 3 Dosenballen verkaufen: PET-Presse, Verteiler, Kreuzung (dazu Verbesserung Bandtempo)
   4. 3 PET-Ballen verkaufen: Kistenpacker
   5. 3 volle Kästen verkaufen: Palettierer
   6. 1 Palette verkaufen
-  7. Wiese leer räumen
+  7. 10 Paletten verkaufen
+  8. Wiese leer räumen, mit Zeitwertung: Gold bis 45 Minuten, Silber bis 60, Bronze bis 80
 - Laufen, Abriss und Drehen sind von Anfang an da.
 
 ## 4. Zahlen
@@ -104,7 +106,7 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 | Dose | 0,25 € | Wiese (45 %) |
 | PET-Flasche | 0,25 € | Wiese (30 %) |
 | Glasflasche | 0,08 € | Wiese (25 %) |
-| Leerkasten | 1,50 € | Wiese (260 Stück) |
+| Leerkasten | 1,50 € | Wiese (390 Stück) |
 | Dosenballen | 4,50 € | Dosenpresse |
 | PET-Ballen | 3,00 € | PET-Presse |
 | Voller Kasten | 4,65 € | Kistenpacker |

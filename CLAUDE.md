@@ -85,6 +85,10 @@ bewusst und nach Freigabe aendern.
 - Spielende (`finish()` in `logik.js`): Wiese, Tuete, Stationen und Annahme leer und seit drei
   Sekunden keine Bewegung (`ui.busyT`, gesetzt bei Bandtransport, laufender Maschine, Verkauf).
   Reste in der Anlage werden zu ihrem Wert gutgeschrieben und stehen in `st.rest`.
+- Menge und Wertung (M4): `N_ITEMS` in `konstanten.js`, Leerkaesten anteilig. Zum Ausprobieren
+  `?items=16000` an die Adresse haengen. Der Spielstand merkt sich die Menge (`n`) und laedt
+  nicht, wenn sie nicht zur Wiese passt. `MEDALS` haelt die Zeitgrenzen der Wertung.
+- `beltSwap(k,x,y)` setzt Verteiler oder Sortierer direkt auf ein Bandfeld, wie `crossOver`.
 - Abriss verliert keine Ware: `unloadTo()` legt alles, was ein Bauteil traegt, in die
   Tuete der Spielfigur.
 - Auslieferung ohne gemischte Dateien: `VERSION` in `konstanten.js` und die
@@ -104,7 +108,7 @@ bewusst und nach Freigabe aendern.
   `http://localhost:8000/` oeffnen, oder die Pages-Adresse nutzen.
 - Rauchtest: `node tests/smoke.js` (Playwright mit Chromium, startet selbst einen
   Server). Vor jedem Commit an Spielcode ausfuehren.
-- Testspieler: `node tests/bot.js [--stations 2] [--belt 0] [--range 2] [--minutes 240]`
+- Testspieler: `node tests/bot.js [--stations 2] [--belt 0] [--range 2] [--items N] [--double] [--minutes 240]`
   spielt eine ganze Partie automatisch (rund eine Minute Rechenzeit) und gibt Zeiten je Ziel,
   Verlauf und Kaeufe aus. Werkzeug fuer das Balancing. Er baut eine feste Anlage, sein Bauplan
   steht in `play()`. Seine Zeiten sind eine Untergrenze, ein Mensch zoegert und plant.
