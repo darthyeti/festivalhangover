@@ -1,11 +1,12 @@
 // Montagmorgen: Bauen
 // Bauen, Abriss, Verbesserungen, Speichern und Laden.
-import {BT,DX,DY,GOALS,MH,MW,SAVE_KEY,T,TENT_COST,UPS,WORLD_SEED,euro} from './konstanten.js';
+import {BT,DX,DY,GOALS,MH,MORE,MW,SAVE_KEY,T,TENT_COST,UPS,WORLD_SEED,euro} from './konstanten.js';
 import {cam,isOpen,st,toast,ui,upPrice} from './zustand.js';
 import {AUTO,belts,blds,blocked,cells,goneTents,grid,items,loadTents,setTentGone,tentAt,tentTiles} from './welt.js';
 import {msg,pop} from './logik.js';
 
-function price(k){if(k==='station')return Math.round(1500*Math.pow(1.12,blds.filter(b=>b.k==='station').length)/10)*10;return BT[k].cost}
+function price(k){if(k==='station')return Math.round(1500*Math.pow(1.12,blds.filter(b=>b.k==='station').length)/10)*10;
+  if(BT[k].inp)return Math.round(BT[k].cost*Math.pow(MORE,blds.filter(b=>b.k===k).length)/10)*10;return BT[k].cost}
 function freeTile(x,y){if(x<0||y<0||x>=MW||y>=MH)return false;const i=y*MW+x;return!grid[i]&&!blocked[i]&&!cells[i].length}
 function canBuild(x,y,w,h){for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(!freeTile(x+i,y+j))return false;return true}
 function placeB(b){for(let j=0;j<b.h;j++)for(let i=0;i<b.w;i++)grid[(b.y+j)*MW+b.x+i]=b;blds.push(b);ui.topoDirty=ui.orderDirty=true}

@@ -11,8 +11,8 @@ const QI=typeof location!=='undefined'?+new URLSearchParams(location.search).get
 // Sorten: 0-3 liegen auf der Wiese, 4-7 entstehen in Maschinen
 const TY=[{n:'Dosen',val:25,col:'#c9d2d8'},{n:'PET',val:25,col:'#7fc4e8'},{n:'Glas',val:8,col:'#a8712f'},{n:'Leerkästen',val:150,col:'#d14b3c'},
  {n:'Dosenballen',val:450,col:'#e4eaed'},{n:'PET-Ballen',val:300,col:'#8fd0f0'},{n:'Volle Kästen',val:465,col:'#b23a2e'},{n:'Paletten',val:6750,col:'#c9a16a'}];
-const VERSION=11,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
-const RAW=4,TENT_COST=500; // Zelt oder Pavillon abbauen, in Cent
+const VERSION=12,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
+const RAW=4,TENT_COST=500,MORE=1.5; // MORE: jede weitere Maschine derselben Art kostet so viel mal mehr (E-014) // Zelt oder Pavillon abbauen, in Cent
 const BT={
  belt:{name:'Band',cost:50,w:1,h:1,info:['Ziehen legt eine Strecke.']},
  split:{name:'Verteiler',cost:300,w:1,h:1,info:['Verteilt reihum auf alle','Bänder, die wegführen.']},
@@ -29,9 +29,9 @@ const TOOLS=['walk','belt','split','sort','cross','station','pd','pp','kp','pal'
 const UPS=[
  {k:'bag',name:'Größere Tüte',base:400,g:1.6,max:6,sub:l=>'fasst '+(25+10*l)},
  {k:'shoe',name:'Laufschuhe',base:500,g:1.6,max:5,sub:l=>'Tempo '+(110+18*l)},
- {k:'crew',name:'Mehr Sammler',base:3000,g:2,max:3,ph:2,sub:l=>(3+l)+' je Station'},
- {k:'range',name:'Größerer Umkreis',base:2500,g:2.2,max:2,ph:2,sub:l=>(8+3*l)+' Felder'},
- {k:'belt',name:'Schnellere Bänder',base:6000,g:2.5,max:2,ph:3,sub:l=>(3+1.5*l).toFixed(1).replace('.',',')+' Stück/s'}
+ {k:'crew',name:'Mehr Sammler',base:3000,g:2.2,max:5,ph:2,sub:l=>(3+l)+' je Station'},
+ {k:'range',name:'Größerer Umkreis',base:2500,g:2.6,max:3,ph:2,sub:l=>(8+3*l)+' Felder'},
+ {k:'belt',name:'Schnellere Bänder',base:6000,g:2.5,max:4,ph:3,sub:l=>(3+1.5*l).toFixed(1).replace('.',',')+' Stück/s'}
 ];
 // Ziele: Jedes erreichte Ziel schaltet Bauteile frei (OPEN). val liest den Fortschritt aus dem Spielstand.
 // Die Reihenfolge ist die Lernkurve: von Hand, Station und Band, Sortieren und Pressen, dann die uebrigen Maschinen.
@@ -51,4 +51,4 @@ const OPEN={belt:1,station:1,sort:2,pd:2,pp:3,split:3,cross:3,kp:4,pal:5};
 const euro=c=>(c/100).toFixed(2).replace('.',',')+' €';
 function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 
-export {AUTO_CAP,AUTO_RATE,MEDALS,BT,DX,DY,FONT,H,LS,MH,MW,N_CRATES,N_ITEMS,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WORLD_SEED,WW,euro,rng};
+export {AUTO_CAP,AUTO_RATE,MEDALS,MORE,BT,DX,DY,FONT,H,LS,MH,MW,N_CRATES,N_ITEMS,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WORLD_SEED,WW,euro,rng};

@@ -303,8 +303,11 @@ function serve() {
       const end = G.belts[G.belts.length - 1]; let c = 0, acc = 0;
       for (let i = 0; i < 1500; i++) { acc = Math.min(1, acc + (3 + 1.5 * lvl) / 60); if (acc >= 0.999999 && G.tryPush(8, 30, 0, 2)) acc -= 1; G.step(1 / 60); if (end.item >= 0) { end.item = -1; if (i >= 300) c++; } }
       return c / 20; };
-    const r0 = rate(0), r2 = rate(2);
-    o.beltFast = r0 > 2.95 && r0 < 3.05 && r2 > 5.9 && r2 < 6.1; o.beltDetail = r0.toFixed(2) + '/' + r2.toFixed(2);
+    const r0 = rate(0), r2 = rate(2), r4 = rate(4);
+    o.beltFast = r0 > 2.95 && r0 < 3.05 && r2 > 5.9 && r2 < 6.1 && r4 > 8.4 && r4 < 9.1; o.beltDetail = r0.toFixed(2) + '/' + r2.toFixed(2) + '/' + r4.toFixed(2);
+    // Jede weitere Maschine derselben Art kostet das Anderthalbfache, der Abriss erstattet den gezahlten Preis.
+    { const m1 = G.st.money, a = G.build('pd', 30, 30) || (G.clear(30, 30, 33, 31), G.build('pd', 30, 30)), m2 = G.st.money; G.clear(32, 30, 33, 31); const b = G.build('pd', 32, 30), m3 = G.st.money;
+      const n = G.blds.filter(q => q.k === 'pd').length; o.priceUp = !!a && !!b && (m2 - m3) === Math.round((m1 - m2) * 1.5 / 10) * 10 && m1 - m2 >= 4000; G.demolish(32, 30); o.priceRefund = G.st.money === m2; G.demolish(30, 30); o.priceDetail = [m1 - m2, m2 - m3, n].join('/'); }
     G.st.up.belt = 0;
 
     // Sortierer direkt auf ein Band setzen: Band wird erstattet, das Stueck darauf bleibt, ein Rueckgaengig-Schritt.
@@ -397,7 +400,8 @@ function serve() {
     ['Spielfigur laeuft um das Zelt herum', m3.walkAround, m3.walkDetail],
     ['Station mit leerem Umkreis zeigt die Warnung, vorher nicht', m3.stationBuilt && m3.noWarnBusy && m3.warnEmpty, `${m3.stationBuilt}/${m3.noWarnBusy}/${m3.warnEmpty}`],
     ['Groesserer Umkreis gibt der Station wieder Arbeit', m3.rangeHelps, String(m3.rangeHelps)],
-    ['Schnellere Baender tragen auf Stufe 2 das Doppelte', m3.beltFast, m3.beltDetail],
+    ['Schnellere Baender tragen auf Stufe 2 das Doppelte, auf Stufe 4 das Dreifache', m3.beltFast, m3.beltDetail],
+    ['Weitere Maschine derselben Art kostet das Anderthalbfache, Abriss erstattet den gezahlten Preis', m3.priceUp && m3.priceRefund, m3.priceDetail],
     ['Sortierer laesst sich direkt auf ein Band setzen, Band erstattet, Stueck bleibt', m3.swapOk && m3.swapNeedsBelt, `${m3.swapOk}/${m3.swapNeedsBelt}`],
     ['Ein Rueckgaengig macht daraus wieder das Band', m3.swapUndo, String(m3.swapUndo)],
     ['Spiel endet bei leerer Wiese auch mit Resten in der Anlage und schreibt sie gut', m3.notDoneYet && m3.waitsBeforeEnd && m3.endsWithRest, `${m3.notDoneYet}/${m3.waitsBeforeEnd}/${m3.endDetail}`],

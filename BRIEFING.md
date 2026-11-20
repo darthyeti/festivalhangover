@@ -43,7 +43,7 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 
 **Bänder**
 
-- Ein Feld trägt höchstens ein Stück. Tempo 3 Felder pro Sekunde, also bis 3 Stück pro Sekunde. Die Verbesserung „Schnellere Bänder“ hebt das auf 4,5 und 6 (seit M3).
+- Ein Feld trägt höchstens ein Stück. Tempo 3 Felder pro Sekunde, also bis 3 Stück pro Sekunde. Die Verbesserung „Schnellere Bänder“ hebt das in vier Stufen auf bis zu 9.
 - Ein Band gibt an das Feld in seiner Richtung ab. Seitliches Einmünden in ein anderes Band ist erlaubt, frontal nicht. Warten an einer Einmündung zwei Bänder, kommen sie abwechselnd dran (Reißverschluss).
 
 **Ein- und Ausgänge**
@@ -67,7 +67,7 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 
 **Sammelstation (2 x 2)**
 
-- Drei Sammler (mit Verbesserung bis sechs) räumen einen Umkreis von 8 Feldern (mit Verbesserung 11 und 14).
+- Drei Sammler (mit Verbesserung bis acht) räumen einen Umkreis von 8 Feldern (mit Verbesserung bis 17).
 - Lager 30 Stück, Abgabe so schnell, wie ein Band trägt.
 - Ist der Umkreis leer, zeigt sie das Warnzeichen. Das Infofeld nennt, wie viel im Umkreis noch liegt. Der Spieler setzt sie um.
 - Sammler und Spielfigur gehen um Zelte herum, durch Maschinen und über Bänder laufen sie weiter (E-004).
@@ -131,7 +131,9 @@ Band 0,50 € je Feld, Verteiler 3 €, Sortierer 5 €, Sammelstation 15 € (j
 
 **Verbesserungen**
 
-Größere Tüte (25, je Stufe +10), Laufschuhe (110 px/s, je Stufe +18), mehr Sammler (je Stufe +1 pro Station), größerer Umkreis (8, 11, 14 Felder), schnellere Bänder (3, 4,5 und 6 Stück pro Sekunde).
+Größere Tüte (25, je Stufe +10), Laufschuhe (110 px/s, je Stufe +18), mehr Sammler (je Stufe +1 pro Station, bis 8), größerer Umkreis (8, 11, 14, 17 Felder), schnellere Bänder (3 bis 9 Stück pro Sekunde in vier Stufen zu 60, 150, 375 und 937,50 €).
+
+Seit Version 12 (Entscheidung E-014): Jede weitere Maschine derselben Art kostet das 1,5-Fache der vorigen (Dosenpresse 40, 60, 90, 135 €). Der Abriss erstattet weiter den gezahlten Preis.
 
 **Messwerte (20.11.2026, per `__G.step`)**
 

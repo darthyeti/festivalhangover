@@ -88,6 +88,8 @@ bewusst und nach Freigabe aendern.
 - Menge und Wertung (M4): `N_ITEMS` in `konstanten.js`, Leerkaesten anteilig. Zum Ausprobieren
   `?items=16000` an die Adresse haengen. Der Spielstand merkt sich die Menge (`n`) und laedt
   nicht, wenn sie nicht zur Wiese passt. `MEDALS` haelt die Zeitgrenzen der Wertung.
+- Preise: `price(k)` in `bauen.js`. Stationen werden je Stueck 12 % teurer, Maschinen je weiterer
+  derselben Art um den Faktor `MORE`. Der Abriss erstattet immer den gezahlten Preis (`b.paid`).
 - `beltSwap(k,x,y)` setzt Verteiler oder Sortierer direkt auf ein Bandfeld, wie `crossOver`.
 - Abriss verliert keine Ware: `unloadTo()` legt alles, was ein Bauteil traegt, in die
   Tuete der Spielfigur.
