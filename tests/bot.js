@@ -64,7 +64,7 @@ function play(cfg) {
       build() { G.demolish(10, 21); G.demolish(9, 21); G.demolish(10, 23); const b = G.build('pal', 9, 20); G.build('split', 10, 23); G.setBelt(10, 22, 3); return !!b; } },
     // Ausbau (--double): zweite Dosenpresse und zweite PET-Presse unter dem Hauptband, sobald die Baender schneller sind
     { id: 'Zweite Pressen', open: () => cfg.double && st.up.belt >= 1 && projects.slice(0, 4).every(p => p.done),
-      tiles: [[21, 27], ...rect(21, 28, 2, 2), [21, 30], [18, 27], ...rect(18, 28, 2, 2), [18, 30], ...row(31, 14, 21)], cost: () => 2 * 4500 + 12 * 50,
+      tiles: [[21, 27], ...rect(21, 28, 2, 2), [21, 30], [18, 27], ...rect(18, 28, 2, 2), [18, 30], ...row(31, 14, 21)], cost: () => 2 * 6500 + 12 * 50,
       build() { sorter(21, R, 1, 0); sorter(18, R, 1, 1); G.setBelt(21, 27, 1); G.setBelt(18, 27, 1); const a = G.build('pd', 21, 28), b = G.build('pp', 18, 28);
         G.setBelt(21, 30, 1); G.setBelt(18, 30, 1); belts(row(31, 14, 21), 2); return !!a && !!b; } },
     // Zwei weitere Hauptbaender im Norden und Sueden, verbunden ueber Spalte 23
@@ -139,7 +139,7 @@ function play(cfg) {
     // 2. Wuensche (Verbesserungen, weitere Stationen), nur wenn kein bezahlbares Projekt wartet
     const reserve = proj ? proj.cost() : 0, w = wishes[0];
     if (w && stations.length) {
-      if (w.up != null) { const lvl = Object.values(st.up)[w.up]; const m0 = st.money; if (st.money >= reserve * 0.5 + 1 && G.buyUp(w.up) ) { wishes.shift(); note('Verbesserung ' + Object.keys(st.up)[w.up] + ' Stufe ' + (lvl + 1) + ' für ' + ((m0 - st.money) / 100).toFixed(2) + ' €'); } else if (lvl >= [6, 5, 3, 2, 2][w.up]) wishes.shift(); }
+      if (w.up != null) { const lvl = Object.values(st.up)[w.up]; const m0 = st.money; if (st.money >= reserve * 0.5 + 1 && G.buyUp(w.up) ) { wishes.shift(); note('Verbesserung ' + Object.keys(st.up)[w.up] + ' Stufe ' + (lvl + 1) + ' für ' + ((m0 - st.money) / 100).toFixed(2) + ' €'); } else if (lvl >= [6, 5, 5, 3, 4][w.up]) wishes.shift(); }
       else if (w.station && st.money >= stationPrice() + 600 + reserve * 0.5) { stations.push({ b: null, stub: null }); wishes.shift(); }
     }
     // 3. Stationen ohne Arbeit bekommen einen neuen Platz
