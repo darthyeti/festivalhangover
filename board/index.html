@@ -110,10 +110,12 @@ a { color: var(--accent); }
   <nav class="tabs" role="tablist">
     <button class="tab" id="tab-entscheidungen" role="tab" aria-selected="true" data-view="entscheidungen">Entscheidungen<span class="n" id="n-dec">0</span></button>
     <button class="tab" id="tab-tests" role="tab" aria-selected="false" data-view="tests">Tests<span class="n" id="n-test">0</span></button>
+    <button class="tab" id="tab-archiv" role="tab" aria-selected="false" data-view="archiv">Archiv<span class="n" id="n-arch">0</span></button>
   </nav>
 
   <section class="list" id="view-entscheidungen"></section>
   <section class="list" id="view-tests" hidden></section>
+  <section class="list" id="view-archiv" hidden></section>
 </div>
 
 <script>
@@ -126,14 +128,14 @@ a { color: var(--accent); }
   function block(title, body) { var b = el("div", "block"); b.appendChild(el("h3", null, title)); if (typeof body === "string") b.appendChild(el("p", null, body)); else b.appendChild(body); return b; }
 
   function setView(v) {
-    ["entscheidungen", "tests"].forEach(function (k) {
+    ["entscheidungen", "tests", "archiv"].forEach(function (k) {
       $("view-" + k).hidden = k !== v;
       $("tab-" + k).setAttribute("aria-selected", String(k === v));
     });
     try { localStorage.setItem("fh-view", v); } catch (e) {}
   }
   document.querySelectorAll(".tab").forEach(function (t) { t.addEventListener("click", function () { setView(t.dataset.view); location.hash = t.dataset.view; }); });
-  function route() { var h = location.hash.replace("#", ""); var v = null; try { v = localStorage.getItem("fh-view"); } catch (e) {} setView(h === "tests" || h === "entscheidungen" ? h : (v === "tests" ? "tests" : "entscheidungen")); }
+  function route() { var h = location.hash.replace("#", ""); var v = null; try { v = localStorage.getItem("fh-view"); } catch (e) {} setView(h === "tests" || h === "entscheidungen" || h === "archiv" ? h : (v === "tests" || v === "archiv" ? v : "entscheidungen")); }
   window.addEventListener("hashchange", route); route();
 
   function save(coll, id, patch, btns) {
@@ -257,13 +259,21 @@ a { color: var(--accent); }
     }
     if (S.readOnly) st.appendChild(el("p", "meta", "Hinweis: Diese Ansicht meldet nur Lesezugriff. Die Antwortfelder bleiben sichtbar. Schlägt das Speichern fehl, steht der Grund neben den Knöpfen."));
     var dv = $("view-entscheidungen"); dv.textContent = "";
-    var decs = order(S.dec, ["offen", "rueckfrage"]);
-    if (!decs.length) dv.appendChild(el("div", "empty", S.loaded.dec ? "Keine Entscheidungen offen. Neue Pitches legt der Lead Dev hier an, du gibst sie frei, lehnst ab oder stellst eine Rückfrage." : "Entscheidungen werden geladen ..."));
+    var isOpenDec = function (d) { return !d.status || d.status === "offen" || d.status === "rueckfrage"; };
+    var isOpenTest = function (t) { return !t.status || t.status === "bereit"; };
+    var decs = order(S.dec.filter(isOpenDec), ["offen", "rueckfrage"]);
+    if (!decs.length) dv.appendChild(el("div", "empty", S.loaded.dec ? "Keine Entscheidungen offen. Erledigte stehen im Archiv." : "Entscheidungen werden geladen ..."));
     decs.forEach(function (d) { dv.appendChild(decCard(d)); });
     var tv = $("view-tests"); tv.textContent = "";
-    var tests = order(S.tests, ["bereit"]);
-    if (!tests.length) tv.appendChild(el("div", "empty", S.loaded.tests ? "Noch keine Tests bereitgestellt. Sobald ein Build testbar ist, erscheinen hier die Schritte und ein Feld für dein Feedback." : "Tests werden geladen ..."));
+    var tests = order(S.tests.filter(isOpenTest), ["bereit"]);
+    if (!tests.length) tv.appendChild(el("div", "empty", S.loaded.tests ? "Keine Tests offen. Erledigte stehen im Archiv." : "Tests werden geladen ..."));
     tests.forEach(function (t) { tv.appendChild(testCard(t)); });
+    var av = $("view-archiv"); av.textContent = "";
+    var doneD = order(S.dec.filter(function (d) { return !isOpenDec(d); }), []), doneT = order(S.tests.filter(function (t) { return !isOpenTest(t); }), []);
+    if (!doneD.length && !doneT.length) av.appendChild(el("div", "empty", "Noch nichts erledigt."));
+    if (doneT.length) { av.appendChild(el("h2", "meta", "Erledigte Tests")); doneT.forEach(function (t) { av.appendChild(testCard(t)); }); }
+    if (doneD.length) { av.appendChild(el("h2", "meta", "Beantwortete Entscheidungen")); doneD.forEach(function (d) { av.appendChild(decCard(d)); }); }
+    $("n-arch").textContent = doneD.length + doneT.length;
     $("n-dec").textContent = S.dec.filter(function (d) { return !d.status || d.status === "offen" || d.status === "rueckfrage"; }).length;
     $("n-test").textContent = S.tests.filter(function (t) { return !t.status || t.status === "bereit"; }).length;
     if (keep && $(keep)) { try { $(keep).focus(); } catch (e) {} }

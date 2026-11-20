@@ -304,6 +304,20 @@ function serve() {
     o.beltFast = r0 > 2.95 && r0 < 3.05 && r2 > 5.9 && r2 < 6.1; o.beltDetail = r0.toFixed(2) + '/' + r2.toFixed(2);
     G.st.up.belt = 0;
 
+    // Spielende: Wiese leer, aber Reste haengen in der Anlage. Das Spiel endet trotzdem und schreibt sie gut.
+    while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
+    G.st.player.bag.length = 0; G.AUTO.q.length = 0;
+    const pd = G.build('pd', 6, 28); G.setBelt(5, 28, 0); G.setBelt(4, 28, 0);
+    for (let i = 0; i < 5; i++) { G.tryPush(4, 28, 0, 0); G.step(1); }
+    G.tryPush(4, 28, 2, 0); G.step(2); // eine Glasflasche bleibt vor der Presse liegen
+    o.notDoneYet = !G.st.done;
+    G.clear(0, 0, G.MW - 1, G.MH - 1);
+    G.tryPush(4, 28, 1, 0); G.step(0.5); // noch in Bewegung: das Ende wartet drei ruhige Sekunden ab
+    G.ui.busyT = G.st.t; const m0 = G.st.money; G.step(2); o.waitsBeforeEnd = !G.st.done; G.step(4);
+    o.endsWithRest = G.st.done && !!G.st.rest && G.st.rest.n === 7 && G.st.rest.v === 5 * 25 + 8 + 25 && G.st.money - m0 === 158 && pd.buf[0] === 0;
+    o.endDetail = JSON.stringify(G.st.rest) + ' ' + (G.st.money - m0);
+    G.st.done = false; // der Rest des Durchgangs prueft nur noch den Spielstand
+
     // Alter Spielstand: ohne Zielstand ist alles frei, die Verbesserung der Annahme wird erstattet.
     G.save();
     const d = JSON.parse(localStorage.getItem('montagmorgen2-v1'));
@@ -372,6 +386,7 @@ function serve() {
     ['Station mit leerem Umkreis zeigt die Warnung, vorher nicht', m3.stationBuilt && m3.noWarnBusy && m3.warnEmpty, `${m3.stationBuilt}/${m3.noWarnBusy}/${m3.warnEmpty}`],
     ['Groesserer Umkreis gibt der Station wieder Arbeit', m3.rangeHelps, String(m3.rangeHelps)],
     ['Schnellere Baender tragen auf Stufe 2 das Doppelte', m3.beltFast, m3.beltDetail],
+    ['Spiel endet bei leerer Wiese auch mit Resten in der Anlage und schreibt sie gut', m3.notDoneYet && m3.waitsBeforeEnd && m3.endsWithRest, `${m3.notDoneYet}/${m3.waitsBeforeEnd}/${m3.endDetail}`],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
     ['Alter Spielstand: alles frei, Ausbau der Annahme erstattet', oldSave.ph === 6 && oldSave.money === 2300 && oldSave.up.auto === undefined && oldSave.up.range === 0, JSON.stringify(oldSave)],
     ['Versionsnummer in index.html und konstanten.js stimmt ueberein', versionOk, String(version)],
