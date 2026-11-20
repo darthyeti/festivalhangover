@@ -42,7 +42,7 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 
 **Bänder**
 
-- Ein Feld trägt höchstens ein Stück. Tempo 3 Felder pro Sekunde, also bis 3 Stück pro Sekunde.
+- Ein Feld trägt höchstens ein Stück. Tempo 3 Felder pro Sekunde, also bis 3 Stück pro Sekunde. Die Verbesserung „Schnellere Bänder“ hebt das auf 4,5 und 6 (seit M3).
 - Ein Band gibt an das Feld in seiner Richtung ab. Seitliches Einmünden in ein anderes Band ist erlaubt, frontal nicht. Warten an einer Einmündung zwei Bänder, kommen sie abwechselnd dran (Reißverschluss).
 
 **Ein- und Ausgänge**
@@ -66,16 +66,29 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 
 **Sammelstation (2 x 2)**
 
-- Drei Sammler (mit Verbesserung bis sechs) räumen einen Umkreis von 8 Feldern.
-- Lager 30 Stück, Abgabe bis 3 Stück pro Sekunde über die Ausgänge.
-- Ist der Umkreis leer, meldet sie „leer". Der Spieler setzt sie um.
+- Drei Sammler (mit Verbesserung bis sechs) räumen einen Umkreis von 8 Feldern (mit Verbesserung 11 und 14).
+- Lager 30 Stück, Abgabe so schnell, wie ein Band trägt.
+- Ist der Umkreis leer, zeigt sie das Warnzeichen. Das Infofeld nennt, wie viel im Umkreis noch liegt. Der Spieler setzt sie um.
+- Sammler und Spielfigur gehen um Zelte herum, durch Maschinen und über Bänder laufen sie weiter (E-004).
 - Die Spielfigur kann ihre Tüte auch an einer Station abgeben.
 
 **Annahme (2 x 3, fest am linken Rand)**
 
-- Rohware wird mit 1,5 Stück pro Sekunde gezählt (verbesserbar), Warteschlange 40.
+- Rohware wird mit 1,5 Stück pro Sekunde gezählt, Warteschlange 40. Nicht verbesserbar (seit M3).
 - Verarbeitete Ware (Ballen, volle Kästen, Paletten) wird sofort bezahlt.
 - Der Engpass der Annahme ist der Grund, überhaupt Maschinen zu bauen.
+
+**Ziele und Freischaltungen (seit M3)**
+
+- Sieben Ziele nacheinander. Jedes erreichte Ziel schaltet Bauteile frei:
+  1. 6 € von Hand einnehmen: Band, Sammelstation
+  2. 40 Stück per Band anliefern: Sortierer, Dosenpresse (dazu Verbesserungen Sammler und Umkreis)
+  3. 3 Dosenballen verkaufen: PET-Presse, Verteiler, Kreuzung (dazu Verbesserung Bandtempo)
+  4. 3 PET-Ballen verkaufen: Kistenpacker
+  5. 3 volle Kästen verkaufen: Palettierer
+  6. 1 Palette verkaufen
+  7. Wiese leer räumen
+- Laufen, Abriss und Drehen sind von Anfang an da.
 
 ## 4. Zahlen
 
@@ -111,7 +124,13 @@ Band 0,50 € je Feld, Verteiler 3 €, Sortierer 5 €, Sammelstation 15 € (j
 
 **Verbesserungen**
 
-Größere Tüte (25, je Stufe +10), Laufschuhe (110 px/s, je Stufe +18), Annahme schneller (je Stufe +1 Stück/s), mehr Sammler (je Stufe +1 pro Station).
+Größere Tüte (25, je Stufe +10), Laufschuhe (110 px/s, je Stufe +18), mehr Sammler (je Stufe +1 pro Station), größerer Umkreis (8, 11, 14 Felder), schnellere Bänder (3, 4,5 und 6 Stück pro Sekunde).
+
+**Messwerte (20.11.2026, per `__G.step`)**
+
+- Eine Sammelstation liefert in dichtem Gebiet rund 3 Stück pro Sekunde, also ein volles Band, und hat ihren Umkreis von 8 Feldern (rund 450 Stück) nach knapp 3 Minuten leer.
+- Mehr Sammler bringen bei Bandtempo 3 nichts, die Abgabe ist durch das Band begrenzt.
+- Ein volles Band mit gemischter Ware (3 Stück pro Sekunde) wird von je einer Dosenpresse, PET-Presse und einem Kistenpacker vollständig verarbeitet. Übrig bleiben nur überzählige Leerkästen. Die PET-Presse ist dabei zu 87 % ausgelastet und wird als erste zu klein.
 
 Alle Zahlen sind geschätzt und nicht ausbalanciert.
 

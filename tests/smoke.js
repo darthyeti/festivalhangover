@@ -43,6 +43,7 @@ function serve() {
 
     // Kleine Anlage im Hof: Sammelstation, drei Felder Band nach links in die Annahme.
     G.st.money = 100000;
+    G.st.ph = 6; // alle Bauteile frei, die Freischaltung prueft der dritte Durchgang
     out.station = !!G.build('station', 6, 25);
     out.belts = [[5, 25, 2], [4, 25, 2], [3, 25, 2]].every(b => G.setBelt(...b));
     out.blockedBuild = G.build('pd', 0, 0) === null && G.setBelt(-1, 5, 0) === false;
@@ -249,6 +250,74 @@ function serve() {
   const mods = fs.readdirSync(path.join(ROOT, 'js')).filter(f => f.endsWith('.js'));
   const versionOk = !!version && html.includes(`src="js/eingabe.js?v=${version}"`) && mods.every(m => html.includes(`"./js/${m}":"./js/${m}?v=${version}"`)) && (html.match(/\?v=/g) || []).length === mods.length + 1;
 
+  // Dritter Durchgang: Ziele, Freischaltungen, neue Verbesserungen, Wege um Zelte (M3).
+  const ctx3 = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  await ctx3.addInitScript(() => { window.requestAnimationFrame = () => 0; });
+  const page3 = await ctx3.newPage();
+  page3.on('pageerror', e => errors.push(e.message));
+  await page3.goto(url);
+  await page3.waitForFunction(() => window.__G && window.__G.st, null, { timeout: 10000 });
+  const m3 = await page3.evaluate(() => {
+    const G = window.__G, o = {};
+    o.startLocked = G.st.ph === 0 && !G.isOpen('belt') && !G.isOpen('pd') && G.isOpen('walk') && G.isOpen('demo');
+    G.st.earned = 600; G.step(0.1);
+    o.goal1 = G.st.ph === 1 && G.isOpen('belt') && G.isOpen('station') && !G.isOpen('sort') && !!G.ui.toast;
+    G.st.viaBelt = 40; G.step(0.1); o.goal2 = G.st.ph === 2 && G.isOpen('sort') && G.isOpen('pd') && !G.isOpen('pp');
+    G.st.sold[4] = 3; G.st.sold[5] = 3; G.st.sold[6] = 3; G.st.sold[7] = 1; G.step(0.1);
+    o.goalAll = G.st.ph === 6 && G.isOpen('pal');
+    G.st.money = 1e7;
+
+    // Wege um Zelte: Die Spielfigur betritt auf dem Weg hinter ein Zelt kein gesperrtes Feld.
+    const B = (x, y) => G.blocked[y * G.MW + x];
+    let t = null;
+    for (let y = 3; y < G.MH - 3 && !t; y++) for (let x = 12; x < G.MW - 4 && !t; x++) if (B(x, y) && !B(x - 2, y) && !B(x + 3, y) && !B(x - 3, y)) t = [x, y];
+    const ax = (t[0] - 2) * 32 + 16, ay = t[1] * 32 + 16, bx = (t[0] + 3) * 32 + 16;
+    o.losBlocked = !G.los(ax, ay, bx, ay);
+    const pts = G.findPath(ax, ay, bx, ay);
+    o.pathFree = pts.length > 1 && pts.every(q => !B((q.x / 32) | 0, (q.y / 32) | 0));
+    const pl = G.st.player; pl.x = ax; pl.y = ay; pl.tx = bx; pl.ty = ay; pl.path = null;
+    let inTent = 0, steps = 0;
+    while (Math.hypot(pl.x - bx, pl.y - ay) > 4 && steps++ < 1800) { G.step(1 / 60); if (B((pl.x / 32) | 0, (pl.y / 32) | 0)) inTent++; }
+    o.walkAround = inTent === 0 && steps < 1800;
+    o.walkDetail = inTent + ' Schritte im Zelt, ' + steps + ' Schritte';
+
+    // Station: leerer Umkreis meldet sich, die Verbesserung vergroessert ihn.
+    G.clear(20, 18, 23, 21);
+    let st0 = null, sx, sy;
+    for (let y = 18; y < 21 && !st0; y++) for (let x = 20; x < 23 && !st0; x++) { st0 = G.build('station', x, y); sx = x; sy = y; }
+    o.stationBuilt = !!st0;
+    G.step(3); o.noWarnBusy = G.jam(st0) === '';
+    for (let y = 0; y < G.MH; y++) for (let x = 0; x < G.MW; x++) if (Math.hypot(x - sx - 1, y - sy - 1) < 9.6) G.clear(x, y, x, y);
+    for (let i = 0; i < 40; i++) { G.step(1); st0.buf.length = 0; }
+    o.warnEmpty = st0.empty && G.jam(st0).includes('Umkreis leer');
+    G.st.up.range = 2; G.step(6); st0.buf.length = 0;
+    o.rangeHelps = !st0.empty && G.jam(st0) !== 'Umkreis leer: versetzen';
+    G.demolish(sx, sy);
+
+    // Schnellere Baender: Stufe 2 traegt doppelt so viel.
+    const rate = lvl => { G.st.up.belt = lvl; while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
+      for (let x = 8; x >= 4; x--) G.setBelt(x, 30, 2);
+      const end = G.belts[G.belts.length - 1]; let c = 0, acc = 0;
+      for (let i = 0; i < 1500; i++) { acc = Math.min(1, acc + (3 + 1.5 * lvl) / 60); if (acc >= 0.999999 && G.tryPush(8, 30, 0, 2)) acc -= 1; G.step(1 / 60); if (end.item >= 0) { end.item = -1; if (i >= 300) c++; } }
+      return c / 20; };
+    const r0 = rate(0), r2 = rate(2);
+    o.beltFast = r0 > 2.95 && r0 < 3.05 && r2 > 5.9 && r2 < 6.1; o.beltDetail = r0.toFixed(2) + '/' + r2.toFixed(2);
+    G.st.up.belt = 0;
+
+    // Alter Spielstand: ohne Zielstand ist alles frei, die Verbesserung der Annahme wird erstattet.
+    G.save();
+    const d = JSON.parse(localStorage.getItem('montagmorgen2-v1'));
+    o.savedPhase = d.ph === 6;
+    delete d.ph; delete d.viaBelt; d.up = { bag: 1, shoe: 0, auto: 2, crew: 0 }; d.money = 1000;
+    localStorage.setItem('montagmorgen2-old', JSON.stringify(d));
+    d.ph = 2; localStorage.setItem('montagmorgen2-new', JSON.stringify(d));
+    return o;
+  });
+  // Neue Seite im selben Kontext: page3 bleibt offen und ueberschreibt den Stand nicht beim Verlassen.
+  const reload = async key => { await page3.evaluate(k => localStorage.setItem('montagmorgen2-v1', localStorage.getItem(k)), key); const pg = await ctx3.newPage(); await pg.goto(url); await pg.waitForFunction(() => window.__G && window.__G.st);
+    return pg.evaluate(() => { const G = window.__G; return { ph: G.st.ph, money: G.st.money, up: G.st.up }; }); };
+  const oldSave = await reload('montagmorgen2-old');
+  const newSave = await reload('montagmorgen2-new');
   await browser.close();
   server.close();
 
@@ -294,6 +363,17 @@ function serve() {
     ['Rueckgaengig nach Abriss bringt ein leeres Band, nichts verdoppelt sich', s1.restoredEmpty, String(s1.restoredEmpty)],
     ['Testanlage traegt Ware auf Baendern, in Kleinteilen und in der Presse', onBelts >= 2 && inSmall >= 2 && s1.pdRunning, `${onBelts}/${inSmall}/${s1.pdRunning}`],
     ['Neuladen mitten im Betrieb verliert nichts', before === after, (() => { let i = 0; while (i < before.length && before[i] === after[i]) i++; return 'ab Zeichen ' + i + ': vorher ' + before.slice(Math.max(0, i - 60), i + 120) + ' | nachher ' + after.slice(Math.max(0, i - 60), i + 120); })()],
+    ['Neues Spiel beginnt mit gesperrten Bauteilen', m3.startLocked, JSON.stringify(m3)],
+    ['Ziel 1 schaltet Band und Sammelstation frei und meldet sich', m3.goal1, JSON.stringify(m3)],
+    ['Ziel 2 schaltet Sortierer und Dosenpresse frei', m3.goal2, JSON.stringify(m3)],
+    ['Nach allen Zielen ist alles frei, das letzte Ziel bleibt stehen', m3.goalAll, JSON.stringify(m3)],
+    ['Zelt unterbricht die Sichtlinie, der Weg fuehrt ueber freie Felder', m3.losBlocked && m3.pathFree, `${m3.losBlocked}/${m3.pathFree}`],
+    ['Spielfigur laeuft um das Zelt herum', m3.walkAround, m3.walkDetail],
+    ['Station mit leerem Umkreis zeigt die Warnung, vorher nicht', m3.stationBuilt && m3.noWarnBusy && m3.warnEmpty, `${m3.stationBuilt}/${m3.noWarnBusy}/${m3.warnEmpty}`],
+    ['Groesserer Umkreis gibt der Station wieder Arbeit', m3.rangeHelps, String(m3.rangeHelps)],
+    ['Schnellere Baender tragen auf Stufe 2 das Doppelte', m3.beltFast, m3.beltDetail],
+    ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
+    ['Alter Spielstand: alles frei, Ausbau der Annahme erstattet', oldSave.ph === 6 && oldSave.money === 2300 && oldSave.up.auto === undefined && oldSave.up.range === 0, JSON.stringify(oldSave)],
     ['Versionsnummer in index.html und konstanten.js stimmt ueberein', versionOk, String(version)],
   ];
   let failed = 0;

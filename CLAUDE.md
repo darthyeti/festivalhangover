@@ -35,7 +35,7 @@ bewusst und nach Freigabe aendern.
   - `logik.js` importiert nichts aus `grafik.js`. Logik zeichnet nichts.
 - Der Testzugang `window.__G` bleibt erhalten: `__G.step(sekunden)` spult ohne
   Bild vor, dazu `build`, `setBelt`, `demolish`, `buyUp`, `clear`, `setTool`, `setRot`,
-  `undo`, `moveTo(gebaeude,x,y)` und `jam(gebaeude)`.
+  `undo`, `moveTo(gebaeude,x,y)`, `jam(gebaeude)`, `isOpen(k)`, `los` und `findPath`.
   `planBelt(ax,ay,bx,by)` liefert einen Bandvorschlag, `buildPlan(plan)` baut ihn.
   `__G.ui` gibt den Bedienzustand heraus, `crossOver(x,y)` setzt eine Kreuzung auf ein Band.
 - Bandplaner (`bauen.js`): `planEnds()` bestimmt, wo ein Band an einem freien Feld,
@@ -69,6 +69,19 @@ bewusst und nach Freigabe aendern.
   neu berechnet bei `ui.orderDirty`. Wer `ui.topoDirty` setzt, setzt auch `ui.orderDirty`.
 - Einmuendung im Reissverschluss (`rival` in `logik.js`): Ein Bandfeld nimmt kein zweites
   Stueck aus derselben Richtung, solange ein anderes Band fertig an ihm wartet.
+- Ziele und Freischaltungen (M3): `GOALS` und `OPEN` in `konstanten.js`. `st.ph` ist das laufende
+  Ziel, `goals()` in `logik.js` schaltet weiter. `isOpen(k)` in `zustand.js` sagt, ob ein Bauteil
+  frei ist. Gesperrt wird nur in der Bedienung (Leiste, Tasten, Planer), nicht in `build()`,
+  damit `__G` und Tests frei bauen koennen. Spielstaende ohne `ph` laden mit allem frei.
+- Verbesserungen wirken ueber `stR()` (Umkreis der Stationen) und `bspd()` (Bandtempo) aus
+  `zustand.js`. Die Annahme zaehlt fest `AUTO_RATE`, ihre fruehere Verbesserung wird beim
+  Laden alter Staende erstattet. Sie soll der Engpass bleiben, der zu Maschinen fuehrt.
+- Baender geben den Ueberschuss an Fortschritt ans naechste Feld weiter. So haengt der
+  Durchsatz nicht an der Bildrate.
+- Wege um Zelte (E-004): `los()` und `findPath()` in `welt.js`, `wayTo()` in `logik.js`.
+  Figuren gehen geradeaus, solange kein Zelt im Weg ist, sonst ueber Feldmitten aussen herum.
+  Maschinen und Baender sind kein Hindernis. Der Weg haengt als `path` an der Figur.
+- Meldungen ueber der Karte: `toast(text)` aus `zustand.js`, laeuft auch im Menue weiter.
 - Abriss verliert keine Ware: `unloadTo()` legt alles, was ein Bauteil traegt, in die
   Tuete der Spielfigur.
 - Auslieferung ohne gemischte Dateien: `VERSION` in `konstanten.js` und die
