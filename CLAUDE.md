@@ -98,6 +98,11 @@ bewusst und nach Freigabe aendern.
   Bei jedem Pull Request mit Spielcode beide um eins erhoehen. Der Rauchtest prueft,
   dass sie zusammenpassen und kein Modul fehlt. Das Menue zeigt die Version an.
 - Alle Grafiken entstehen per Code, es gibt keine Bilddateien.
+- Optik: Bauteile haben einen Koerper (Deckflaeche nach oben versetzt, dunklere Vorderwand, Schlagschatten
+  nach rechts unten). Maschinen unterscheiden sich durch Farbe und Sichtfenster, nicht durch Aufbauten
+  (von Till am 20.11.2026 so gewuenscht).
+- Kamera: `clampCam()` laesst oben und unten Luft ueber den Wiesenrand hinaus, damit Zielanzeige,
+  Minikarte und Planleiste keinen Teil der Wiese dauerhaft verdecken.
 - Texte im Spiel auf Deutsch, keine Gedankenstriche als Satzzeichen.
 - Tablet und Desktop gleichwertig, Zielgroesse ab 1180 x 820.
 - Der Code ist sehr dicht geschrieben (lange Zeilen, kurze Namen). Beim Aendern
