@@ -142,7 +142,11 @@ a { color: var(--accent); }
     S.db.collection(coll).doc(id).update(patch).then(function () { delete S.drafts[coll + id]; })
       .catch(function (e) {
         if (e && e.code === "invalid_argument") { S.canWrite = false; render(); }
-        else btns.forEach(function (b) { b.disabled = false; });
+        else {
+          btns.forEach(function (b) { b.disabled = false; });
+          var box = btns[0] && btns[0].parentNode;
+          if (box) { var w = el("span", "meta", "Speichern fehlgeschlagen (" + ((e && (e.code || e.message)) || "unbekannt") + "). Bitte noch einmal antippen."); box.appendChild(w); }
+        }
       });
   }
 
