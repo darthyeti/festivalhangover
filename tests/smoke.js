@@ -319,6 +319,17 @@ function serve() {
     G.undo(); o.swapUndo = G.belts.length === nb && G.st.money === ms && G.grid[30 * G.MW + 6].k === 'belt';
     o.swapNeedsBelt = G.beltSwap('split', 20, 40) === null;
 
+    // Zwei Sortierer uebereinander, ein Querband muendet seitlich in den oberen: Nichts darf im unteren stranden.
+    while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
+    { G.setRot(2); const gs = G.build('sort', 6, 30), ks = G.build('sort', 6, 29); gs.filter = 2; ks.filter = 3;
+      G.setBelt(6, 31, 3); G.setBelt(6, 28, 3); G.setBelt(6, 27, 3); for (const y of [29, 30]) { G.setBelt(5, y, 2); G.setBelt(4, y, 2); G.setBelt(7, y, 2); G.setBelt(8, y, 2); }
+      const top = G.grid[27 * G.MW + 6]; let got = 0;
+      for (let i = 0; i < 6; i++) { G.tryPush(8, 29, 0, 2); for (let k = 0; k < 120; k++) { G.step(1 / 60); if (top.item >= 0 && top.prog >= 1) { top.item = -1; got++; } } }
+      o.sortSide = got === 6 && gs.item < 0 && ks.item < 0 && !G.jam(gs);
+      gs.item = 0; gs.from = 1; gs.wait = 0; for (let k = 0; k < 360; k++) { G.step(1 / 60); if (top.item >= 0 && top.prog >= 1) { top.item = -1; got++; } }
+      o.sortRescue = gs.item < 0 && got === 7; o.sortDetail = got + '/' + gs.item + '/' + ks.item;
+      G.demolish(6, 30); G.demolish(6, 29); G.st.player.bag.length = 0; }
+
     // Spielende: Wiese leer, aber Reste haengen in der Anlage. Das Spiel endet trotzdem und schreibt sie gut.
     while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
     G.st.player.bag.length = 0; G.AUTO.q.length = 0;
@@ -404,6 +415,7 @@ function serve() {
     ['Weitere Maschine derselben Art kostet das Anderthalbfache, Abriss erstattet den gezahlten Preis', m3.priceUp && m3.priceRefund, m3.priceDetail],
     ['Sortierer laesst sich direkt auf ein Band setzen, Band erstattet, Stueck bleibt', m3.swapOk && m3.swapNeedsBelt, `${m3.swapOk}/${m3.swapNeedsBelt}`],
     ['Ein Rueckgaengig macht daraus wieder das Band', m3.swapUndo, String(m3.swapUndo)],
+    ['Sortierer uebereinander mit seitlichem Zulauf: kein Stueck strandet, Festsitzendes kommt frei', m3.sortSide && m3.sortRescue, `${m3.sortSide}/${m3.sortRescue} ${m3.sortDetail}`],
     ['Spiel endet bei leerer Wiese auch mit Resten in der Anlage und schreibt sie gut', m3.notDoneYet && m3.waitsBeforeEnd && m3.endsWithRest, `${m3.notDoneYet}/${m3.waitsBeforeEnd}/${m3.endDetail}`],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
     ['Alter Spielstand: alles frei, Ausbau der Annahme erstattet', oldSave.ph === 7 && oldSave.money === 2300 && oldSave.up.auto === undefined && oldSave.up.range === 0, JSON.stringify(oldSave)],

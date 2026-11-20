@@ -19,10 +19,11 @@ function accept(b,ty,dir){
   if(b.k==='cross'){const a=dir%2;if(b.it[a]>=0)return false;b.it[a]=ty;b.dr[a]=dir;b.wt[a]=0.45/bspd();return true}
   if(b.k==='split'||b.k==='sort'){if(b.item>=0)return false;b.item=ty;b.wait=0.45/bspd();b.from=dir;return true}
   const R=BT[b.k].inp;if(R&&R[ty]!=null&&b.buf[ty]<R[ty]*2){b.buf[ty]++;return true}return false}
-// Ausgang = angrenzendes Band, das vom Gebaeude wegfuehrt
+// Ausgang = angrenzendes Band, das vom Gebaeude wegfuehrt. Ein Sortierer reicht an einen Nachbarn nur geradeaus weiter,
+// sonst landet ein Stueck in einem Nachbarn ohne Ausweg. Haengt es laenger als zwei Sekunden fest, ist jeder Nachbar recht.
 function pushOut(b,ty,ex){const c=[],pass=b.k==='split'||b.k==='sort';
   for(let d=0;d<4;d++){if(d===ex)continue;const n=d%2?b.w:b.h;for(let k=0;k<n;k++){const x=d===0?b.x+b.w:d===2?b.x-1:b.x+k,y=d===1?b.y+b.h:d===3?b.y-1:b.y+k;
-    if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];if(o&&((o.k==='belt'&&o.dir===d)||(pass&&(o.k==='split'||o.k==='sort')&&d!==(b.from+2)%4)))c.push(x,y,d)}}
+    if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];if(o&&((o.k==='belt'&&o.dir===d)||(pass&&(o.k==='split'||o.k==='sort')&&(b.wait<-2||(b.k==='sort'?d===b.from:d!==(b.from+2)%4)))))c.push(x,y,d)}}
   const n=c.length/3;for(let i=0;i<n;i++){const j=((b.rr+i)%n)*3;if(tryPush(c[j],c[j+1],ty,c[j+2])){b.rr=(b.rr+i+1)%n;return true}}return false}
 // Zahl der moeglichen Ausgaenge eines Gebaeudes, gleiche Nachbarschaft wie pushOut
 function outCount(b){let c=0;const pass=b.k==='split'||b.k==='sort';
