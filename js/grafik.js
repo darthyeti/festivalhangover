@@ -1,7 +1,7 @@
 // Montagmorgen: Grafik
 // Vorgerenderte Ebenen, Sprites, Zeichenfunktionen, Oberflaeche.
-import {AUTO_CAP,BSPD,BT,DX,DY,FONT,H,LS,MH,MW,PS,RAW,SAVE_KEY,ST_CAP,ST_R,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WW,euro,rng} from './konstanten.js';
-import {cam,st,ui,upPrice} from './zustand.js';
+import {AUTO_CAP,AUTO_RATE,BT,DX,DY,FONT,H,LS,MH,MW,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WW,euro,rng} from './konstanten.js';
+import {bspd,cam,isOpen,st,stR,toast,ui,upPrice} from './zustand.js';
 import {belts,blds,blocked,camps,cells,grid,items,near,pathDist,pathX,pathY} from './welt.js';
 import {buyUp,canBuild,canMove,confirmPlan,demolish,freeTile,price,save,toggleCross,topo,undo} from './bauen.js';
 import {jam} from './logik.js';
@@ -119,7 +119,7 @@ function beltStrip(len0,len1,off){// im gedrehten System: von x=len0 bis len1
   ctx.fillStyle='#14181a';ctx.fillRect(len0,-10,len1-len0,20);ctx.fillStyle='#343c42';ctx.fillRect(len0,-8,len1-len0,16);
   ctx.strokeStyle='rgba(255,255,255,.13)';ctx.lineWidth=1.3;ctx.beginPath();for(let px=len0-8+off;px<len1;px+=8){if(px<len0||px+3>len1)continue;ctx.moveTo(px,-5);ctx.lineTo(px+3,0);ctx.lineTo(px,5)}ctx.stroke();
   ctx.fillStyle='#7d878d';ctx.fillRect(len0,-10,len1-len0,1.6);ctx.fillRect(len0,8.4,len1-len0,1.6)}
-function drawBelt(t){const cx=t.x*T+16,cy=t.y*T+16,off=(st.t*BSPD*T)%8;
+function drawBelt(t){const cx=t.x*T+16,cy=t.y*T+16,off=(st.t*bspd()*T)%8;
   for(const d of t.feed){ctx.save();ctx.translate(cx,cy);ctx.rotate(d*Math.PI/2);beltStrip(-16,0,off);ctx.restore()}
   ctx.save();ctx.translate(cx,cy);ctx.rotate(t.dir*Math.PI/2);beltStrip(0,16,off);ctx.restore();
   if(t.feed.length>1||t.feed[0]!==t.dir){ctx.fillStyle='#343c42';ctx.beginPath();ctx.arc(cx,cy,8,0,6.3);ctx.fill();arrow(cx,cy,t.dir,4,'rgba(255,255,255,.25)')}}
@@ -218,28 +218,35 @@ function drawWorld(){ctx.save();ctx.beginPath();ctx.rect(VIEW.x,VIEW.y,VIEW.w,VI
   ents.push([st.player.y,2,null]);ents.sort((a,b)=>a[0]-b[0]);
   for(const e of ents){if(e[1]===1)drawHelper(e[2]);else if(e[1]===2)drawPlayer();else{const b=e[2];if(b.k==='cross')drawCross(b);else if(b.k==='split'||b.k==='sort')drawSmall(b);else if(b.k==='station')drawStation(b);else if(b.k==='auto')drawAuto(b);else drawMachine(b)}}
   for(const b of blds)if(vis(b.x*T,b.y*T,80)&&jam(b))warnBadge((b.x+b.w)*T-5,b.y*T+3);
-  for(const b of blds)if(b.k==='station'&&(building||ui.sel===b)){ctx.strokeStyle=ui.sel===b?'rgba(255,226,122,.9)':'rgba(255,255,255,.3)';ctx.lineWidth=1.5/cam.z;ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc((b.x+1)*T,(b.y+1)*T,ST_R,0,6.3);ctx.stroke();ctx.setLineDash([])}
+  for(const b of blds)if(b.k==='station'&&(building||ui.sel===b)){ctx.strokeStyle=ui.sel===b?'rgba(255,226,122,.9)':'rgba(255,255,255,.3)';ctx.lineWidth=1.5/cam.z;ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc((b.x+1)*T,(b.y+1)*T,stR(),0,6.3);ctx.stroke();ctx.setLineDash([])}
   if(ui.sel){ctx.strokeStyle='#ffe27a';ctx.lineWidth=2/cam.z;rr(ctx,ui.sel.x*T-2,ui.sel.y*T-2,ui.sel.w*T+4,ui.sel.h*T+4,6);ctx.stroke()}
   for(const f of st.fly){const k=f.t/f.d,x=f.x0+(f.x1-f.x0)*k,y=f.y0+(f.y1-f.y0)*k-Math.sin(k*Math.PI)*14;ctx.save();ctx.translate(x,y);ctx.rotate(f.rot+k*4);const c=sp(f.ty,0,0);ctx.drawImage(c,-13,-13,26,26);ctx.restore()}
   // Bauvorschau
   if(ui.move&&ptr.inView){const b=ui.move,g=movePos(),ok=canMove(b,g.x,g.y);ctx.fillStyle=ok?'rgba(110,230,120,.35)':'rgba(255,80,60,.4)';ctx.fillRect(g.x*T,g.y*T,b.w*T,b.h*T);ctx.strokeStyle=ok?'#9be28a':'#ff7a6b';ctx.lineWidth=2/cam.z;ctx.strokeRect(g.x*T,g.y*T,b.w*T,b.h*T);
     ctx.strokeStyle='rgba(255,226,122,.8)';ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo((b.x+b.w/2)*T,(b.y+b.h/2)*T);ctx.lineTo((g.x+b.w/2)*T,(g.y+b.h/2)*T);ctx.stroke();ctx.setLineDash([]);
-    if(b.k==='station'){ctx.strokeStyle='rgba(255,255,255,.7)';ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc((g.x+1)*T,(g.y+1)*T,ST_R,0,6.3);ctx.stroke();ctx.setLineDash([])}}
+    if(b.k==='station'){ctx.strokeStyle='rgba(255,255,255,.7)';ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc((g.x+1)*T,(g.y+1)*T,stR(),0,6.3);ctx.stroke();ctx.setLineDash([])}}
   if(building&&!ui.move&&ptr.inView&&ui.tool!=='demo'){const D=BT[ui.tool],g=ghostPos(),onBelt=g.x>=0&&g.y>=0&&g.x<MW&&g.y<MH&&grid[g.y*MW+g.x]&&grid[g.y*MW+g.x].k==='belt',ok=ui.tool==='belt'?(freeTile(g.x,g.y)||onBelt):(ui.tool==='cross'&&onBelt)||canBuild(g.x,g.y,D.w,D.h);
     ctx.fillStyle=ok?'rgba(110,230,120,.35)':'rgba(255,80,60,.4)';ctx.fillRect(g.x*T,g.y*T,D.w*T,D.h*T);ctx.strokeStyle=ok?'#9be28a':'#ff7a6b';ctx.lineWidth=2/cam.z;ctx.strokeRect(g.x*T,g.y*T,D.w*T,D.h*T);
     if(ui.tool==='belt'||ui.tool==='sort')arrow(g.x*T+16,g.y*T+16,ui.rot,9,'#fff');
-    if(ui.tool==='station'){ctx.strokeStyle='rgba(255,255,255,.7)';ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc((g.x+1)*T,(g.y+1)*T,ST_R,0,6.3);ctx.stroke();ctx.setLineDash([])}}
+    if(ui.tool==='station'){ctx.strokeStyle='rgba(255,255,255,.7)';ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc((g.x+1)*T,(g.y+1)*T,stR(),0,6.3);ctx.stroke();ctx.setLineDash([])}}
   if(ui.tool==='belt'){const A=ui.planA,P=ui.plan;
     if(P)for(const t of P.path){ctx.fillStyle=t.cross?'rgba(255,140,50,.7)':'rgba(255,226,122,.42)';ctx.fillRect(t.x*T+2,t.y*T+2,T-4,T-4);ctx.strokeStyle='rgba(255,240,170,.9)';ctx.lineWidth=1.2/cam.z;ctx.strokeRect(t.x*T+2,t.y*T+2,T-4,T-4);arrow(t.x*T+16,t.y*T+16,t.d,8,'#fff')}
     if(A){const o=grid[A.y*MW+A.x],b=o&&o.k!=='belt'?o:{x:A.x,y:A.y,w:1,h:1};ctx.strokeStyle='#ffe27a';ctx.lineWidth=2.5/cam.z;ctx.setLineDash([6,4]);ctx.strokeRect(b.x*T+1,b.y*T+1,b.w*T-2,b.h*T-2);ctx.setLineDash([])}}
   if(ui.tool==='demo'&&ptr.inView){const tx=(ptr.wx/T)|0,ty=(ptr.wy/T)|0;ctx.strokeStyle='#ff7a6b';ctx.lineWidth=2/cam.z;ctx.strokeRect(tx*T,ty*T,T,T)}
   for(const p of st.pops){const k=p.t/1.3;ctx.globalAlpha=k<0.7?1:1-(k-0.7)/0.3;const fs=(p.big?15:11.5)/Math.max(0.7,cam.z);ctx.font='700 '+fs+'px '+FONT;ctx.textAlign='center';ctx.lineWidth=3/cam.z;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.strokeText(p.txt,p.x,p.y-k*26);ctx.fillStyle=p.col;ctx.fillText(p.txt,p.x,p.y-k*26);ctx.globalAlpha=1}
   ctx.restore()}
-const HINTS=['Tippe oder ziehe auf der Wiese: Die Figur läuft hin und sammelt. Volle Tüte zur Annahme links bringen.',
- 'Baue eine Sammelstation auf sauberem Boden und ziehe ein Band von ihr bis in die Annahme.',
- 'Ein Band, das von einem Gebäude wegführt, ist sein Ausgang. Eines, das hineinführt, sein Eingang.',
- 'Die Annahme zählt nur langsam. Sortierer und Pressen machen aus vielen Stücken wenige wertvolle.',
- 'Maschinen nehmen nur ihre Sorten. Rechne Rezepte gegeneinander: Wie viele Pressen braucht ein Palettierer?'];
+// Zielanzeige oben links. Antippen klappt sie ein.
+function wrap(str,maxW){const out=[];let cur='';for(const w of str.split(' ')){const t=cur?cur+' '+w:w;if(cur&&ctx.measureText(t).width>maxW){out.push(cur);cur=w}else cur=t}if(cur)out.push(cur);return out}
+function drawGoal(){const G=GOALS[st.ph],x=20,y=VIEW.y+10,w=404,v=Math.min(G.need,G.val(st)),k=v/G.need,min=ui.goalMin;ctx.font='11px '+FONT;const L=min?[]:wrap(G.how,w-24),h=(min?44:52)+L.length*14;
+  rr(ctx,x,y,w,h,10);ctx.fillStyle='rgba(16,22,20,.88)';ctx.fill();ctx.strokeStyle='rgba(155,226,138,.35)';ctx.lineWidth=1;ctx.stroke();
+  const neu=Object.keys(OPEN).filter(q=>OPEN[q]===st.ph+1).map(q=>BT[q].name);
+  txt('ZIEL '+(st.ph+1)+' VON '+GOALS.length,x+12,y+16,9.5,'#9be28a','left',true);if(neu.length)txt('schaltet frei: '+neu.join(', '),x+w-12,y+16,9.5,'#ffe27a','right');
+  txt(G.t,x+12,y+33,14,'#f3efe2','left',true);
+  const pt=G.money?euro(v)+' von '+euro(G.need):G.pct?(k*100).toFixed(1).replace('.',',')+' %':v+' von '+G.need+' '+G.unit;txt(pt,x+w-12,y+33,11.5,'#cfd8cf','right',true);
+  L.forEach((q,i)=>txt(q,x+12,y+50+i*14,11,'#b8c2c6'));const by=y+h-11;rr(ctx,x+12,by,w-24,5,2.5);ctx.fillStyle='#0d1011';ctx.fill();if(k>0){rr(ctx,x+12,by,Math.max(5,(w-24)*k),5,2.5);ctx.fillStyle='#8fc15a';ctx.fill()}
+  button(x,y,w,h,()=>{ui.goalMin=!ui.goalMin})}
+function drawToast(){const t=ui.toast;if(!t)return;const a=(performance.now()-t.t)/1000;if(a>4.5){ui.toast=null;return}ctx.globalAlpha=a>3.8?(4.5-a)/0.7:1;ctx.font='600 14px '+FONT;const w=ctx.measureText(t.txt).width+36;
+  rr(ctx,W/2-w/2,VIEW.y+118,w,34,17);ctx.fillStyle='rgba(40,62,38,.95)';ctx.fill();ctx.strokeStyle='#9be28a';ctx.lineWidth=1.5;ctx.stroke();txt(t.txt,W/2,VIEW.y+140,14,'#f3efe2','center',true);ctx.globalAlpha=1}
 function toolIcon(id,x,y){ctx.save();ctx.translate(x,y);
   if(id==='walk')drawFigure(0,9,0,0,false,'#2fb9c9','#d9482b',false);
   else if(id==='belt'){ctx.translate(-14,0);beltStrip(0,28,(st.t*24)%8)}
@@ -251,12 +258,13 @@ function toolIcon(id,x,y){ctx.save();ctx.translate(x,y);
   else{const D=BT[id];rr(ctx,-14,-13,28,24,3);ctx.fillStyle=lg(ctx,-14,-13,14,11,[shade(D.col,0.3),shade(D.col,-0.3)]);ctx.fill();ctx.fillStyle='#0f1315';ctx.fillRect(-8,-9,16,13);mini(D.out,0,-2,0.6,0,0)}
   ctx.restore()}
 function drawToolbar(){ctx.fillStyle=lg(ctx,0,726,0,800,['#232a2c','#161b1a']);ctx.fillRect(0,726,W,74);
-  TOOLS.forEach((id,i)=>{const x=4+i*106,y=730,w=102,h=66,on=ui.tool===id,D=BT[id],p=D?price(id):0,can=!D||st.money>=p;
-    rr(ctx,x,y,w,h,8);ctx.fillStyle=on?lg(ctx,0,y,0,y+h,['#3f7a8a','#2a5561']):'#2c3338';ctx.fill();ctx.strokeStyle=on?'#7fd0e2':'#3c454b';ctx.lineWidth=on?2:1;ctx.stroke();
-    toolIcon(id,x+24,y+30);
+  const now=performance.now();TOOLS.forEach((id,i)=>{const x=4+i*106,y=730,w=102,h=66,on=ui.tool===id,D=BT[id],p=D?price(id):0,can=!D||st.money>=p,open=isOpen(id),fresh=open&&OPEN[id]===st.ph&&now-ui.newT<9000;
+    rr(ctx,x,y,w,h,8);ctx.fillStyle=on?lg(ctx,0,y,0,y+h,['#3f7a8a','#2a5561']):open?'#2c3338':'#1f2427';ctx.fill();ctx.strokeStyle=fresh?'#ffe27a':on?'#7fd0e2':'#3c454b';ctx.lineWidth=fresh?2+Math.sin(now/150):on?2:1;ctx.stroke();
+    ctx.globalAlpha=open?1:0.28;toolIcon(id,x+24,y+30);ctx.globalAlpha=1;
     const nm=id==='walk'?'Laufen':id==='demo'?'Abriss':id==='rot'?'Drehen':D.name;
     ctx.font='600 11px '+FONT;const parts=({station:['Sammel-','station'],pd:['Dosen-','presse'],pp:['PET-','Presse'],kp:['Kisten-','packer'],pal:['Palet-','tierer']})[id]||[nm];
-    parts.forEach((s,j)=>txt(s,x+48,y+(parts.length>1?21:27)+j*12,11,'#fff','left',true));
+    parts.forEach((s,j)=>txt(s,x+48,y+(parts.length>1?21:27)+j*12,11,open?'#fff':'#727c82','left',true));
+    if(!open){txt('nach Ziel '+OPEN[id],x+48,y+56,9.5,'#727c82');button(x,y,w,h,()=>toast(D.name+' kommt nach Ziel '+OPEN[id]));return}
     if(D)txt(euro(p),x+48,y+56,10.5,can?'#ffe27a':'#8a949a');else txt(id==='rot'?'Taste R':id==='walk'?'Esc':'erstattet',x+48,y+56,9.5,'#8f9aa0');
     button(x,y,w,h,()=>{if(id==='rot')ui.rot=(ui.rot+1)%4;else{ui.tool=id;ui.move=null;if(id!=='walk')ui.sel=null}})})}
 function drawTop(){ctx.fillStyle=lg(ctx,0,0,0,46,['#232a2c','#161b1a']);ctx.fillRect(0,0,W,46);
@@ -278,14 +286,14 @@ function panelBtn(x,y,w,label,cb,col,on){rr(ctx,x,y,w,28,6);ctx.fillStyle=on===f
 let panelRect=null;
 function drawPanel(){panelRect=null;const b=ui.sel;if(!b)return;const x=1052,y=VIEW.y+124,w=220,D=BT[b.k];let lines=[],h;
   if(b.k==='auto'){h=64+UPS.length*52+6;rr(ctx,x,y,w,h,8);ctx.fillStyle='rgba(22,28,30,.94)';ctx.fill();ctx.strokeStyle='#4a5257';ctx.lineWidth=1;ctx.stroke();
-    txt('Leergutannahme',x+12,y+22,14,'#fff','left',true);txt('zählt '+(1.5+st.up.auto).toFixed(1).replace('.',',')+' Stück/s · Ballen,',x+12,y+40,10.5,'#aeb7bc');txt('Kästen und Paletten sofort',x+12,y+53,10.5,'#aeb7bc');
-    UPS.forEach((u,i)=>{const by=y+64+i*52,l=st.up[u.k],mx=l>=u.max,p=upPrice(u),can=!mx&&st.money>=p;rr(ctx,x+10,by,w-20,46,6);ctx.fillStyle=can?'#2a5561':'#2c3338';ctx.fill();ctx.strokeStyle=can?'#7fd0e2':'#3c454b';ctx.stroke();
-      txt(u.name,x+20,by+19,12,can?'#fff':'#aeb7bc','left',true);txt(u.sub(l),x+20,by+35,10.5,'#8f9aa0');txt(mx?'max.':euro(p),x+w-20,by+28,12.5,mx?'#7d878d':can?'#ffe27a':'#8a949a','right',true);button(x+10,by,w-20,46,()=>buyUp(i),can)})}
+    txt('Leergutannahme',x+12,y+22,14,'#fff','left',true);txt('zählt '+AUTO_RATE.toFixed(1).replace('.',',')+' Stück/s · Ballen,',x+12,y+40,10.5,'#aeb7bc');txt('Kästen und Paletten sofort',x+12,y+53,10.5,'#aeb7bc');
+    UPS.forEach((u,i)=>{const by=y+64+i*52,l=st.up[u.k],mx=l>=u.max,p=upPrice(u),lock=u.ph>st.ph,can=!mx&&!lock&&st.money>=p;rr(ctx,x+10,by,w-20,46,6);ctx.fillStyle=can?'#2a5561':'#2c3338';ctx.fill();ctx.strokeStyle=can?'#7fd0e2':'#3c454b';ctx.stroke();
+      txt(u.name,x+20,by+19,12,can?'#fff':'#aeb7bc','left',true);txt(lock?'nach Ziel '+u.ph:u.sub(l),x+20,by+35,10.5,'#8f9aa0');txt(mx?'max.':lock?'':euro(p),x+w-20,by+28,12.5,mx?'#7d878d':can?'#ffe27a':'#8a949a','right',true);button(x+10,by,w-20,46,()=>buyUp(i),can)})}
   else{if(D.inp){const rate=k=>(D.inp[k]/D.time).toFixed(2).replace('.',',');lines.push(Object.keys(D.inp).map(k=>D.inp[k]+' '+TY[k].n).join(' + '));lines.push('→ 1 '+TY[D.out].n+' in '+D.time+' s');
       lines.push('Bedarf: '+Object.keys(D.inp).map(k=>rate(k)+' '+TY[k].n+'/s').join(', '));lines.push('Wert: '+euro(TY[D.out].val)+' · gefertigt: '+b.made)}
     else lines=D.info.slice();
     if(b.k==='sort')lines.push('Sorte: '+TY[b.filter].n);
-    if(b.k==='station')lines.push(b.empty?'Umkreis ist leer: umsetzen':'Lager '+b.buf.length+'/'+ST_CAP);
+    if(b.k==='station'){let n=0;near((b.x+1)*T,(b.y+1)*T,stR(),()=>{n++});lines.push('Lager '+b.buf.length+'/'+ST_CAP+' · im Umkreis: '+n+' Stück')}
     const why=jam(b);if(why)lines.push('Achtung: '+why);
     const nb=b.k==='sort'?4:2;h=36+lines.length*15+nb*34+6;rr(ctx,x,y,w,h,8);ctx.fillStyle='rgba(22,28,30,.94)';ctx.fill();ctx.strokeStyle='#4a5257';ctx.lineWidth=1;ctx.stroke();
     txt(D.name,x+12,y+22,14,'#fff','left',true);lines.forEach((s,i)=>txt(s,x+12,y+42+i*15,10.5,s.startsWith('Achtung')?'#ffc94a':'#cfd8dc'));let by=y+36+lines.length*15;
@@ -293,11 +301,12 @@ function drawPanel(){panelRect=null;const b=ui.sel;if(!b)return;const x=1052,y=V
     panelBtn(x+10,by,w-20,ui.move===b?'Versetzen abbrechen':'Versetzen',()=>{ui.move=ui.move===b?null:b;ui.tool='walk'},ui.move===b?'#8a6a2a':undefined);by+=34;
     panelBtn(x+10,by,w-20,'Abreißen (+'+euro(b.paid)+')',()=>demolish(b.x,b.y),'#6a4a44')}
   panelRect={x,y,w,h}}
-function drawPlanBar(){if(ui.tool!=='belt')return;const P=ui.plan,y=VIEW.y+VIEW.h-48,x=W/2-275;
-  rr(ctx,P?x-8:x+422,y-7,P?566:136,48,11);ctx.fillStyle='rgba(16,22,20,.9)';ctx.fill();
+function drawPlanBar(){if(ui.tool!=='belt')return;const P=ui.plan,y=VIEW.y+VIEW.h-48,x=W/2-275,cr=isOpen('cross');if(!P&&!cr)return;
+  rr(ctx,P?x-8:x+422,y-7,P?(cr?566:436):136,48,11);ctx.fillStyle='rgba(16,22,20,.9)';ctx.fill();
   if(P){const n=P.path.length-P.crosses,can=st.money>=P.cost,label='Bauen · '+n+(n===1?' Feld':' Felder')+(P.crosses?' · '+P.crosses+(P.crosses===1?' Kreuzung':' Kreuzungen'):'')+' · '+euro(P.cost);
     rr(ctx,x,y,300,34,7);ctx.fillStyle=can?'#3f8f4f':'#3c454b';ctx.fill();txt(label,x+150,y+22,12.5,can?'#fff':'#9aa4aa','center',true);button(x,y,300,34,()=>confirmPlan());
     rr(ctx,x+310,y,110,34,7);ctx.fillStyle='#6a4a44';ctx.fill();txt('Abbrechen',x+365,y+22,12.5,'#fff','center',true);button(x+310,y,110,34,()=>{ui.plan=null;ui.planA=null})}
+  if(!cr)return;
   rr(ctx,x+430,y,120,34,7);ctx.fillStyle=ui.planCross?'#8a6a2a':'#3c454b';ctx.fill();txt(ui.planCross?'Kreuzen: an':'Kreuzen: aus',x+490,y+22,12,'#fff','center',true);button(x+430,y,120,34,()=>toggleCross())}
 function drawMenu(){if(!ui.menu)return;btns=[];ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);const w=340,h=306,x=W/2-w/2,y=H/2-h/2;
   rr(ctx,x,y,w,h,14);ctx.fillStyle='#222b2d';ctx.fill();ctx.strokeStyle='#4a5257';ctx.lineWidth=1.5;ctx.stroke();
@@ -314,10 +323,10 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#161b1a';ctx.fillRe
   if(cam.follow&&ui.tool==='walk'){cam.x+=(st.player.x-cam.x)*0.08;cam.y+=(st.player.y-cam.y)*0.08}clampCam();
   const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;
   drawWorld();
-  ctx.font='600 12px '+FONT;const ht=HINTS[st.hint],hw=ctx.measureText(ht).width+28;rr(ctx,20,VIEW.y+10,hw,24,12);ctx.fillStyle='rgba(16,22,20,.8)';ctx.fill();txt(ht,34,VIEW.y+26.5,12,'#f3efe2','left',true);
+  drawGoal();
   if(ui.move||ui.tool!=='walk'){const tip=ui.move?'Neuen Platz antippen · Laufen oder Esc bricht ab':ui.tool==='belt'?(ui.plan?'Vorschlag prüfen · anderes Ziel ändert ihn':ui.planA?'Ziel antippen · Start nochmal: Einzelfeld':'Start antippen, dann Ziel · Ziehen legt direkt'):ui.tool==='demo'?'Tippen oder ziehen reißt ab · Zelt antippen baut es für '+euro(TENT_COST)+' ab':ui.tool==='sort'?'Tippen setzt · auf vorhandenen Sortierer tippen wechselt die Sorte':'Tippen setzt · Karte mit zwei Fingern, rechter Maustaste oder WASD verschieben';
     ctx.font='11px '+FONT;const tw=ctx.measureText(tip).width+24;rr(ctx,20,VIEW.y+VIEW.h-32,tw,22,11);ctx.fillStyle='rgba(16,22,20,.8)';ctx.fill();txt(tip,32,VIEW.y+VIEW.h-17,11,'#cfd8dc')}
-  drawMiniMap();drawPanel();drawTop();drawToolbar();drawPlanBar();
+  drawMiniMap();drawPanel();drawTop();drawToolbar();drawPlanBar();drawToast();
   if(st.done){ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);rr(ctx,W/2-250,H/2-120,500,240,16);ctx.fillStyle='#22302a';ctx.fill();ctx.strokeStyle='#a4c964';ctx.lineWidth=2;ctx.stroke();
     txt('Die Wiese ist sauber.',W/2,H/2-60,28,'#f3efe2','center',true);const mm=Math.floor(st.t/60),ss=Math.floor(st.t%60);
     txt('Zeit '+mm+':'+(ss<10?'0':'')+ss+'   ·   eingenommen '+euro(st.earned),W/2,H/2-20,15,'#cfd8cf','center');

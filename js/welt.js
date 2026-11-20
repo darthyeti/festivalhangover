@@ -57,6 +57,23 @@ function loadTents(list){for(const i of list||[])if(foot[i])foot[i].o.gone=true;
 function near(x,y,R,fn){const x0=Math.max(0,((x-R)/T)|0),x1=Math.min(MW-1,((x+R)/T)|0),y0=Math.max(0,((y-R)/T)|0),y1=Math.min(MH-1,((y+R)/T)|0);
   for(let gy=y0;gy<=y1;gy++)for(let gx=x0;gx<=x1;gx++){const c=cells[gy*MW+gx];for(let k=c.length-1;k>=0;k--){const it=c[k];if(Math.hypot(it.x-x,it.y-y)<=R)fn(it)}}}
 function nearestIn(px,py,cx,cy,R){let best=null,bd=1e9;near(cx,cy,R,it=>{if(it.claimed)return;const d=Math.hypot(it.x-px,it.y-py);if(d<bd){bd=d;best=it}});return best}
+// Wege um Zelte: Sichtlinie in Schritten von 6 px, 12 px breit, damit Figuren keine Zeltecken schneiden.
+// Das eigene Feld und das Zielfeld zaehlen nicht als Hindernis, die Breite gilt nicht direkt an Start und Ziel.
+function los(ax,ay,bx,by){const d=Math.hypot(bx-ax,by-ay);if(d<1)return true;const n=Math.ceil(d/6),ta=((ay/T)|0)*MW+((ax/T)|0),tb=((by/T)|0)*MW+((bx/T)|0),ox=-(by-ay)/d*6,oy=(bx-ax)/d*6;
+  const hit=(x,y)=>{if(x<0||y<0||x>=WW||y>=WH)return false;const q=((y/T)|0)*MW+((x/T)|0);return blocked[q]&&q!==ta&&q!==tb};
+  for(let i=1;i<n;i++){const k=i/n,x=ax+(bx-ax)*k,y=ay+(by-ay)*k;if(hit(x,y))return false;if(k*d>14&&(1-k)*d>14&&(hit(x+ox,y+oy)||hit(x-ox,y-oy)))return false}return true}
+// A* ueber die Felder, acht Richtungen, diagonal nur ohne Ecken zu schneiden. Liefert Feldmitten ohne das Startfeld.
+// Ist das Ziel nicht erreichbar (mitten im Zelt), endet der Weg am naechsten erreichbaren Feld.
+const pG=new Float32Array(MW*MH),pF=new Int32Array(MW*MH),pS=new Uint32Array(MW*MH);let pStamp=0;
+function findPath(ax,ay,bx,by){const cl=(v,m)=>v<0?0:v>=m?m-1:v,sx=cl((ax/T)|0,MW),sy=cl((ay/T)|0,MH),gx=cl((bx/T)|0,MW),gy=cl((by/T)|0,MH),s=sy*MW+sx,g=gy*MW+gx;if(s===g)return[];
+  pStamp++;const heap=[],hv=[],h=q=>{const dx=Math.abs(q%MW-gx),dy=Math.abs(((q/MW)|0)-gy);return Math.max(dx,dy)+0.414*Math.min(dx,dy)};
+  const push=(q,f)=>{let i=heap.length;heap.push(q);hv.push(f);while(i>0){const p=(i-1)>>1;if(hv[p]<=f)break;heap[i]=heap[p];hv[i]=hv[p];i=p}heap[i]=q;hv[i]=f};
+  const popMin=()=>{const q=heap[0],lq=heap.pop(),lf=hv.pop(),n=heap.length;if(n){let i=0;for(;;){let c=2*i+1;if(c>=n)break;if(c+1<n&&hv[c+1]<hv[c])c++;if(hv[c]>=lf)break;heap[i]=heap[c];hv[i]=hv[c];i=c}heap[i]=lq;hv[i]=lf}return q};
+  const free=q=>!blocked[q]||q===g;pG[s]=0;pF[s]=-1;pS[s]=pStamp;push(s,h(s));let best=s,bh=h(s),n=0,found=false;
+  while(heap.length&&n++<3000){const q=popMin();if(q===g){found=true;break}const hq=h(q);if(hq<bh){bh=hq;best=q}const x=q%MW,y=(q/MW)|0;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=x+dx,ny=y+dy;if(nx<0||ny<0||nx>=MW||ny>=MH)continue;const m=ny*MW+nx;if(!free(m))continue;
+      if(dx&&dy&&(blocked[y*MW+nx]||blocked[ny*MW+x]))continue;const c=pG[q]+(dx&&dy?1.414:1);if(pS[m]===pStamp&&pG[m]<=c)continue;pS[m]=pStamp;pG[m]=c;pF[m]=q;push(m,c+h(m))}}
+  const pts=[];for(let q=found?g:best;q!==s&&q>=0;q=pF[q])pts.push({x:(q%MW)*T+16,y:((q/MW)|0)*T+16});pts.reverse();if(found&&pts.length)pts[pts.length-1]={x:bx,y:by};return pts}
 function removeItem(it){if(!it.alive)return;it.alive=false;const c=cells[it.c];c.splice(c.indexOf(it),1);st.left[it.m]--;eraseItem(it)}
 
-export {AUTO,belts,blds,blocked,camps,cells,genWorld,goneTents,grid,loadTents,setTentGone,tentAt,tentTiles,items,near,nearestIn,pathDist,pathX,pathY,removeItem};
+export {AUTO,belts,blds,blocked,camps,cells,findPath,genWorld,los,goneTents,grid,loadTents,setTentGone,tentAt,tentTiles,items,near,nearestIn,pathDist,pathX,pathY,removeItem};

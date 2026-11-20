@@ -1,7 +1,7 @@
 // Montagmorgen: Bauen
 // Bauen, Abriss, Verbesserungen, Speichern und Laden.
-import {BT,DX,DY,MH,MW,SAVE_KEY,T,TENT_COST,UPS,WORLD_SEED,euro} from './konstanten.js';
-import {cam,st,ui,upPrice} from './zustand.js';
+import {BT,DX,DY,GOALS,MH,MW,SAVE_KEY,T,TENT_COST,UPS,WORLD_SEED,euro} from './konstanten.js';
+import {cam,isOpen,st,toast,ui,upPrice} from './zustand.js';
 import {AUTO,belts,blds,blocked,cells,goneTents,grid,items,loadTents,setTentGone,tentAt,tentTiles} from './welt.js';
 import {msg,pop} from './logik.js';
 
@@ -86,7 +86,7 @@ function planBelt(ax,ay,bx,by){if(ui.topoDirty)topo();const S=planEnds(ax,ay,tru
     if(gs)for(const e of gs){let ok=true,extra=0,dir=e;if(e<0)dir=h<4?h:h<8?h-4:ui.rot;else if(h<4){if(e===(h+2)%4)ok=false;else if(e!==h)extra=1}else if(h<8&&e!==h-4)ok=false;
       if(ok&&c+extra<best){best=c+extra;end=n;endDir=dir}}
     for(let d=0;d<4;d++){if(h<4&&d===(h+2)%4)continue;if(h>=4&&h<8&&d!==h-4)continue;const nx=x+DX[d],ny=y+DY[d],tn=h<4&&d!==h?1:0;let m,nc;
-      if(freeTile(nx,ny)){m=(ny*MW+nx)*9+d;nc=c+1000+tn}else if(ui.planCross&&nx>=0&&ny>=0&&nx<MW&&ny<MH&&straightBelt(grid[ny*MW+nx],d)){m=(ny*MW+nx)*9+4+d;nc=c+7000+tn}else continue;
+      if(freeTile(nx,ny)){m=(ny*MW+nx)*9+d;nc=c+1000+tn}else if(ui.planCross&&isOpen('cross')&&nx>=0&&ny>=0&&nx<MW&&ny<MH&&straightBelt(grid[ny*MW+nx],d)){m=(ny*MW+nx)*9+4+d;nc=c+7000+tn}else continue;
       if(nc<dist[m]){dist[m]=nc;par[m]=n;put(m,nc)}}}
   if(end<0)return null;const path=[];for(let n=end,d=endDir;n>=0;){const i=(n/9)|0,h=n%9;path.push({x:i%MW,y:(i/MW)|0,d,cross:!!grid[i]});d=h<4?h:h-4;n=par[n]}
   path.reverse();const crosses=path.filter(t=>t.cross).length;return{ax,ay,bx,by,path,crosses,cost:(path.length-crosses)*50+crosses*(BT.cross.cost-50)}}
@@ -101,11 +101,14 @@ function buyUp(i){const u=UPS[i],p=upPrice(u);if(st.up[u.k]>=u.max||st.money<p)r
 // Spielstand Version 2: merkt sich auch, was auf Baendern, in Sortierern, Verteilern, Kreuzungen, Maschinen und in der
 // Warteschlange der Annahme liegt. Was Sammler gerade tragen, wird ins Lager ihrer Station gelegt. Version 1 laedt weiterhin.
 function save(){try{const bits=new Uint8Array(Math.ceil(items.length/8));items.forEach((it,i)=>{if(!it.alive)bits[i>>3]|=1<<(i&7)});let s='';for(let i=0;i<bits.length;i++)s+=String.fromCharCode(bits[i]);
-  localStorage.setItem(SAVE_KEY,JSON.stringify({v:2,seed:WORLD_SEED,money:st.money,earned:st.earned,t:st.t,up:st.up,sold:st.sold,hint:st.hint,px:st.player.x,py:st.player.y,bag:st.player.bag,dead:btoa(s),tents:goneTents(),
+  localStorage.setItem(SAVE_KEY,JSON.stringify({v:2,seed:WORLD_SEED,money:st.money,earned:st.earned,t:st.t,up:st.up,sold:st.sold,ph:st.ph,viaBelt:st.viaBelt,px:st.player.x,py:st.player.y,bag:st.player.bag,dead:btoa(s),tents:goneTents(),
     auto:{q:AUTO.q,acc:AUTO.acc},belts:belts.map(t=>[t.x,t.y,t.dir,t.item,t.prog,t.from]),
     blds:blds.filter(b=>b.k!=='auto').map(b=>({k:b.k,x:b.x,y:b.y,dir:b.dir,filter:b.filter,paid:b.paid,buf:b.k==='station'?b.buf.concat(...b.helpers.map(h=>h.load)):b.buf,out:b.out,made:b.made,t:b.t,item:b.item,from:b.from,it:b.it,dr:b.dr}))}))}catch(e){}}
 function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;const d=JSON.parse(raw);if(d.v!==1&&d.v!==2)return;if(d.seed!=null&&d.seed!==WORLD_SEED)return;
-  st.money=d.money;st.earned=d.earned;st.t=d.t;Object.assign(st.up,d.up);st.sold=d.sold;st.hint=d.hint||0;const p=st.player;p.x=p.tx=d.px;p.y=p.ty=d.py;p.bag=d.bag||[];
+  st.money=d.money;st.earned=d.earned;st.t=d.t;Object.assign(st.up,d.up);st.sold=d.sold;st.ph=d.ph==null?GOALS.length-1:d.ph;st.viaBelt=d.viaBelt||0;
+  // Die Verbesserung der Annahme gibt es nicht mehr (die Annahme soll der Engpass bleiben). Bezahlte Stufen werden erstattet.
+  if(st.up.auto){let r=0;for(let l=0;l<st.up.auto;l++)r+=Math.round(500*Math.pow(1.6,l)/10)*10;st.money+=r;toast('Ausbau der Annahme erstattet: '+euro(r))}delete st.up.auto;
+  const p=st.player;p.x=p.tx=d.px;p.y=p.ty=d.py;p.bag=d.bag||[];
   loadTents(d.tents);const s=atob(d.dead);items.forEach((it,i)=>{if(s.charCodeAt(i>>3)&(1<<(i&7))){it.alive=false;const c=cells[it.c];c.splice(c.indexOf(it),1);st.left[it.m]--}});
   if(d.auto){AUTO.q=d.auto.q||[];AUTO.acc=d.auto.acc||0}
   for(const t of d.belts){const o={k:'belt',x:t[0],y:t[1],dir:t[2],item:t[3]==null?-1:t[3],prog:t[4]||0,from:t[5]==null?t[2]:t[5],feed:[t[2]]};grid[o.y*MW+o.x]=o;belts.push(o)}
