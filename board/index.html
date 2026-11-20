@@ -141,8 +141,7 @@ a { color: var(--accent); }
     btns.forEach(function (b) { b.disabled = true; });
     S.db.collection(coll).doc(id).update(patch).then(function () { delete S.drafts[coll + id]; })
       .catch(function (e) {
-        if (e && e.code === "invalid_argument") { S.canWrite = false; render(); }
-        else {
+        {
           btns.forEach(function (b) { b.disabled = false; });
           var box = btns[0] && btns[0].parentNode;
           if (box) { var w = el("span", "meta", "Speichern fehlgeschlagen (" + ((e && (e.code || e.message)) || "unbekannt") + "). Bitte noch einmal antippen."); box.appendChild(w); }
@@ -256,6 +255,7 @@ a { color: var(--accent); }
       st.appendChild(el("span", "phase", "Noch kein Status eingetragen"));
       st.appendChild(el("p", null, "Hier steht, woran gerade gearbeitet wird und was als Nächstes ansteht."));
     }
+    if (S.readOnly) st.appendChild(el("p", "meta", "Hinweis: Diese Ansicht meldet nur Lesezugriff. Die Antwortfelder bleiben sichtbar. Schlägt das Speichern fehl, steht der Grund neben den Knöpfen."));
     var dv = $("view-entscheidungen"); dv.textContent = "";
     var decs = order(S.dec, ["offen", "rueckfrage"]);
     if (!decs.length) dv.appendChild(el("div", "empty", S.loaded.dec ? "Keine Entscheidungen offen. Neue Pitches legt der Lead Dev hier an, du gibst sie frei, lehnst ab oder stellst eine Rückfrage." : "Entscheidungen werden geladen ..."));
@@ -277,7 +277,7 @@ a { color: var(--accent); }
       var db = r[0], user = r[1];
       if (!db) { $("conn").textContent = "Board-Speicher nicht erreichbar. Bitte angemeldet öffnen."; S.canWrite = false; S.loaded.dec = S.loaded.tests = true; render(); return; }
       S.db = db;
-      if (user) Promise.resolve(user.can("data.write")).then(function (ok) { if (ok === false) { S.canWrite = false; render(); } });
+      if (user) Promise.resolve(user.can("data.write")).then(function (ok) { if (ok === false) { S.readOnly = true; render(); } });
       var timer = setTimeout(function () { $("conn").textContent = "Daten noch nicht erreichbar, Anzeige kann veraltet sein."; $("conn").classList.add("note"); }, 10000);
       var live = function (snap) { if (!snap.metadata || !snap.metadata.fromCache) { clearTimeout(timer); $("conn").classList.remove("note"); $("conn").textContent = "Live verbunden"; } };
       var fail = function () { clearTimeout(timer); $("conn").textContent = "Verbindung zum Board-Speicher beendet. Seite neu öffnen."; $("conn").classList.add("note"); S.loaded.dec = S.loaded.tests = true; render(); };
