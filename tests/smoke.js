@@ -156,6 +156,16 @@ function serve() {
     const dA = dense(false), dB = dense(true);
     out.beltDense = dA > 5.9 && dB > 5.9 && Math.abs(dA - dB) < 0.01;
     out.beltDenseDetail = dA.toFixed(2) + '/' + dB.toFixed(2);
+
+    // Reissverschluss: Muendet ein Band seitlich in ein volles Band, kommen beide abwechselnd dran.
+    while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
+    [[8, 26, 2], [7, 26, 2], [6, 26, 2], [5, 26, 2], [4, 26, 2], [3, 26, 2], [6, 28, 3], [6, 27, 3]].forEach(t => G.setBelt(...t));
+    let zA = 0, zB = 0;
+    for (let i = 0; i < 1800; i++) { const a = G.tryPush(8, 26, 0, 2), b = G.tryPush(6, 28, 1, 3); if (i > 600) { if (a) zA++; if (b) zB++; } G.step(1 / 60); }
+    out.zipper = zA > 5 && zB > 5 && zA / zB > 0.6 && zA / zB < 1.7;
+    out.zipperDetail = zA + '/' + zB;
+    while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
+    G.st.player.bag.length = 0; G.AUTO.q.length = 0;
     while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
     G.st.player.bag.length = 0;
 
@@ -274,6 +284,7 @@ function serve() {
     ['Rueckgaengig macht aus der Kreuzung wieder das Band', r.planCrossUndo, String(r.planCrossUndo)],
     ['Planer quert kein Band an einem Knick', r.planNoCorner, String(r.planNoCorner)],
     ['Volles Band rueckt dicht auf, unabhaengig von der Baureihenfolge', r.beltDense, r.beltDenseDetail],
+    ['Seitlicher Zulauf und Hauptband wechseln sich ab (Reissverschluss)', r.zipper, r.zipperDetail],
     ['Zelt abbauen kostet 5 Euro und gibt Felder frei', r.tentRemoved, String(r.tentRemoved)],
     ['Ziehen mit dem Abriss baut kein Zelt ab', r.tentDragSafe, String(r.tentDragSafe)],
     ['Rueckgaengig stellt das Zelt wieder her und erstattet', r.tentUndo, String(r.tentUndo)],

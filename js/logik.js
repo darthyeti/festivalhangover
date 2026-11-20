@@ -10,8 +10,10 @@ function pay(c,x,y,col,big){st.money+=c;st.earned+=c;if(x!=null)pop(x,y,'+'+euro
 function fly(ty,x0,y0,x1,y1,d){st.fly.push({ty,x0,y0,x1,y1,t:0,d:d||0.3,rot:Math.random()*6.28})}
 // Ein Stueck kommt in Fahrtrichtung dir auf Feld x,y an
 function tryPush(x,y,ty,dir){if(x<0||y<0||x>=MW||y>=MH)return false;const o=grid[y*MW+x];if(!o)return false;
-  if(o.k==='belt'){if(o.item>=0||o.dir===(dir+2)%4)return false;o.item=ty;o.prog=0;o.from=dir;return true}
+  if(o.k==='belt'){if(o.item>=0||o.dir===(dir+2)%4||(o.from===dir&&rival(o,dir)))return false;o.item=ty;o.prog=0;o.from=dir;return true}
   return accept(o,ty,dir)}
+// Reissverschluss: Kam das letzte Stueck aus derselben Richtung und wartet ein anderes Band fertig am Feld, ist das zuerst dran
+function rival(o,dir){for(let d=0;d<4;d++){if(d===dir)continue;const x=o.x-DX[d],y=o.y-DY[d];if(x<0||y<0||x>=MW||y>=MH)continue;const n=grid[y*MW+x];if(n&&n.k==='belt'&&n.dir===d&&n.item>=0&&n.prog>=1)return true}return false}
 function accept(b,ty,dir){
   if(b.k==='auto'){if(ty>=RAW){st.sold[ty]++;pay(TY[ty].val,b.x*T+50,b.y*T+20,'#ffd23e',true);return true}if(b.q.length<AUTO_CAP){b.q.push(ty);return true}return false}
   if(b.k==='cross'){const a=dir%2;if(b.it[a]>=0)return false;b.it[a]=ty;b.dr[a]=dir;b.wt[a]=0.15;return true}

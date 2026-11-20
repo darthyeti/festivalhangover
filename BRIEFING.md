@@ -43,7 +43,7 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 **Bänder**
 
 - Ein Feld trägt höchstens ein Stück. Tempo 3 Felder pro Sekunde, also bis 3 Stück pro Sekunde.
-- Ein Band gibt an das Feld in seiner Richtung ab. Seitliches Einmünden in ein anderes Band ist erlaubt, frontal nicht.
+- Ein Band gibt an das Feld in seiner Richtung ab. Seitliches Einmünden in ein anderes Band ist erlaubt, frontal nicht. Warten an einer Einmündung zwei Bänder, kommen sie abwechselnd dran (Reißverschluss).
 
 **Ein- und Ausgänge**
 

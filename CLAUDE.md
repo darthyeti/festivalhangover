@@ -67,6 +67,8 @@ bewusst und nach Freigabe aendern.
   deshalb einen frischen Browser-Kontext oder muessen das beruecksichtigen.
 - Baender (`logik.js`): `updBelts` arbeitet jede Kette vom Ende her ab (`beltOrder`),
   neu berechnet bei `ui.orderDirty`. Wer `ui.topoDirty` setzt, setzt auch `ui.orderDirty`.
+- Einmuendung im Reissverschluss (`rival` in `logik.js`): Ein Bandfeld nimmt kein zweites
+  Stueck aus derselben Richtung, solange ein anderes Band fertig an ihm wartet.
 - Abriss verliert keine Ware: `unloadTo()` legt alles, was ein Bauteil traegt, in die
   Tuete der Spielfigur.
 - Auslieferung ohne gemischte Dateien: `VERSION` in `konstanten.js` und die
