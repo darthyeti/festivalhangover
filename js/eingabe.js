@@ -4,7 +4,7 @@ import {DX,DY,MH,MW,RAW,T,TOOLS,VIEW,WH,WW} from './konstanten.js';
 import {cam,isOpen,resetState,st,ui} from './zustand.js';
 import {AUTO,belts,blds,blocked,cells,findPath,genWorld,grid,los,removeItem} from './welt.js';
 import {jam,msg,tryPush,update} from './logik.js';
-import {build,buildPlan,buyUp,crossOver,demolish,load,moveTo,planBelt,planEnds,rec,save,setBelt,stepBegin,stepEnd,undo} from './bauen.js';
+import {beltSwap,build,buildPlan,buyUp,crossOver,demolish,load,moveTo,planBelt,planEnds,rec,save,setBelt,stepBegin,stepEnd,undo} from './bauen.js';
 import {MM,S,movePos,btns,buildGround,buildItemLayer,buildMini,buildSprites,cv,draw,dropItemLayer,ghostPos,groundL,offX,offY,panelRect,ptr,resize,spr,toW} from './grafik.js';
 
 const toL=e=>({x:(e.clientX-offX)/S,y:(e.clientY-offY)/S});
@@ -44,7 +44,7 @@ cv.addEventListener('pointermove',e=>{const p=toL(e);if(pts.has(e.pointerId))pts
 function pUp(e){const had=pts.has(e.pointerId);pts.delete(e.pointerId);if(pts.size<2)gest=null;if(!act||!had)return;const a=act;act=null;
   if(a.type==='belt'){if(a.moved){ui.planA=null;ui.plan=null;setBelt(a.lx,a.ly,a.dir)}else beltTap(a.lx,a.ly)}
   else if(a.type==='place'&&ptr.inView){const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;const g=ghostPos(),o=g.x>=0&&g.y>=0&&g.x<MW&&g.y<MH?grid[g.y*MW+g.x]:null;
-    if(ui.tool==='sort'&&o&&o.k==='sort')o.filter=(o.filter+1)%RAW;else if(ui.tool==='cross'&&o&&o.k==='belt')crossOver(g.x,g.y);else build(ui.tool,g.x,g.y)}
+    if(ui.tool==='sort'&&o&&o.k==='sort')o.filter=(o.filter+1)%RAW;else if(ui.tool==='cross'&&o&&o.k==='belt')crossOver(g.x,g.y);else if((ui.tool==='split'||ui.tool==='sort')&&o&&o.k==='belt')beltSwap(ui.tool,g.x,g.y);else build(ui.tool,g.x,g.y)}
   else if(a.type==='move'&&ui.move&&ptr.inView){const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;const b=ui.move,g=movePos();if(moveTo(b,g.x,g.y)){ui.move=null;ui.sel=b}}
   stepEnd();if(e.pointerType!=='mouse')ptr.inView=false}
 cv.addEventListener('pointerup',pUp);cv.addEventListener('pointercancel',pUp);cv.addEventListener('contextmenu',e=>e.preventDefault());
@@ -58,7 +58,7 @@ let last=0,saveT=0;function frame(t){const dt=Math.min(0.05,(t-last)/1000||0);la
   const pv=260*dt/cam.z;if(keys.a||keys.arrowleft){cam.x-=pv;cam.follow=false}if(keys.d||keys.arrowright){cam.x+=pv;cam.follow=false}if(keys.w||keys.arrowup){cam.y-=pv;cam.follow=false}if(keys.s||keys.arrowdown){cam.y+=pv;cam.follow=false}
   if(!ui.menu)update(dt);draw();saveT+=dt;if(saveT>15){saveT=0;save()}requestAnimationFrame(frame)}
 start(false);requestAnimationFrame(frame);
-window.__G={get st(){return st},get ui(){return ui},crossOver,save,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,isOpen,los,findPath,
+window.__G={get st(){return st},get ui(){return ui},crossOver,beltSwap,save,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,isOpen,los,findPath,
   step(sec,dt){dt=dt||1/60;for(let t=0;t<sec;t+=dt)update(dt)},build,setBelt,demolish,buyUp,tryPush,undo,moveTo,jam,planBelt,buildPlan,setTool(t){ui.tool=t},setRot(r){ui.rot=r},
   clear(x0,y0,x1,y1){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)for(const it of cells[y*MW+x].slice())removeItem(it)}};
 

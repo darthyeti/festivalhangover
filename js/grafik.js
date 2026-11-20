@@ -1,6 +1,6 @@
 // Montagmorgen: Grafik
 // Vorgerenderte Ebenen, Sprites, Zeichenfunktionen, Oberflaeche.
-import {AUTO_CAP,AUTO_RATE,BT,DX,DY,FONT,H,LS,MH,MW,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WW,euro,rng} from './konstanten.js';
+import {AUTO_CAP,AUTO_RATE,MEDALS,BT,DX,DY,FONT,H,LS,MH,MW,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WW,euro,rng} from './konstanten.js';
 import {bspd,cam,isOpen,st,stR,toast,ui,upPrice} from './zustand.js';
 import {belts,blds,blocked,camps,cells,grid,items,near,pathDist,pathX,pathY} from './welt.js';
 import {buyUp,canBuild,canMove,confirmPlan,demolish,freeTile,price,save,toggleCross,topo,undo} from './bauen.js';
@@ -225,7 +225,7 @@ function drawWorld(){ctx.save();ctx.beginPath();ctx.rect(VIEW.x,VIEW.y,VIEW.w,VI
   if(ui.move&&ptr.inView){const b=ui.move,g=movePos(),ok=canMove(b,g.x,g.y);ctx.fillStyle=ok?'rgba(110,230,120,.35)':'rgba(255,80,60,.4)';ctx.fillRect(g.x*T,g.y*T,b.w*T,b.h*T);ctx.strokeStyle=ok?'#9be28a':'#ff7a6b';ctx.lineWidth=2/cam.z;ctx.strokeRect(g.x*T,g.y*T,b.w*T,b.h*T);
     ctx.strokeStyle='rgba(255,226,122,.8)';ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo((b.x+b.w/2)*T,(b.y+b.h/2)*T);ctx.lineTo((g.x+b.w/2)*T,(g.y+b.h/2)*T);ctx.stroke();ctx.setLineDash([]);
     if(b.k==='station'){ctx.strokeStyle='rgba(255,255,255,.7)';ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc((g.x+1)*T,(g.y+1)*T,stR(),0,6.3);ctx.stroke();ctx.setLineDash([])}}
-  if(building&&!ui.move&&ptr.inView&&ui.tool!=='demo'){const D=BT[ui.tool],g=ghostPos(),onBelt=g.x>=0&&g.y>=0&&g.x<MW&&g.y<MH&&grid[g.y*MW+g.x]&&grid[g.y*MW+g.x].k==='belt',ok=ui.tool==='belt'?(freeTile(g.x,g.y)||onBelt):(ui.tool==='cross'&&onBelt)||canBuild(g.x,g.y,D.w,D.h);
+  if(building&&!ui.move&&ptr.inView&&ui.tool!=='demo'){const D=BT[ui.tool],g=ghostPos(),onBelt=g.x>=0&&g.y>=0&&g.x<MW&&g.y<MH&&grid[g.y*MW+g.x]&&grid[g.y*MW+g.x].k==='belt',ok=ui.tool==='belt'?(freeTile(g.x,g.y)||onBelt):((ui.tool==='cross'||ui.tool==='split'||ui.tool==='sort')&&onBelt)||canBuild(g.x,g.y,D.w,D.h);
     ctx.fillStyle=ok?'rgba(110,230,120,.35)':'rgba(255,80,60,.4)';ctx.fillRect(g.x*T,g.y*T,D.w*T,D.h*T);ctx.strokeStyle=ok?'#9be28a':'#ff7a6b';ctx.lineWidth=2/cam.z;ctx.strokeRect(g.x*T,g.y*T,D.w*T,D.h*T);
     if(ui.tool==='belt'||ui.tool==='sort')arrow(g.x*T+16,g.y*T+16,ui.rot,9,'#fff');
     if(ui.tool==='station'){ctx.strokeStyle='rgba(255,255,255,.7)';ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc((g.x+1)*T,(g.y+1)*T,stR(),0,6.3);ctx.stroke();ctx.setLineDash([])}}
@@ -243,7 +243,8 @@ function drawGoal(){const G=GOALS[st.ph],x=20,y=VIEW.y+10,w=404,v=Math.min(G.nee
   txt('ZIEL '+(st.ph+1)+' VON '+GOALS.length,x+12,y+16,9.5,'#9be28a','left',true);if(neu.length)txt('schaltet frei: '+neu.join(', '),x+w-12,y+16,9.5,'#ffe27a','right');
   txt(G.t,x+12,y+33,14,'#f3efe2','left',true);
   const pt=G.money?euro(v)+' von '+euro(G.need):G.pct?(k*100).toFixed(1).replace('.',',')+' %':v+' von '+G.need+' '+G.unit;txt(pt,x+w-12,y+33,11.5,'#cfd8cf','right',true);
-  L.forEach((q,i)=>txt(q,x+12,y+50+i*14,11,'#b8c2c6'));const by=y+h-11;rr(ctx,x+12,by,w-24,5,2.5);ctx.fillStyle='#0d1011';ctx.fill();if(k>0){rr(ctx,x+12,by,Math.max(5,(w-24)*k),5,2.5);ctx.fillStyle='#8fc15a';ctx.fill()}
+  L.forEach((q,i)=>txt(q,x+12,y+50+i*14,11,'#b8c2c6'));const by=y+h-11;
+  if(G.pct){const md=MEDALS.find(q=>st.t<q.m*60);txt(md?md.n+' bis '+md.m+':00':'Zeit für eine Medaille abgelaufen',x+w-12,y+16,9.5,md?md.col:'#8f9aa0','right',true)}rr(ctx,x+12,by,w-24,5,2.5);ctx.fillStyle='#0d1011';ctx.fill();if(k>0){rr(ctx,x+12,by,Math.max(5,(w-24)*k),5,2.5);ctx.fillStyle='#8fc15a';ctx.fill()}
   button(x,y,w,h,()=>{ui.goalMin=!ui.goalMin})}
 function drawToast(){const t=ui.toast;if(!t)return;const a=(performance.now()-t.t)/1000;if(a>4.5){ui.toast=null;return}ctx.globalAlpha=a>3.8?(4.5-a)/0.7:1;ctx.font='600 14px '+FONT;const w=ctx.measureText(t.txt).width+36;
   rr(ctx,W/2-w/2,VIEW.y+118,w,34,17);ctx.fillStyle='rgba(40,62,38,.95)';ctx.fill();ctx.strokeStyle='#9be28a';ctx.lineWidth=1.5;ctx.stroke();txt(t.txt,W/2,VIEW.y+140,14,'#f3efe2','center',true);ctx.globalAlpha=1}
@@ -324,12 +325,13 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#161b1a';ctx.fillRe
   const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;
   drawWorld();
   drawGoal();
-  if(ui.move||ui.tool!=='walk'){const tip=ui.move?'Neuen Platz antippen · Laufen oder Esc bricht ab':ui.tool==='belt'?(ui.plan?'Vorschlag prüfen · anderes Ziel ändert ihn':ui.planA?'Ziel antippen · Start nochmal: Einzelfeld':'Start antippen, dann Ziel · Ziehen legt direkt'):ui.tool==='demo'?'Tippen oder ziehen reißt ab · Zelt antippen baut es für '+euro(TENT_COST)+' ab':ui.tool==='sort'?'Tippen setzt · auf vorhandenen Sortierer tippen wechselt die Sorte':'Tippen setzt · Karte mit zwei Fingern, rechter Maustaste oder WASD verschieben';
+  if(ui.move||ui.tool!=='walk'){const tip=ui.move?'Neuen Platz antippen · Laufen oder Esc bricht ab':ui.tool==='belt'?(ui.plan?'Vorschlag prüfen · anderes Ziel ändert ihn':ui.planA?'Ziel antippen · Start nochmal: Einzelfeld':'Start antippen, dann Ziel · Ziehen legt direkt'):ui.tool==='demo'?'Tippen oder ziehen reißt ab · Zelt antippen baut es für '+euro(TENT_COST)+' ab':ui.tool==='sort'?'Tippen setzt, auch direkt auf ein Band · auf vorhandenen Sortierer tippen wechselt die Sorte':ui.tool==='split'?'Tippen setzt, auch direkt auf ein Band':'Tippen setzt · Karte mit zwei Fingern, rechter Maustaste oder WASD verschieben';
     ctx.font='11px '+FONT;const tw=ctx.measureText(tip).width+24;rr(ctx,20,VIEW.y+VIEW.h-32,tw,22,11);ctx.fillStyle='rgba(16,22,20,.8)';ctx.fill();txt(tip,32,VIEW.y+VIEW.h-17,11,'#cfd8dc')}
   drawMiniMap();drawPanel();drawTop();drawToolbar();drawPlanBar();drawToast();
   if(st.done){ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);rr(ctx,W/2-250,H/2-120,500,240,16);ctx.fillStyle='#22302a';ctx.fill();ctx.strokeStyle='#a4c964';ctx.lineWidth=2;ctx.stroke();
-    txt('Die Wiese ist sauber.',W/2,H/2-60,28,'#f3efe2','center',true);const mm=Math.floor(st.t/60),ss=Math.floor(st.t%60);
-    txt('Zeit '+mm+':'+(ss<10?'0':'')+ss+'   ·   eingenommen '+euro(st.earned),W/2,H/2-20,15,'#cfd8cf','center');
+    txt('Die Wiese ist sauber.',W/2,H/2-66,28,'#f3efe2','center',true);const mm=Math.floor(st.t/60),ss=Math.floor(st.t%60),md=MEDALS.find(q=>st.t<=q.m*60);
+    txt(md?md.n:'Ohne Medaille',W/2,H/2-40,16,md?md.col:'#8f9aa0','center',true);
+    txt('Zeit '+mm+':'+(ss<10?'0':'')+ss+'   ·   eingenommen '+euro(st.earned),W/2,H/2-18,15,'#cfd8cf','center');
     txt('Paletten '+st.sold[7]+' · Ballen '+(st.sold[4]+st.sold[5])+' · volle Kästen '+st.sold[6],W/2,H/2+4,13,'#9be28a','center');
     if(st.rest&&st.rest.n)txt('Reste in der Anlage: '+st.rest.n+' Stück, '+euro(st.rest.v)+' gutgeschrieben',W/2,H/2+24,11.5,'#aeb7bc','center');
     rr(ctx,W/2-90,H/2+40,180,46,10);ctx.fillStyle='#58b765';ctx.fill();txt('Nochmal',W/2,H/2+69,17,'#fff','center',true);button(W/2-90,H/2+40,180,46,()=>{try{localStorage.removeItem(SAVE_KEY)}catch(e){}start(true)})}

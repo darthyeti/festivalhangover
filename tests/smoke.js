@@ -98,6 +98,7 @@ function serve() {
     out.planTurns = turns;
     const m2 = G.st.money;
     out.planBuilt = !!plan && G.buildPlan(plan) === 'ok' && G.belts.length === path.length && G.st.money === m2 - plan.cost;
+    sA.buf.push(0, 0, 0); // drei Dosen zuerst, sonst haengt es davon ab, was die Sammler als Erstes bringen
     G.step(240);
     out.planFlows = Object.values(pB.buf).some(v => v > 0) || pB.made > 0;
     out.planUndo = G.undo() && G.belts.length === 0 && G.st.money === m2;
@@ -264,7 +265,9 @@ function serve() {
     o.goal1 = G.st.ph === 1 && G.isOpen('belt') && G.isOpen('station') && !G.isOpen('sort') && !!G.ui.toast;
     G.st.viaBelt = 40; G.step(0.1); o.goal2 = G.st.ph === 2 && G.isOpen('sort') && G.isOpen('pd') && !G.isOpen('pp');
     G.st.sold[4] = 3; G.st.sold[5] = 3; G.st.sold[6] = 3; G.st.sold[7] = 1; G.step(0.1);
-    o.goalAll = G.st.ph === 6 && G.isOpen('pal');
+    o.goalPal = G.st.ph === 6;
+    G.st.sold[7] = 10; G.step(0.1);
+    o.goalAll = o.goalPal && G.st.ph === 7 && G.isOpen('pal');
     G.st.money = 1e7;
 
     // Wege um Zelte: Die Spielfigur betritt auf dem Weg hinter ein Zelt kein gesperrtes Feld.
@@ -304,6 +307,15 @@ function serve() {
     o.beltFast = r0 > 2.95 && r0 < 3.05 && r2 > 5.9 && r2 < 6.1; o.beltDetail = r0.toFixed(2) + '/' + r2.toFixed(2);
     G.st.up.belt = 0;
 
+    // Sortierer direkt auf ein Band setzen: Band wird erstattet, das Stueck darauf bleibt, ein Rueckgaengig-Schritt.
+    while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
+    for (let x = 4; x <= 8; x++) G.setBelt(x, 30, 2);
+    G.tryPush(6, 30, 1, 2); const ms = G.st.money, nb = G.belts.length; G.setRot(3);
+    const sw = G.beltSwap('sort', 6, 30);
+    o.swapOk = !!sw && sw.k === 'sort' && sw.item === 1 && sw.dir === 3 && G.st.money === ms - 450 && G.belts.length === nb - 1;
+    G.undo(); o.swapUndo = G.belts.length === nb && G.st.money === ms && G.grid[30 * G.MW + 6].k === 'belt';
+    o.swapNeedsBelt = G.beltSwap('split', 20, 40) === null;
+
     // Spielende: Wiese leer, aber Reste haengen in der Anlage. Das Spiel endet trotzdem und schreibt sie gut.
     while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
     G.st.player.bag.length = 0; G.AUTO.q.length = 0;
@@ -321,7 +333,7 @@ function serve() {
     // Alter Spielstand: ohne Zielstand ist alles frei, die Verbesserung der Annahme wird erstattet.
     G.save();
     const d = JSON.parse(localStorage.getItem('montagmorgen2-v1'));
-    o.savedPhase = d.ph === 6;
+    o.savedPhase = d.ph === 7 && d.n > 12000;
     delete d.ph; delete d.viaBelt; d.up = { bag: 1, shoe: 0, auto: 2, crew: 0 }; d.money = 1000;
     localStorage.setItem('montagmorgen2-old', JSON.stringify(d));
     d.ph = 2; localStorage.setItem('montagmorgen2-new', JSON.stringify(d));
@@ -338,9 +350,9 @@ function serve() {
   const checks = [
     ['keine Fehler in der Konsole', errors.length === 0, errors.join(' | ')],
     ['Karte 80 x 52 Felder zu 32 px', r.map.join('x') === '80x52x32', r.map.join('x')],
-    ['8260 Stueck zu Beginn', r.total === 8260 && r.leftStart === 8260, `${r.total}/${r.leftStart}`],
+    ['12390 Stueck zu Beginn', r.total === 12390 && r.leftStart === 12390, `${r.total}/${r.leftStart}`],
     ['step(30) spult die Zeit vor', r.tAfterStep >= 30, String(r.tAfterStep)],
-    ['ohne Eingabe verschwindet nichts', r.leftAfterIdle === 8260, String(r.leftAfterIdle)],
+    ['ohne Eingabe verschwindet nichts', r.leftAfterIdle === 12390, String(r.leftAfterIdle)],
     ['Sammelstation und Band lassen sich bauen', r.station && r.belts, `${r.station}/${r.belts}`],
     ['Bauen auf belegtem Feld und ausserhalb wird abgelehnt', r.blockedBuild, String(r.blockedBuild)],
     ['Sammler raeumen den Umkreis', r.collected > 0, String(r.collected)],
@@ -386,9 +398,11 @@ function serve() {
     ['Station mit leerem Umkreis zeigt die Warnung, vorher nicht', m3.stationBuilt && m3.noWarnBusy && m3.warnEmpty, `${m3.stationBuilt}/${m3.noWarnBusy}/${m3.warnEmpty}`],
     ['Groesserer Umkreis gibt der Station wieder Arbeit', m3.rangeHelps, String(m3.rangeHelps)],
     ['Schnellere Baender tragen auf Stufe 2 das Doppelte', m3.beltFast, m3.beltDetail],
+    ['Sortierer laesst sich direkt auf ein Band setzen, Band erstattet, Stueck bleibt', m3.swapOk && m3.swapNeedsBelt, `${m3.swapOk}/${m3.swapNeedsBelt}`],
+    ['Ein Rueckgaengig macht daraus wieder das Band', m3.swapUndo, String(m3.swapUndo)],
     ['Spiel endet bei leerer Wiese auch mit Resten in der Anlage und schreibt sie gut', m3.notDoneYet && m3.waitsBeforeEnd && m3.endsWithRest, `${m3.notDoneYet}/${m3.waitsBeforeEnd}/${m3.endDetail}`],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
-    ['Alter Spielstand: alles frei, Ausbau der Annahme erstattet', oldSave.ph === 6 && oldSave.money === 2300 && oldSave.up.auto === undefined && oldSave.up.range === 0, JSON.stringify(oldSave)],
+    ['Alter Spielstand: alles frei, Ausbau der Annahme erstattet', oldSave.ph === 7 && oldSave.money === 2300 && oldSave.up.auto === undefined && oldSave.up.range === 0, JSON.stringify(oldSave)],
     ['Versionsnummer in index.html und konstanten.js stimmt ueberein', versionOk, String(version)],
   ];
   let failed = 0;

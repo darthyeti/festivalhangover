@@ -10,7 +10,7 @@ const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
 const arg = (name, def) => { const i = process.argv.indexOf('--' + name); return i < 0 ? def : Number(process.argv[i + 1]); };
-const CFG = { stations: arg('stations', 2), belt: arg('belt', 0), range: arg('range', 2), minutes: arg('minutes', 240) };
+const CFG = { stations: arg('stations', 2), belt: arg('belt', 0), range: arg('range', 2), minutes: arg('minutes', 240), items: arg('items', 0), double: process.argv.includes('--double') };
 
 function serve() {
   return new Promise(resolve => {
@@ -62,6 +62,11 @@ function play(cfg) {
     { id: 'Palettierer', open: () => G.isOpen('pal'),
       tiles: [[9, 20], [10, 20], [10, 22]], cost: () => 15000 + 300 + 50,
       build() { G.demolish(10, 21); G.demolish(9, 21); G.demolish(10, 23); const b = G.build('pal', 9, 20); G.build('split', 10, 23); G.setBelt(10, 22, 3); return !!b; } },
+    // Ausbau (--double): zweite Dosenpresse und zweite PET-Presse unter dem Hauptband, sobald die Baender schneller sind
+    { id: 'Zweite Pressen', open: () => cfg.double && st.up.belt >= 1 && projects.slice(0, 4).every(p => p.done),
+      tiles: [[21, 27], ...rect(21, 28, 2, 2), [21, 30], [18, 27], ...rect(18, 28, 2, 2), [18, 30], ...row(31, 14, 21)], cost: () => 2 * 4500 + 12 * 50,
+      build() { sorter(21, R, 1, 0); sorter(18, R, 1, 1); G.setBelt(21, 27, 1); G.setBelt(18, 27, 1); const a = G.build('pd', 21, 28), b = G.build('pp', 18, 28);
+        G.setBelt(21, 30, 1); G.setBelt(18, 30, 1); belts(row(31, 14, 21), 2); return !!a && !!b; } },
     // Zwei weitere Hauptbaender im Norden und Sueden, verbunden ueber Spalte 23
     { id: 'Hauptband Nord', open: () => wantTrunk(1), tiles: col(23, 9, 25), cost: () => 17 * 50, build() { belts(col(23, 9, 25), 1); trunks[1].end = 23; return true; } },
     { id: 'Hauptband Süd', open: () => wantTrunk(2), tiles: col(23, 27, 43), cost: () => 17 * 50, build() { belts(col(23, 27, 43), 3); trunks[2].end = 23; return true; } },
@@ -99,7 +104,7 @@ function play(cfg) {
     if (s.b) { G.demolish(s.stub[0], s.stub[1]); if (!G.moveTo(s.b, q.x, q.sy)) { G.setBelt(s.stub[0], s.stub[1], s.dir); return false; } }
     else { if (st.money < stationPrice() + (ext.length + 1) * 50) return false; s.b = G.build('station', q.x, q.sy); if (!s.b) return false; }
     belts(ext, 2); if (ext.length) tr.end = q.x; G.setBelt(q.stub[0], q.stub[1], q.dir);
-    s.stub = q.stub; s.dir = q.dir; s.site = null; s.moves = (s.moves || 0) + 1; moves++; return true;
+    s.stub = q.stub; s.dir = q.dir; s.site = null; s.moves = (s.moves || 0) + 1; moves++; s.rest = st.t + 8; s.b.empty = false; return true;
   }
   let moves = 0;
 
@@ -140,7 +145,7 @@ function play(cfg) {
     // 3. Stationen ohne Arbeit bekommen einen neuen Platz
     let need = null;
     for (const s of stations) {
-      const idle = !s.b || (s.b.empty && !s.b.buf.length);
+      const idle = !s.b || (s.b.empty && !s.b.buf.length && st.t > (s.rest || 0)); // nach dem Versetzen brauchen die Sammler ein paar Sekunden, bis sie Arbeit melden
       if (idle && !s.site) { const c = sites(); bestMid = Math.max(0, ...c.filter(q => q.ti === 0).map(q => q.n)); if (c.length) s.site = c[0]; }
       if (s.site) { const tiles = siteTiles(s.site);
         if (tents(tiles) && tiles.every(t => free(t[0], t[1]) || (G.grid[idx(t[0], t[1])] && G.grid[idx(t[0], t[1])].k === 'belt'))) { if (settle(s)) note(s.moves > 1 ? 'Station versetzt' : 'Station gebaut'); }
@@ -157,7 +162,7 @@ function play(cfg) {
       samples.push({ min: lastSample * 5, sauber: +(100 * (st.total - left) / st.total).toFixed(1), geld: +(st.money / 100).toFixed(0), eingenommen: +(st.earned / 100).toFixed(0), stationen: stations.filter(s => s.b).length, ziel: st.ph + 1 }); }
   }
   const left = st.left.reduce((a, b) => a + b, 0);
-  return { fertig: st.done, minuten: +(st.t / 60).toFixed(1), sauber: +(100 * (st.total - left) / st.total).toFixed(1), eingenommen: +(st.earned / 100).toFixed(2), geld: +(st.money / 100).toFixed(2),
+  return { total: st.total, fertig: st.done, minuten: +(st.t / 60).toFixed(1), sauber: +(100 * (st.total - left) / st.total).toFixed(1), eingenommen: +(st.earned / 100).toFixed(2), geld: +(st.money / 100).toFixed(2),
     ziele: goalAt.map(t => +(t / 60).toFixed(1)), verkauft: st.sold, up: st.up, versetzt: moves, zelte: tentsGone,
     annahmeVoll: +(100 * autoFull / ticks).toFixed(0), stationOhneArbeit: +(100 * stIdle / Math.max(1, ticks)).toFixed(0), stationVoll: +(100 * stFull / Math.max(1, ticks)).toFixed(0),
     offen: projects.filter(p => !p.done).map(p => p.id), samples, log };
@@ -171,13 +176,13 @@ function play(cfg) {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
-  await page.goto(`http://127.0.0.1:${server.address().port}/`);
+  await page.goto(`http://127.0.0.1:${server.address().port}/` + (CFG.items ? '?items=' + CFG.items : ''));
   await page.waitForFunction(() => window.__G && window.__G.st, null, { timeout: 10000 });
   const t0 = Date.now();
   const r = await page.evaluate(play, CFG);
   await browser.close(); server.close();
   if (process.argv.includes('--json')) { console.log(JSON.stringify(r)); return; }
-  console.log(`Testspieler: ${CFG.stations} Stationen, Umkreis bis Stufe ${CFG.range}, Bandtempo bis Stufe ${CFG.belt}  (Rechenzeit ${((Date.now() - t0) / 1000).toFixed(0)} s)`);
+  console.log(`Testspieler: ${r.total} Stück, ${CFG.stations} Stationen, Umkreis bis Stufe ${CFG.range}, Bandtempo bis Stufe ${CFG.belt}${CFG.double ? ', doppelte Pressen' : ''}  (Rechenzeit ${((Date.now() - t0) / 1000).toFixed(0)} s)`);
   console.log(r.fertig ? `Wiese sauber nach ${r.minuten} Minuten` : `Nicht fertig nach ${r.minuten} Minuten, ${r.sauber} % sauber`);
   console.log('Ziele erreicht nach Minuten: ' + r.ziele.join(' | '));
   console.log(`Eingenommen ${r.eingenommen} €, übrig ${r.geld} €, Paletten ${r.verkauft[7]}, Ballen ${r.verkauft[4]}+${r.verkauft[5]}, volle Kästen ${r.verkauft[6]}, roh ${r.verkauft.slice(0, 4).join('/')}`);
