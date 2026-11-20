@@ -82,6 +82,9 @@ bewusst und nach Freigabe aendern.
   Figuren gehen geradeaus, solange kein Zelt im Weg ist, sonst ueber Feldmitten aussen herum.
   Maschinen und Baender sind kein Hindernis. Der Weg haengt als `path` an der Figur.
 - Meldungen ueber der Karte: `toast(text)` aus `zustand.js`, laeuft auch im Menue weiter.
+- Spielende (`finish()` in `logik.js`): Wiese, Tuete, Stationen und Annahme leer und seit drei
+  Sekunden keine Bewegung (`ui.busyT`, gesetzt bei Bandtransport, laufender Maschine, Verkauf).
+  Reste in der Anlage werden zu ihrem Wert gutgeschrieben und stehen in `st.rest`.
 - Abriss verliert keine Ware: `unloadTo()` legt alles, was ein Bauteil traegt, in die
   Tuete der Spielfigur.
 - Auslieferung ohne gemischte Dateien: `VERSION` in `konstanten.js` und die
@@ -101,6 +104,10 @@ bewusst und nach Freigabe aendern.
   `http://localhost:8000/` oeffnen, oder die Pages-Adresse nutzen.
 - Rauchtest: `node tests/smoke.js` (Playwright mit Chromium, startet selbst einen
   Server). Vor jedem Commit an Spielcode ausfuehren.
+- Testspieler: `node tests/bot.js [--stations 2] [--belt 0] [--range 2] [--minutes 240]`
+  spielt eine ganze Partie automatisch (rund eine Minute Rechenzeit) und gibt Zeiten je Ziel,
+  Verlauf und Kaeufe aus. Werkzeug fuer das Balancing. Er baut eine feste Anlage, sein Bauplan
+  steht in `play()`. Seine Zeiten sind eine Untergrenze, ein Mensch zoegert und plant.
 - Bei Umbauten ohne gewollte Verhaltensaenderung zusaetzlich alt gegen neu
   vergleichen: `Math.random` und `requestAnimationFrame` per Init-Skript
   festlegen, dieselben Eingaben abspielen, Zustand und Canvas-Bild vergleichen.
@@ -142,6 +149,7 @@ Board: https://claude.ai/artifact/H2FAjzrJ3EDxAqYzoPM1c5
 Die Quelle der Board-Seite liegt in `board/index.html`. Inhalte (Status, Entscheidungen,
 Tests) stehen in der Datenbank des Artifacts, nicht im HTML: Collections `decisions`
 (IDs E-001 ...), `tests` (IDs T-001 ...) und das Dokument `meta/status`.
+Erledigte Eintraege zeigt das Board im Reiter Archiv, die Reiter Entscheidungen und Tests nur Offenes.
 
 ## Kommunikation
 

@@ -101,11 +101,11 @@ function buyUp(i){const u=UPS[i],p=upPrice(u);if(st.up[u.k]>=u.max||st.money<p)r
 // Spielstand Version 2: merkt sich auch, was auf Baendern, in Sortierern, Verteilern, Kreuzungen, Maschinen und in der
 // Warteschlange der Annahme liegt. Was Sammler gerade tragen, wird ins Lager ihrer Station gelegt. Version 1 laedt weiterhin.
 function save(){try{const bits=new Uint8Array(Math.ceil(items.length/8));items.forEach((it,i)=>{if(!it.alive)bits[i>>3]|=1<<(i&7)});let s='';for(let i=0;i<bits.length;i++)s+=String.fromCharCode(bits[i]);
-  localStorage.setItem(SAVE_KEY,JSON.stringify({v:2,seed:WORLD_SEED,money:st.money,earned:st.earned,t:st.t,up:st.up,sold:st.sold,ph:st.ph,viaBelt:st.viaBelt,px:st.player.x,py:st.player.y,bag:st.player.bag,dead:btoa(s),tents:goneTents(),
+  localStorage.setItem(SAVE_KEY,JSON.stringify({v:2,seed:WORLD_SEED,money:st.money,earned:st.earned,t:st.t,up:st.up,sold:st.sold,ph:st.ph,viaBelt:st.viaBelt,rest:st.rest,px:st.player.x,py:st.player.y,bag:st.player.bag,dead:btoa(s),tents:goneTents(),
     auto:{q:AUTO.q,acc:AUTO.acc},belts:belts.map(t=>[t.x,t.y,t.dir,t.item,t.prog,t.from]),
     blds:blds.filter(b=>b.k!=='auto').map(b=>({k:b.k,x:b.x,y:b.y,dir:b.dir,filter:b.filter,paid:b.paid,buf:b.k==='station'?b.buf.concat(...b.helpers.map(h=>h.load)):b.buf,out:b.out,made:b.made,t:b.t,item:b.item,from:b.from,it:b.it,dr:b.dr}))}))}catch(e){}}
 function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;const d=JSON.parse(raw);if(d.v!==1&&d.v!==2)return;if(d.seed!=null&&d.seed!==WORLD_SEED)return;
-  st.money=d.money;st.earned=d.earned;st.t=d.t;Object.assign(st.up,d.up);st.sold=d.sold;st.ph=d.ph==null?GOALS.length-1:d.ph;st.viaBelt=d.viaBelt||0;
+  st.money=d.money;st.earned=d.earned;st.t=d.t;Object.assign(st.up,d.up);st.sold=d.sold;st.ph=d.ph==null?GOALS.length-1:d.ph;st.viaBelt=d.viaBelt||0;st.rest=d.rest||null;
   // Die Verbesserung der Annahme gibt es nicht mehr (die Annahme soll der Engpass bleiben). Bezahlte Stufen werden erstattet.
   if(st.up.auto){let r=0;for(let l=0;l<st.up.auto;l++)r+=Math.round(500*Math.pow(1.6,l)/10)*10;st.money+=r;toast('Ausbau der Annahme erstattet: '+euro(r))}delete st.up.auto;
   const p=st.player;p.x=p.tx=d.px;p.y=p.ty=d.py;p.bag=d.bag||[];

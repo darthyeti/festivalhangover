@@ -6,7 +6,7 @@ import {AUTO,belts,blds,findPath,grid,los,near,nearestIn,removeItem} from './wel
 
 function pop(x,y,txt,col,big){st.pops.push({x,y,txt,col:col||'#ffe27a',t:0,big:!!big})}
 function msg(txt,x,y){if(st.t-st.lastMsg>1){st.lastMsg=st.t;st.pops.push({x:x==null?st.player.x:x,y:y==null?st.player.y-34:y,txt,col:'#ff9a7a',t:0})}}
-function pay(c,x,y,col,big){st.money+=c;st.earned+=c;if(x!=null)pop(x,y,'+'+euro(c),col,big)}
+function pay(c,x,y,col,big){ui.busyT=st.t;st.money+=c;st.earned+=c;if(x!=null)pop(x,y,'+'+euro(c),col,big)}
 function fly(ty,x0,y0,x1,y1,d){st.fly.push({ty,x0,y0,x1,y1,t:0,d:d||0.3,rot:Math.random()*6.28})}
 // Ein Stueck kommt in Fahrtrichtung dir auf Feld x,y an
 function tryPush(x,y,ty,dir){if(x<0||y<0||x>=MW||y>=MH)return false;const o=grid[y*MW+x];if(!o)return false;
@@ -43,7 +43,7 @@ function beltOrder(){ui.orderDirty=false;order=[];const seen=new Set(),stack=[];
     while(stack.length)order.push(stack.pop())}}
 function updBelts(dt){if(ui.orderDirty||order.length!==belts.length)beltOrder();const v=bspd();for(const t of order){if(t.item<0)continue;t.prog+=v*dt;if(t.prog<0.999999)continue;
     // Der Ueberschuss geht mit aufs naechste Feld, sonst haengt der Durchsatz an der Bildrate
-    const c=Math.max(0,Math.min(t.prog-1,v*dt)),x=t.x+DX[t.dir],y=t.y+DY[t.dir];if(tryPush(x,y,t.item,t.dir)){t.item=-1;const o=grid[y*MW+x];if(o.k==='belt')o.prog=c}else t.prog=1}}
+    const c=Math.max(0,Math.min(t.prog-1,v*dt)),x=t.x+DX[t.dir],y=t.y+DY[t.dir];if(tryPush(x,y,t.item,t.dir)){t.item=-1;ui.busyT=st.t;const o=grid[y*MW+x];if(o.k==='belt')o.prog=c}else t.prog=1}}
 function updBld(b,dt){
   // Kreuzung: je Achse ein Platz, das Stueck faehrt in seiner Richtung geradeaus weiter
   if(b.k==='cross'){for(let a=0;a<2;a++){if(b.it[a]<0)continue;b.wt[a]-=dt;if(b.wt[a]<=0&&tryPush(b.x+DX[b.dr[a]],b.y+DY[b.dr[a]],b.it[a],b.dr[a]))b.it[a]=-1}return}
@@ -55,7 +55,7 @@ function updBld(b,dt){
     if(b.q.length){b.spin+=dt*9;while(b.acc>=1&&b.q.length){const m=b.q.shift();b.acc-=1;b.bon=0.5;st.sold[m]++;pay(TY[m].val,b.x*T+40+Math.random()*24,b.y*T+34,'#e9eef0')}}else b.acc=Math.min(b.acc,1);return}
   const R=BT[b.k];
   if(b.t<0){if(b.out<2){let ok=true;for(const k in R.inp)if(b.buf[k]<R.inp[k])ok=false;if(ok){for(const k in R.inp)b.buf[k]-=R.inp[k];b.t=0}}}
-  else{b.t+=dt;b.anim+=dt;if(b.t>=R.time){b.t=-1;b.out++;b.made++}}
+  else{ui.busyT=st.t;b.t+=dt;b.anim+=dt;if(b.t>=R.time){b.t=-1;b.out++;b.made++}}
   if(b.out>0&&pushOut(b,R.out,-1))b.out--}
 // Naechster Wegpunkt fuer eine Figur m auf dem Weg nach tx,ty. null heisst: geradeaus, kein Zelt im Weg.
 // Sonst fuehrt ein Weg aussen um die Zelte (E-004). Der Weg haengt an der Figur und wird neu gesucht, wenn das Ziel das Feld wechselt.
@@ -87,6 +87,13 @@ function updPlayer(dt){const p=st.player,sp=110+18*st.up.shoe,cap=25+10*st.up.ba
   p.ucool-=dt;if(p.ucool<=0&&p.bag.length){const ax=(AUTO.x+1)*T,ay=(AUTO.y+1.5)*T;
     if(Math.hypot(p.x-ax,p.y-ay)<88){if(AUTO.q.length<AUTO_CAP){const m=p.bag.pop();AUTO.q.push(m);fly(m,p.x,p.y-12,ax,ay-10,0.3);p.ucool=0.07}}
     else for(const b of blds){if(b.k!=='station')continue;const cx=(b.x+1)*T,cy=(b.y+1)*T;if(Math.hypot(p.x-cx,p.y-cy)<62&&b.buf.length<ST_CAP){const m=p.bag.pop();b.buf.push(m);fly(m,p.x,p.y-12,cx,cy-6,0.25);p.ucool=0.07;break}}}}
+// Spielende: Die Wiese ist leer, Tuete, Stationen und Annahme auch, und seit drei Sekunden bewegt sich nichts mehr
+// (kein Band, keine Maschine, kein Verkauf). Was dann noch in der Anlage haengt, wird zu seinem Wert gutgeschrieben.
+function finish(){let n=0,v=0;const add=(ty,k)=>{if(ty>=0&&k>0){n+=k;v+=TY[ty].val*k;st.sold[ty]+=k}};
+  for(const t of belts){add(t.item,1);t.item=-1}
+  for(const b of blds){if(b.k==='cross'){add(b.it[0],1);add(b.it[1],1);b.it=[-1,-1]}else if(b.k==='split'||b.k==='sort'){add(b.item,1);b.item=-1}
+    else if(BT[b.k].inp){for(const k in b.buf){add(+k,b.buf[k]);b.buf[k]=0}add(BT[b.k].out,b.out);b.out=0}}
+  st.money+=v;st.earned+=v;st.rest={n,v};st.done=true}
 // Ziele: Ist das aktuelle erreicht, beginnt das naechste und schaltet seine Bauteile frei.
 function goals(){while(st.ph<GOALS.length-1&&GOALS[st.ph].val(st)>=GOALS[st.ph].need){st.ph++;const neu=Object.keys(OPEN).filter(k=>OPEN[k]===st.ph).map(k=>BT[k].name);
     toast('Ziel erreicht'+(neu.length?' · Neu: '+neu.join(', '):''));ui.newT=performance.now()}}
@@ -95,6 +102,7 @@ function update(dt){if(st.done)return;st.t+=dt;updBelts(dt);for(const b of blds)
   for(let k=st.pops.length-1;k>=0;k--){st.pops[k].t+=dt;if(st.pops[k].t>1.3)st.pops.splice(k,1)}
   if(ui.resetArm>0)ui.resetArm-=dt;
   goals();
-  if(st.left[0]+st.left[1]+st.left[2]+st.left[3]===0&&!st.player.bag.length&&!AUTO.q.length&&belts.every(t=>t.item<0)&&blds.every(b=>b.k!=='station'||(!b.buf.length&&b.helpers.every(h=>!h.load.length))))st.done=true}
+  if(ui.busyT>st.t)ui.busyT=st.t;
+  if(st.left[0]+st.left[1]+st.left[2]+st.left[3]===0&&!st.player.bag.length&&!AUTO.q.length&&st.t-ui.busyT>3&&blds.every(b=>b.k!=='station'||(!b.buf.length&&b.helpers.every(h=>!h.load.length))))finish()}
 
 export {jam,msg,pop,tryPush,update};

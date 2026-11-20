@@ -330,7 +330,8 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#161b1a';ctx.fillRe
   if(st.done){ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);rr(ctx,W/2-250,H/2-120,500,240,16);ctx.fillStyle='#22302a';ctx.fill();ctx.strokeStyle='#a4c964';ctx.lineWidth=2;ctx.stroke();
     txt('Die Wiese ist sauber.',W/2,H/2-60,28,'#f3efe2','center',true);const mm=Math.floor(st.t/60),ss=Math.floor(st.t%60);
     txt('Zeit '+mm+':'+(ss<10?'0':'')+ss+'   ·   eingenommen '+euro(st.earned),W/2,H/2-20,15,'#cfd8cf','center');
-    txt('Paletten '+st.sold[7]+' · Ballen '+(st.sold[4]+st.sold[5])+' · volle Kästen '+st.sold[6],W/2,H/2+8,13,'#9be28a','center');
+    txt('Paletten '+st.sold[7]+' · Ballen '+(st.sold[4]+st.sold[5])+' · volle Kästen '+st.sold[6],W/2,H/2+4,13,'#9be28a','center');
+    if(st.rest&&st.rest.n)txt('Reste in der Anlage: '+st.rest.n+' Stück, '+euro(st.rest.v)+' gutgeschrieben',W/2,H/2+24,11.5,'#aeb7bc','center');
     rr(ctx,W/2-90,H/2+40,180,46,10);ctx.fillStyle='#58b765';ctx.fill();txt('Nochmal',W/2,H/2+69,17,'#fff','center',true);button(W/2-90,H/2+40,180,46,()=>{try{localStorage.removeItem(SAVE_KEY)}catch(e){}start(true)})}
   drawMenu()}
 

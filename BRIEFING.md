@@ -78,6 +78,11 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 - Verarbeitete Ware (Ballen, volle Kästen, Paletten) wird sofort bezahlt.
 - Der Engpass der Annahme ist der Grund, überhaupt Maschinen zu bauen.
 
+**Spielende (seit Version 10)**
+
+- Das Spiel endet, wenn die Wiese leer ist, Tüte, Stationen und Annahme leer sind und sich drei Sekunden lang nichts mehr bewegt.
+- Was dann noch auf Bändern oder in Maschinen liegt, wird zu seinem Wert gutgeschrieben. Der Endbildschirm nennt die Reste.
+
 **Ziele und Freischaltungen (seit M3)**
 
 - Sieben Ziele nacheinander. Jedes erreichte Ziel schaltet Bauteile frei:
