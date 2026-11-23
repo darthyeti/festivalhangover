@@ -329,6 +329,15 @@ function serve() {
       gs.item = 0; gs.from = 1; gs.wait = 0; for (let k = 0; k < 360; k++) { G.step(1 / 60); if (top.item >= 0 && top.prog >= 1) { top.item = -1; got++; } }
       o.sortRescue = gs.item < 0 && got === 7; o.sortDetail = got + '/' + gs.item + '/' + ks.item;
       G.demolish(6, 30); G.demolish(6, 29); G.st.player.bag.length = 0; }
+    // Kurve am Sortierer: ohne geraden Ausgang geht der Rest auf ein Band daneben, das quer wegfuehrt. Mit geradem Ausgang nicht.
+    while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
+    { G.setRot(3); const sb = G.build('sort', 6, 29); sb.filter = 1; G.setBelt(8, 29, 2); G.setBelt(7, 29, 2); G.setBelt(6, 30, 2); G.setBelt(5, 30, 2); G.setBelt(4, 30, 2);
+      G.tryPush(8, 29, 0, 2); G.step(4); const at = (x, y) => { const q = G.grid[y * G.MW + x]; return q && q.k === 'belt' ? q.item : -2; };
+      G.planBelt(4, 32, 6, 32); // rechnet die Zulaeufe neu, sonst macht das erst das naechste Bild
+      o.sortCurve = sb.item < 0 && at(4, 30) === 0 && !G.jam(sb) && G.grid[30 * G.MW + 6].feed.includes(1);
+      G.grid[30 * G.MW + 4].item = -1; G.setBelt(5, 29, 2); G.setBelt(4, 29, 2); G.tryPush(8, 29, 0, 2); G.step(4);
+      o.sortStraight = at(4, 29) === 0 && at(4, 30) === -1; o.curveDetail = [sb.item, at(4, 30), at(4, 29)].join('/');
+      G.demolish(6, 29); G.st.player.bag.length = 0; }
 
     // Spielende: Wiese leer, aber Reste haengen in der Anlage. Das Spiel endet trotzdem und schreibt sie gut.
     while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
@@ -415,6 +424,7 @@ function serve() {
     ['Weitere Maschine derselben Art kostet das Anderthalbfache, Abriss erstattet den gezahlten Preis', m3.priceUp && m3.priceRefund, m3.priceDetail],
     ['Sortierer laesst sich direkt auf ein Band setzen, Band erstattet, Stueck bleibt', m3.swapOk && m3.swapNeedsBelt, `${m3.swapOk}/${m3.swapNeedsBelt}`],
     ['Ein Rueckgaengig macht daraus wieder das Band', m3.swapUndo, String(m3.swapUndo)],
+    ['Kurve am Sortierer: Rest geht aufs Band daneben, mit geradem Ausgang geradeaus', m3.sortCurve && m3.sortStraight, `${m3.sortCurve}/${m3.sortStraight} ${m3.curveDetail}`],
     ['Sortierer uebereinander mit seitlichem Zulauf: kein Stueck strandet, Festsitzendes kommt frei', m3.sortSide && m3.sortRescue, `${m3.sortSide}/${m3.sortRescue} ${m3.sortDetail}`],
     ['Spiel endet bei leerer Wiese auch mit Resten in der Anlage und schreibt sie gut', m3.notDoneYet && m3.waitsBeforeEnd && m3.endsWithRest, `${m3.notDoneYet}/${m3.waitsBeforeEnd}/${m3.endDetail}`],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
