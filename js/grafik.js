@@ -232,6 +232,7 @@ function drawWorld(){ctx.save();ctx.beginPath();ctx.rect(VIEW.x,VIEW.y,VIEW.w,VI
   const ents=[];for(const b of blds){if(!vis(b.x*T,b.y*T,360))continue;ents.push([(b.y+b.h)*T-6,0,b]);if(b.k==='station')for(const h of b.helpers)ents.push([h.y,1,h])}
   ents.push([st.player.y,2,null]);ents.sort((a,b)=>a[0]-b[0]);
   for(const e of ents){if(e[1]===1)drawHelper(e[2]);else if(e[1]===2)drawPlayer();else{const b=e[2];if(b.k==='cross')drawCross(b);else if(b.k==='split'||b.k==='sort')drawSmall(b);else if(b.k==='station')drawStation(b);else if(b.k==='auto')drawAuto(b);else drawMachine(b)}}
+  {const last=lastItems();if(last){const k=0.5+0.5*Math.sin(performance.now()/160);ctx.strokeStyle='rgba(255,70,50,'+(0.85-0.45*k)+')';ctx.lineWidth=2.5/cam.z;for(const it of last)if(vis(it.x,it.y,40)){ctx.beginPath();ctx.arc(it.x,it.y,16+8*k,0,6.3);ctx.stroke()}}}
   for(const b of blds)if(vis(b.x*T,b.y*T,80)&&jam(b))warnBadge((b.x+b.w)*T-5,b.y*T+3);
   for(const b of blds)if(b.k==='station'&&(building||ui.sel===b)){ctx.strokeStyle=ui.sel===b?'rgba(255,226,122,.9)':'rgba(255,255,255,.3)';ctx.lineWidth=1.5/cam.z;ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc((b.x+1)*T,(b.y+1)*T,stR(),0,6.3);ctx.stroke();ctx.setLineDash([])}
   if(ui.sel){ctx.strokeStyle='#ffe27a';ctx.lineWidth=2/cam.z;rr(ctx,ui.sel.x*T-2,ui.sel.y*T-2,ui.sel.w*T+4,ui.sel.h*T+4,6);ctx.stroke()}
@@ -296,8 +297,12 @@ function drawTop(){ctx.fillStyle=lg(ctx,0,0,0,46,['#232a2c','#161b1a']);ctx.fill
   [['−',930,()=>{cam.z=Math.max(0.4,cam.z/1.25)}],['+',966,()=>{cam.z=Math.min(2.2,cam.z*1.25)}]].forEach(b=>{rr(ctx,b[1],8,30,30,6);ctx.fillStyle='#2c3338';ctx.fill();txt(b[0],b[1]+15,29,18,'#e6ecef','center',true);button(b[1],8,30,30,b[2])});
   {const n=ui.undo.length;rr(ctx,1004,8,92,30,6);ctx.fillStyle=n?'#2c3338':'#22282b';ctx.fill();txt('Rückgängig',1050,28,11.5,n?'#e6ecef':'#6f7a80','center',true);button(1004,8,92,30,()=>undo(),n>0)}
   txt(euro(st.money),W-14,31,24,'#ffe27a','right',true)}
+// Die letzten Stuecke auf der Wiese: ab LAST_N werden sie auf Karte und Minikarte markiert, sonst sucht man sie von Hand
+const LAST_N=40;
+function lastItems(){const L=st.left,n=L[0]+L[1]+L[2]+L[3];if(n<1||n>LAST_N||st.done)return null;const out=[];for(const it of items)if(it.alive)out.push(it);return out}
 function drawMiniMap(){const x=1112,y=VIEW.y+8,w=160,h=104;rr(ctx,x-3,y-3,w+6,h+6,5);ctx.fillStyle='rgba(16,20,22,.85)';ctx.fill();ctx.imageSmoothingEnabled=false;ctx.drawImage(mmL,x,y,w,h);ctx.imageSmoothingEnabled=true;
   const p=st.player;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x+p.x/WW*w,y+p.y/WH*h,2.5,0,6.3);ctx.fill();
+  const last=lastItems();if(last){const k=0.5+0.5*Math.sin(performance.now()/160);for(const it of last){const px=x+it.x/WW*w,py=y+it.y/WH*h;ctx.strokeStyle='rgba(255,60,40,'+(0.9-0.5*k)+')';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(px,py,3+4*k,0,6.3);ctx.stroke();ctx.fillStyle='#ff4a36';ctx.beginPath();ctx.arc(px,py,2.2,0,6.3);ctx.fill()}}
   const hw=VIEW.w/2/cam.z,hh=VIEW.h/2/cam.z;ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();ctx.strokeStyle='#ffe27a';ctx.lineWidth=1.2;ctx.strokeRect(x+(cam.x-hw)/WW*w,y+(cam.y-hh)/WH*h,2*hw/WW*w,2*hh/WH*h);ctx.restore()}
 const MM={x:1112,y:VIEW.y+8,w:160,h:104};
 function panelBtn(x,y,w,label,cb,col,on){rr(ctx,x,y,w,28,6);ctx.fillStyle=on===false?'#3c454b':col||'#3f7a8a';ctx.fill();txt(label,x+w/2,y+18.5,11.5,on===false?'#8a949a':'#fff','center',true);button(x,y,w,28,cb,on)}

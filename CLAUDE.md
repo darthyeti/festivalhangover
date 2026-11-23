@@ -112,6 +112,8 @@ bewusst und nach Freigabe aendern.
 - Optik: Bauteile haben einen Koerper (Deckflaeche nach oben versetzt, dunklere Vorderwand, Schlagschatten
   nach rechts unten). Maschinen unterscheiden sich durch Farbe und Sichtfenster, nicht durch Aufbauten
   (von Till am 20.11.2026 so gewuenscht).
+- Letzte Stuecke: Liegen hoechstens `LAST_N` Stueck auf der Wiese, markiert `lastItems()` in `grafik.js` sie
+  blinkend auf Karte und Minikarte.
 - Kamera: `clampCam()` laesst oben und unten Luft ueber den Wiesenrand hinaus, damit Zielanzeige,
   Minikarte und Planleiste keinen Teil der Wiese dauerhaft verdecken.
 - Texte im Spiel auf Deutsch, keine Gedankenstriche als Satzzeichen.
