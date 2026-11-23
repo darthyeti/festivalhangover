@@ -255,7 +255,7 @@ function drawWorld(){ctx.save();ctx.beginPath();ctx.rect(VIEW.x,VIEW.y,VIEW.w,VI
 function wrap(str,maxW){const out=[];let cur='';for(const w of str.split(' ')){const t=cur?cur+' '+w:w;if(cur&&ctx.measureText(t).width>maxW){out.push(cur);cur=w}else cur=t}if(cur)out.push(cur);return out}
 function drawGoal(){const G=GOALS[st.ph],x=20,y=VIEW.y+10,w=404,v=Math.min(G.need,G.val(st)),k=v/G.need,min=ui.goalMin;ctx.font='11px '+FONT;const L=min?[]:wrap(G.how,w-24),h=(min?44:52)+L.length*14;
   rr(ctx,x,y,w,h,10);ctx.fillStyle='rgba(16,22,20,.88)';ctx.fill();ctx.strokeStyle='rgba(155,226,138,.35)';ctx.lineWidth=1;ctx.stroke();
-  const neu=Object.keys(OPEN).filter(q=>OPEN[q]===st.ph+1).map(q=>BT[q].name);
+  const neu=Object.keys(OPEN).filter(q=>OPEN[q]===st.ph+1).map(q=>BT[q]?BT[q].name:'Doppelband');
   txt('ZIEL '+(st.ph+1)+' VON '+GOALS.length,x+12,y+16,9.5,'#9be28a','left',true);if(neu.length)txt('schaltet frei: '+neu.join(', '),x+w-12,y+16,9.5,'#ffe27a','right');
   txt(G.t,x+12,y+33,14,'#f3efe2','left',true);
   const pt=G.money?euro(v)+' von '+euro(G.need):G.pct?(k*100).toFixed(1).replace('.',',')+' %':v+' von '+G.need+' '+G.unit;txt(pt,x+w-12,y+33,11.5,'#cfd8cf','right',true);
