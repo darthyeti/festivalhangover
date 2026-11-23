@@ -1,7 +1,7 @@
 // Montagmorgen: Grafik
 // Vorgerenderte Ebenen, Sprites, Zeichenfunktionen, Oberflaeche.
 import {AUTO_CAP,AUTO_RATE,MEDALS,BT,DX,DY,FONT,H,LS,MH,MW,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WIDE_COST,WW,euro,rng} from './konstanten.js';
-import {bspd,cam,isOpen,st,stR,toast,ui,upPrice} from './zustand.js';
+import {bspd,cam,isOpen,nSort,st,stR,toast,ui,upPrice} from './zustand.js';
 import {belts,blds,blocked,camps,cells,grid,items,near,pathDist,pathX,pathY} from './welt.js';
 import {buyUp,canBuild,canMove,confirmPlan,demolish,freeTile,price,save,toggleCross,topo,undo} from './bauen.js';
 import {jam} from './logik.js';
@@ -315,7 +315,7 @@ function drawPanel(){panelRect=null;const b=ui.sel;if(!b)return;const x=1052,y=V
     const why=jam(b);lines.push(why?'Achtung: '+why:'');// Zeile bleibt immer frei, sonst springt die Fensterhoehe
     const nb=b.k==='sort'?4:2;h=36+lines.length*15+nb*34+6;rr(ctx,x,y,w,h,8);ctx.fillStyle='rgba(22,28,30,.94)';ctx.fill();ctx.strokeStyle='#4a5257';ctx.lineWidth=1;ctx.stroke();
     txt(D.name,x+12,y+22,14,'#fff','left',true);lines.forEach((s,i)=>txt(s,x+12,y+42+i*15,10.5,s.startsWith('Achtung')?'#ffc94a':'#cfd8dc'));let by=y+36+lines.length*15;
-    if(b.k==='sort'){panelBtn(x+10,by,w-20,'Sorte wechseln',()=>{b.filter=(b.filter+1)%RAW});by+=34;panelBtn(x+10,by,w-20,'Auswurf drehen',()=>{b.dir=(b.dir+1)%4});by+=34}
+    if(b.k==='sort'){panelBtn(x+10,by,w-20,'Sorte wechseln',()=>{b.filter=(b.filter+1)%nSort()});by+=34;panelBtn(x+10,by,w-20,'Auswurf drehen',()=>{b.dir=(b.dir+1)%4});by+=34}
     panelBtn(x+10,by,w-20,ui.move===b?'Versetzen abbrechen':'Versetzen',()=>{ui.move=ui.move===b?null:b;ui.tool='walk'},ui.move===b?'#8a6a2a':undefined);by+=34;
     panelBtn(x+10,by,w-20,'Abreißen (+'+euro(b.paid)+')',()=>demolish(b.x,b.y),'#6a4a44')}
   panelRect={x,y,w,h}}
@@ -342,7 +342,7 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#161b1a';ctx.fillRe
   const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;
   drawWorld();
   drawGoal();
-  if(ui.move||ui.tool!=='walk'){const tip=ui.move?'Neuen Platz antippen · Laufen oder Esc bricht ab':ui.tool==='belt'?(ui.plan?'Vorschlag prüfen · anderes Ziel ändert ihn':ui.planA?'Ziel antippen · Start nochmal: Einzelfeld':'Start antippen, dann Ziel · Ziehen legt direkt'):ui.tool==='demo'?'Tippen oder ziehen reißt ab · Zelt antippen baut es für '+euro(TENT_COST)+' ab':ui.tool==='sort'?'Tippen setzt, auch direkt auf ein Band · auf vorhandenen Sortierer tippen wechselt die Sorte':ui.tool==='split'?'Tippen setzt, auch direkt auf ein Band':ui.tool==='wide'?'Über vorhandene Bänder tippen oder ziehen: zweite Spur, doppelte Menge':'Tippen setzt · Karte mit zwei Fingern, rechter Maustaste oder WASD verschieben';
+  if(ui.move||ui.tool!=='walk'){const tip=ui.move?'Neuen Platz antippen · Laufen oder Esc bricht ab':ui.tool==='belt'?(ui.plan?'Vorschlag prüfen · anderes Ziel ändert ihn':ui.planA?'Ziel antippen · Start nochmal: Einzelfeld':'Start antippen, dann Ziel · Ziehen legt direkt'):ui.tool==='demo'?'Tippen oder ziehen reißt ab · Zelt antippen baut es für '+euro(TENT_COST)+' ab':ui.tool==='sort'?'Tippen setzt, auch direkt auf ein Band · auf vorhandenen Sortierer tippen wechselt die Sorte, ab dem Palettierer auch Ballen':ui.tool==='split'?'Tippen setzt, auch direkt auf ein Band':ui.tool==='wide'?'Über vorhandene Bänder tippen oder ziehen: zweite Spur, doppelte Menge':'Tippen setzt · Karte mit zwei Fingern, rechter Maustaste oder WASD verschieben';
     ctx.font='11px '+FONT;const tw=ctx.measureText(tip).width+24;rr(ctx,20,VIEW.y+VIEW.h-32,tw,22,11);ctx.fillStyle='rgba(16,22,20,.8)';ctx.fill();txt(tip,32,VIEW.y+VIEW.h-17,11,'#cfd8dc')}
   drawMiniMap();drawPanel();drawTop();drawToolbar();drawPlanBar();drawToast();
   if(st.done){ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);rr(ctx,W/2-250,H/2-120,500,240,16);ctx.fillStyle='#22302a';ctx.fill();ctx.strokeStyle='#a4c964';ctx.lineWidth=2;ctx.stroke();

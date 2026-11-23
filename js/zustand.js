@@ -11,7 +11,7 @@ function newState(){return{money:0,earned:0,t:0,done:false,up:{bag:0,shoe:0,crew
 const upPrice=u=>Math.round(u.base*Math.pow(u.g,st.up[u.k])/10)*10;
 
 // Abgeleitete Werte aus Verbesserungen und Zielen
-const stR=()=>(8+3*st.up.range)*T,bspd=()=>3+1.5*st.up.belt,isOpen=k=>!(OPEN[k]>st.ph);
+const stR=()=>(8+3*st.up.range)*T,bspd=()=>3+1.5*st.up.belt,isOpen=k=>!(OPEN[k]>st.ph),nSort=()=>isOpen('pal')?6:4; // nSort: Sorten, die ein Sortierer waehlen kann. Mit dem Palettierer kommen die beiden Ballen dazu
 function toast(txt){ui.toast={txt,t:performance.now()}}
 
-export {bspd,cam,isOpen,resetState,st,stR,toast,ui,upPrice};
+export {bspd,cam,isOpen,nSort,resetState,st,stR,toast,ui,upPrice};
