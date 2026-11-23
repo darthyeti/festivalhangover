@@ -309,7 +309,7 @@ function drawPanel(){panelRect=null;const b=ui.sel;if(!b)return;const x=1052,y=V
     else lines=D.info.slice();
     if(b.k==='sort')lines.push('Sorte: '+TY[b.filter].n);
     if(b.k==='station'){let n=0;near((b.x+1)*T,(b.y+1)*T,stR(),()=>{n++});lines.push('Lager '+b.buf.length+'/'+ST_CAP+' · im Umkreis: '+n+' Stück')}
-    const why=jam(b);if(why)lines.push('Achtung: '+why);
+    const why=jam(b);lines.push(why?'Achtung: '+why:'');// Zeile bleibt immer frei, sonst springt die Fensterhoehe
     const nb=b.k==='sort'?4:2;h=36+lines.length*15+nb*34+6;rr(ctx,x,y,w,h,8);ctx.fillStyle='rgba(22,28,30,.94)';ctx.fill();ctx.strokeStyle='#4a5257';ctx.lineWidth=1;ctx.stroke();
     txt(D.name,x+12,y+22,14,'#fff','left',true);lines.forEach((s,i)=>txt(s,x+12,y+42+i*15,10.5,s.startsWith('Achtung')?'#ffc94a':'#cfd8dc'));let by=y+36+lines.length*15;
     if(b.k==='sort'){panelBtn(x+10,by,w-20,'Sorte wechseln',()=>{b.filter=(b.filter+1)%RAW});by+=34;panelBtn(x+10,by,w-20,'Auswurf drehen',()=>{b.dir=(b.dir+1)%4});by+=34}
