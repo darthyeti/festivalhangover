@@ -112,6 +112,7 @@ function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;cons
   if((d.n||8260)!==items.length){toast('Die Wiese ist neu angelegt. Der alte Spielstand passt nicht mehr.');return}
   st.money=d.money;st.earned=d.earned;st.t=d.t;Object.assign(st.up,d.up);st.sold=d.sold;st.ph=d.ph==null?GOALS.length-1:d.ph;st.viaBelt=d.viaBelt||0;st.rest=d.rest||null;
   // Die Verbesserung der Annahme gibt es nicht mehr (die Annahme soll der Engpass bleiben). Bezahlte Stufen werden erstattet.
+  {let r=0;for(const u of UPS)while(st.up[u.k]>u.max){st.up[u.k]--;r+=upPrice(u)}if(r){st.money+=r;toast('Gestrichene Stufen erstattet: '+euro(r))}}// E-015: Stufen ueber dem Hoechstwert zurueckzahlen
   if(st.up.auto){let r=0;for(let l=0;l<st.up.auto;l++)r+=Math.round(500*Math.pow(1.6,l)/10)*10;st.money+=r;toast('Ausbau der Annahme erstattet: '+euro(r))}delete st.up.auto;
   const p=st.player;p.x=p.tx=d.px;p.y=p.ty=d.py;p.bag=d.bag||[];
   loadTents(d.tents);const s=atob(d.dead);items.forEach((it,i)=>{if(s.charCodeAt(i>>3)&(1<<(i&7))){it.alive=false;const c=cells[it.c];c.splice(c.indexOf(it),1);st.left[it.m]--}});
