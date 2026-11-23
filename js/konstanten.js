@@ -11,7 +11,7 @@ const QI=typeof location!=='undefined'?+new URLSearchParams(location.search).get
 // Sorten: 0-3 liegen auf der Wiese, 4-7 entstehen in Maschinen
 const TY=[{n:'Dosen',val:25,col:'#c9d2d8'},{n:'PET',val:25,col:'#7fc4e8'},{n:'Glas',val:8,col:'#a8712f'},{n:'Leerkästen',val:150,col:'#d14b3c'},
  {n:'Dosenballen',val:450,col:'#e4eaed'},{n:'PET-Ballen',val:300,col:'#8fd0f0'},{n:'Volle Kästen',val:465,col:'#b23a2e'},{n:'Paletten',val:6750,col:'#c9a16a'}];
-const VERSION=23,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
+const VERSION=24,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
 const RAW=4,TENT_COST=500,MORE=1.2; // MORE: jede weitere Maschine derselben Art kostet so viel mal mehr (E-014, gesenkt mit E-015) // Zelt oder Pavillon abbauen, in Cent
 const BT={
  belt:{name:'Band',cost:50,w:1,h:1,info:['Ziehen legt eine Strecke.']},
@@ -41,7 +41,7 @@ const GOALS=[
  {t:'Presse Dosen',how:'Sortierer auf Dosen ins Band setzen, sein Pfeil zeigt in die Dosenpresse. Von der Presse ein Band zur Annahme.',need:3,val:s=>s.sold[4],unit:'Dosenballen'},
  {t:'Presse PET',how:'Ein zweiter Sortierer auf PET füttert die PET-Presse. Ballen entlasten die Annahme.',need:3,val:s=>s.sold[5],unit:'PET-Ballen'},
  {t:'Packe Kästen',how:'Der Kistenpacker braucht Glas und Leerkästen: zwei Sortierer, zwei Eingänge.',need:3,val:s=>s.sold[6],unit:'volle Kästen'},
- {t:'Stapel Paletten',how:'Der Palettierer nimmt Dosenballen und PET-Ballen statt sie zu verkaufen. Sortierer können jetzt auch Ballen aus dem Band holen.',need:1,val:s=>s.sold[7],unit:'Palette'},
+ {t:'Stapel Paletten',how:'Der Palettierer nimmt Dosenballen und PET-Ballen statt sie zu verkaufen. Sortierer können auch Ballen aus dem Band holen.',need:1,val:s=>s.sold[7],unit:'Palette'},
  {t:'Liefere Paletten in Serie',how:'Eine Kette reicht dafür kaum. Pressen direkt bei den Stationen entlasten die Bänder: Ein Ballen ersetzt zwölf Dosen.',need:10,val:s=>s.sold[7],unit:'Paletten'},
  {t:'Räum die Wiese leer',how:'Versetze Stationen, sobald ihr Umkreis leer ist. Die letzten Stücke blinken rot auf der Minikarte.',need:1,val:s=>s.total?(s.total-s.left[0]-s.left[1]-s.left[2]-s.left[3])/s.total:0,pct:true}
 ];
