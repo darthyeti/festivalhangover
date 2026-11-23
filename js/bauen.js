@@ -3,7 +3,7 @@
 import {BT,DX,DY,GOALS,MH,MORE,MW,SAVE_KEY,T,TENT_COST,UPS,WORLD_SEED,euro} from './konstanten.js';
 import {cam,isOpen,st,toast,ui,upPrice} from './zustand.js';
 import {AUTO,belts,blds,blocked,cells,goneTents,grid,items,loadTents,setTentGone,tentAt,tentTiles} from './welt.js';
-import {msg,pop} from './logik.js';
+import {msg,pop,straightOut} from './logik.js';
 
 function price(k){if(k==='station')return Math.round(1500*Math.pow(1.12,blds.filter(b=>b.k==='station').length)/10)*10;
   if(BT[k].inp)return Math.round(BT[k].cost*Math.pow(MORE,blds.filter(b=>b.k===k).length)/10)*10;return BT[k].cost}
@@ -100,7 +100,7 @@ function buildPlan(p){const e=p.path[p.path.length-1];if(ui.topoDirty)topo();if(
 function confirmPlan(){const p=ui.plan;if(!p)return;const r=buildPlan(p);if(r==='ok'){ui.plan=null;ui.planA=null}
   else if(r==='stale'){ui.plan=planBelt(p.ax,p.ay,p.bx,p.by);msg(ui.plan?'Weg neu berechnet':'Kein freier Weg mehr',p.bx*T+16,p.by*T-4)}}
 function topo(){ui.topoDirty=false;for(const t of belts){t.feed=[];for(let d=0;d<4;d++){if(d===(t.dir+2)%4)continue;const x=t.x-DX[d],y=t.y-DY[d];if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];
-      if(o&&((o.k==='belt'&&o.dir===d)||(o.k!=='belt'&&t.dir===d)))t.feed.push(d)}if(!t.feed.length)t.feed.push(t.dir)}}
+      if(o&&((o.k==='belt'&&o.dir===d)||(o.k!=='belt'&&t.dir===d)||((o.k==='split'||o.k==='sort')&&t.dir%2!==d%2&&!(o.k==='sort'&&o.dir===d)&&!straightOut(o))))t.feed.push(d)}if(!t.feed.length)t.feed.push(t.dir)}}
 function buyUp(i){const u=UPS[i],p=upPrice(u);if(st.up[u.k]>=u.max||st.money<p)return false;st.money-=p;st.up[u.k]++;return true}
 // Spielstand Version 2: merkt sich auch, was auf Baendern, in Sortierern, Verteilern, Kreuzungen, Maschinen und in der
 // Warteschlange der Annahme liegt. Was Sammler gerade tragen, wird ins Lager ihrer Station gelegt. Version 1 laedt weiterhin.
