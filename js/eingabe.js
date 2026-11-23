@@ -1,7 +1,7 @@
 // Montagmorgen: Eingabe und Schleife
 // Einstiegspunkt: Zeigerereignisse, Tastatur, Spielschleife, Testzugang window.__G.
 import {DX,DY,MH,MW,RAW,T,TOOLS,VIEW,WH,WW} from './konstanten.js';
-import {cam,isOpen,resetState,st,ui} from './zustand.js';
+import {cam,isOpen,nSort,resetState,st,ui} from './zustand.js';
 import {AUTO,belts,blds,blocked,cells,findPath,genWorld,grid,los,removeItem} from './welt.js';
 import {jam,msg,tryPush,update} from './logik.js';
 import {beltSwap,build,buildPlan,buyUp,crossOver,demolish,load,moveTo,planBelt,planEnds,rec,save,setBelt,stepBegin,stepEnd,undo,widen} from './bauen.js';
@@ -46,7 +46,7 @@ cv.addEventListener('pointermove',e=>{const p=toL(e);if(pts.has(e.pointerId))pts
 function pUp(e){const had=pts.has(e.pointerId);pts.delete(e.pointerId);if(pts.size<2)gest=null;if(!act||!had)return;const a=act;act=null;
   if(a.type==='belt'){if(a.moved){ui.planA=null;ui.plan=null;setBelt(a.lx,a.ly,a.dir)}else beltTap(a.lx,a.ly)}
   else if(a.type==='place'&&ptr.inView){const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;const g=ghostPos(),o=g.x>=0&&g.y>=0&&g.x<MW&&g.y<MH?grid[g.y*MW+g.x]:null;
-    if(ui.tool==='sort'&&o&&o.k==='sort')o.filter=(o.filter+1)%RAW;else if(ui.tool==='cross'&&o&&o.k==='belt')crossOver(g.x,g.y);else if((ui.tool==='split'||ui.tool==='sort')&&o&&o.k==='belt')beltSwap(ui.tool,g.x,g.y);else build(ui.tool,g.x,g.y)}
+    if(ui.tool==='sort'&&o&&o.k==='sort')o.filter=(o.filter+1)%nSort();else if(ui.tool==='cross'&&o&&o.k==='belt')crossOver(g.x,g.y);else if((ui.tool==='split'||ui.tool==='sort')&&o&&o.k==='belt')beltSwap(ui.tool,g.x,g.y);else build(ui.tool,g.x,g.y)}
   else if(a.type==='move'&&ui.move&&ptr.inView){const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;const b=ui.move,g=movePos();if(moveTo(b,g.x,g.y)){ui.move=null;ui.sel=b}}
   stepEnd();if(e.pointerType!=='mouse')ptr.inView=false}
 cv.addEventListener('pointerup',pUp);cv.addEventListener('pointercancel',pUp);cv.addEventListener('contextmenu',e=>e.preventDefault());

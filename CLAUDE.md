@@ -99,6 +99,8 @@ bewusst und nach Freigabe aendern.
   Sortierer oder Verteiler nur geradeaus weiter, Verteiler und Sortierer in eine Kreuzung ebenfalls nur geradeaus. Sitzt ein Stueck laenger als zwei Sekunden fest, ist jeder Nachbar recht.
 - Kurve am Verteiler oder Sortierer: Hat er keinen geraden Ausgang, gibt er auch auf ein Band direkt daneben ab,
   das quer wegfuehrt (`sideOuts`, `straightOut` in `logik.js`). `topo()` zeichnet dem Band dafuer einen Zulauf.
+- Sorten am Sortierer: `nSort()` in `zustand.js`. Rohware immer, mit freiem Palettierer auch Dosenballen und PET-Ballen,
+  damit sich Ballen von Pressen draussen aus dem gemischten Band holen lassen.
 - `beltSwap(k,x,y)` setzt Verteiler oder Sortierer direkt auf ein Bandfeld, wie `crossOver`.
 - Abriss verliert keine Ware: `unloadTo()` legt alles, was ein Bauteil traegt, in die
   Tuete der Spielfigur.

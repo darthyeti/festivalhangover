@@ -329,6 +329,11 @@ function serve() {
       gs.item = 0; gs.from = 1; gs.wait = 0; for (let k = 0; k < 360; k++) { G.step(1 / 60); if (top.item >= 0 && top.prog >= 1) { top.item = -1; got++; } }
       o.sortRescue = gs.item < 0 && got === 7; o.sortDetail = got + '/' + gs.item + '/' + ks.item;
       G.demolish(6, 30); G.demolish(6, 29); G.st.player.bag.length = 0; }
+    // Sortierer auf Ballen: holt Dosenballen aus einem gemischten Band, der Rest laeuft weiter.
+    while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
+    { G.setRot(1); for (let x = 8; x >= 4; x--) G.setBelt(x, 30, 2); const sb = G.beltSwap('sort', 6, 30); sb.filter = 4; G.setBelt(6, 31, 1);
+      G.tryPush(8, 30, 4, 2); G.step(1); G.tryPush(8, 30, 0, 2); G.step(4); const at = (x, y) => { const q = G.grid[y * G.MW + x]; return q && q.k === 'belt' ? q.item : -2; };
+      o.sortBale = at(6, 31) === 4 && at(4, 30) === 0; o.sortBaleDetail = at(6, 31) + '/' + at(4, 30); G.demolish(6, 30); G.st.player.bag.length = 0; }
     // Doppelband: traegt bei gleichem Tempo das Doppelte, zwei Zulaeufe laufen beide voll weiter. Abriss und Rueckgaengig erstatten.
     while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
     { for (let x = 8; x >= 4; x--) G.setBelt(x, 30, 2); G.setBelt(7, 29, 1); G.setBelt(7, 28, 1);
@@ -447,6 +452,7 @@ function serve() {
     ['Weitere Maschine derselben Art kostet 20 Prozent mehr, Abriss erstattet den gezahlten Preis', m3.priceUp && m3.priceRefund, m3.priceDetail],
     ['Sortierer laesst sich direkt auf ein Band setzen, Band erstattet, Stueck bleibt', m3.swapOk && m3.swapNeedsBelt, `${m3.swapOk}/${m3.swapNeedsBelt}`],
     ['Ein Rueckgaengig macht daraus wieder das Band', m3.swapUndo, String(m3.swapUndo)],
+    ['Sortierer auf Dosenballen holt Ballen aus gemischtem Band', m3.sortBale, m3.sortBaleDetail],
     ['Doppelband traegt das Doppelte, zwei Zulaeufe laufen voll weiter', m3.wideRate, m3.wideDetail],
     ['Doppelband kostet 1 Euro Aufpreis, Abriss erstattet 1,50 Euro, Spielstand merkt sich die Spur', m3.wideMoney && m3.wideSaved, `${m3.wideMoney}/${m3.wideSaved} ${m3.wideDetail}`],
     ['Kreuzung zwischen zwei Sortierern laesst die Linie durch', m3.crossBetween, m3.crossBetweenDetail],
