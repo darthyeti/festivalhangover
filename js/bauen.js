@@ -1,6 +1,6 @@
 // Montagmorgen: Bauen
 // Bauen, Abriss, Verbesserungen, Speichern und Laden.
-import {BT,DX,DY,GOALS,MH,MORE,MW,SAVE_KEY,T,TENT_COST,UPS,WORLD_SEED,euro} from './konstanten.js';
+import {BT,DX,DY,GOALS,MH,MORE,MW,SAVE_KEY,T,TENT_COST,UPS,WIDE_COST,WORLD_SEED,euro} from './konstanten.js';
 import {cam,isOpen,st,toast,ui,upPrice} from './zustand.js';
 import {AUTO,belts,blds,blocked,cells,goneTents,grid,items,loadTents,setTentGone,tentAt,tentTiles} from './welt.js';
 import {msg,pop,straightOut} from './logik.js';
@@ -22,18 +22,21 @@ function blockReason(x,y,w,h,ign){for(let j=0;j<h;j++)for(let i=0;i<w;i++){const
 function setBelt(x,y,d){if(x<0||y<0||x>=MW||y>=MH)return false;const o=grid[y*MW+x];if(o){if(o.k==='belt'&&o.dir!==d){rec({t:'dir',o,d:o.dir});o.dir=d;ui.topoDirty=ui.orderDirty=true}return o.k==='belt'}
   if(!freeTile(x,y)){msg(blockReason(x,y,1,1),x*T+16,y*T-4);return false}if(st.money<50){msg('Zu wenig Geld',x*T+16,y*T-4);return false}
   st.money-=50;const t={k:'belt',x,y,dir:d,item:-1,prog:0,from:d,feed:[d]};grid[y*MW+x]=t;belts.push(t);ui.topoDirty=ui.orderDirty=true;rec({t:'add',o:t});return true}
+// Doppelband (E-015): gibt einem vorhandenen Bandfeld eine zweite Spur. Gleiches Tempo, doppelte Menge.
+function widen(x,y,quiet){if(x<0||y<0||x>=MW||y>=MH)return false;const o=grid[y*MW+x];if(!o||o.k!=='belt'){if(!quiet)msg('Erst ein Band legen, dann verbreitern',x*T+16,y*T-4);return false}if(o.b)return false;
+  if(st.money<WIDE_COST){if(!quiet)msg('Zu wenig Geld',x*T+16,y*T-4);return false}st.money-=WIDE_COST;o.b={item:-1,prog:0,from:o.dir};rec({t:'wide',o});return true}
 // Zelt oder Pavillon abbauen: kostet TENT_COST, keine Erstattung, gibt die Felder frei. Nur beim Antippen, nicht beim Ziehen.
 function removeTent(f,x,y){if(st.money<TENT_COST){msg('Abbauen kostet '+euro(TENT_COST),x*T+16,y*T-4);return false}st.money-=TENT_COST;setTentGone(f,true);pop(f.x,f.y-20,'−'+euro(TENT_COST),'#ff9a7a');rec({t:'tent',o:f});return true}
 // Was ein Bauteil gerade traegt, wandert beim Abriss in die Tuete der Spielfigur (auch ueber ihr Fassungsvermoegen). Nichts geht verloren.
 function unloadTo(o,bag){const n0=bag.length;
-  if(o.k==='belt'||o.k==='split'||o.k==='sort'){if(o.item>=0){bag.push(o.item);o.item=-1}}
+  if(o.k==='belt'||o.k==='split'||o.k==='sort'){if(o.item>=0){bag.push(o.item);o.item=-1}if(o.b&&o.b.item>=0){bag.push(o.b.item);o.b.item=-1}}
   else if(o.k==='cross'){for(let a=0;a<2;a++)if(o.it[a]>=0){bag.push(o.it[a]);o.it[a]=-1}}
   else if(o.k==='station'){for(const m of o.buf)bag.push(m);o.buf.length=0;for(const h of o.helpers){for(const m of h.load)bag.push(m);h.load.length=0}}
   else if(BT[o.k].inp){const R=BT[o.k];if(o.t>=0){for(const k in R.inp)o.buf[k]+=R.inp[k];o.t=-1}for(const k in o.buf){for(let i=0;i<o.buf[k];i++)bag.push(+k);o.buf[k]=0}for(let i=0;i<o.out;i++)bag.push(R.out);o.out=0}
   return bag.length-n0}
 function demolish(x,y,noTent){if(x<0||y<0||x>=MW||y>=MH)return;const o=grid[y*MW+x];if(!o){const f=noTent?null:tentAt(x,y);if(f)removeTent(f,x,y);return}if(o.k==='auto')return;
   const got=unloadTo(o,st.player.bag);if(got)pop(x*T+16,y*T-6,'+'+got+' in die Tüte','#cfe8ff');
-  if(o.k==='belt'){grid[y*MW+x]=null;belts.splice(belts.indexOf(o),1);st.money+=50}
+  if(o.k==='belt'){grid[y*MW+x]=null;belts.splice(belts.indexOf(o),1);st.money+=50+(o.b?WIDE_COST:0)}
   else{for(let j=0;j<o.h;j++)for(let i=0;i<o.w;i++)grid[(o.y+j)*MW+o.x+i]=null;blds.splice(blds.indexOf(o),1);st.money+=o.paid;
     if(o.k==='station')for(const h of o.helpers)if(h.target)h.target.claimed=false}
   if(ui.sel===o)ui.sel=null;if(ui.move===o)ui.move=null;ui.topoDirty=ui.orderDirty=true;rec({t:'del',o})}
@@ -44,14 +47,14 @@ function stepEnd(){const s=ui.step;ui.step=null;if(s&&s.length)pushStep(s)}
 function stepBegin(){stepEnd();ui.step=[]}
 function rec(e){if(ui.undoing)return;if(ui.step)ui.step.push(e);else pushStep([e])}
 function restore(o){const px=(o.x+(o.w||1)/2)*T,py=o.y*T-4;
-  if(o.k==='belt'){if(!freeTile(o.x,o.y)){msg('Platz ist nicht mehr frei',px,py);return}if(st.money<50){msg('Zu wenig Geld',px,py);return}st.money-=50;grid[o.y*MW+o.x]=o;belts.push(o);ui.topoDirty=ui.orderDirty=true;return}
+  if(o.k==='belt'){if(!freeTile(o.x,o.y)){msg('Platz ist nicht mehr frei',px,py);return}{const c=50+(o.b?WIDE_COST:0);if(st.money<c){msg('Zu wenig Geld',px,py);return}st.money-=c}grid[o.y*MW+o.x]=o;belts.push(o);ui.topoDirty=ui.orderDirty=true;return}
   if(!canBuild(o.x,o.y,o.w,o.h)){msg('Platz ist nicht mehr frei',px,py);return}if(st.money<o.paid){msg('Zu wenig Geld',px,py);return}
   st.money-=o.paid;if(o.k==='station')for(const h of o.helpers){h.target=null;if(h.state==='walk'||h.state==='pick')h.state='seek'}placeB(o)}
 function undo(){stepEnd();const s=ui.undo.pop();if(!s)return false;ui.undoing=true;
   for(let i=s.length-1;i>=0;i--){const e=s[i],o=e.o;
     if(e.t==='tent'){if(tentTiles(o).some(q=>grid[q]))msg('Platz ist nicht mehr frei',o.x,o.y-20);else{setTentGone(o,false);st.money+=TENT_COST}continue}
     const here=grid[o.y*MW+o.x]===o;
-    if(e.t==='add'){if(here)demolish(o.x,o.y)}else if(e.t==='dir'){if(here){o.dir=e.d;ui.topoDirty=ui.orderDirty=true}}else if(e.t==='del'){if(!here)restore(o)}else if(e.t==='move'){if(here)moveB(o,e.x,e.y)}}
+    if(e.t==='add'){if(here)demolish(o.x,o.y)}else if(e.t==='dir'){if(here){o.dir=e.d;ui.topoDirty=ui.orderDirty=true}}else if(e.t==='del'){if(!here)restore(o)}else if(e.t==='wide'){if(here&&o.b){if(o.b.item>=0)st.player.bag.push(o.b.item);delete o.b;st.money+=WIDE_COST}}else if(e.t==='move'){if(here)moveB(o,e.x,e.y)}}
   ui.undoing=false;return true}
 // Versetzen: Gebaeude behaelt Inhalt und Einstellungen, kostet nichts. Baender und die Annahme lassen sich nicht versetzen.
 function canMove(b,x,y){return b.k!=='belt'&&b.k!=='auto'&&blockReason(x,y,b.w,b.h,b)===''}
@@ -106,7 +109,7 @@ function buyUp(i){const u=UPS[i],p=upPrice(u);if(st.up[u.k]>=u.max||st.money<p)r
 // Warteschlange der Annahme liegt. Was Sammler gerade tragen, wird ins Lager ihrer Station gelegt. Version 1 laedt weiterhin.
 function save(){try{const bits=new Uint8Array(Math.ceil(items.length/8));items.forEach((it,i)=>{if(!it.alive)bits[i>>3]|=1<<(i&7)});let s='';for(let i=0;i<bits.length;i++)s+=String.fromCharCode(bits[i]);
   localStorage.setItem(SAVE_KEY,JSON.stringify({v:2,seed:WORLD_SEED,n:items.length,money:st.money,earned:st.earned,t:st.t,up:st.up,sold:st.sold,ph:st.ph,viaBelt:st.viaBelt,rest:st.rest,px:st.player.x,py:st.player.y,bag:st.player.bag,dead:btoa(s),tents:goneTents(),
-    auto:{q:AUTO.q,acc:AUTO.acc},belts:belts.map(t=>[t.x,t.y,t.dir,t.item,t.prog,t.from]),
+    auto:{q:AUTO.q,acc:AUTO.acc},belts:belts.map(t=>t.b?[t.x,t.y,t.dir,t.item,t.prog,t.from,[t.b.item,t.b.prog,t.b.from]]:[t.x,t.y,t.dir,t.item,t.prog,t.from]),
     blds:blds.filter(b=>b.k!=='auto').map(b=>({k:b.k,x:b.x,y:b.y,dir:b.dir,filter:b.filter,paid:b.paid,buf:b.k==='station'?b.buf.concat(...b.helpers.map(h=>h.load)):b.buf,out:b.out,made:b.made,t:b.t,item:b.item,from:b.from,it:b.it,dr:b.dr}))}))}catch(e){}}
 function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;const d=JSON.parse(raw);if(d.v!==1&&d.v!==2)return;if(d.seed!=null&&d.seed!==WORLD_SEED)return;
   if((d.n||8260)!==items.length){toast('Die Wiese ist neu angelegt. Der alte Spielstand passt nicht mehr.');return}
@@ -117,11 +120,11 @@ function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;cons
   const p=st.player;p.x=p.tx=d.px;p.y=p.ty=d.py;p.bag=d.bag||[];
   loadTents(d.tents);const s=atob(d.dead);items.forEach((it,i)=>{if(s.charCodeAt(i>>3)&(1<<(i&7))){it.alive=false;const c=cells[it.c];c.splice(c.indexOf(it),1);st.left[it.m]--}});
   if(d.auto){AUTO.q=d.auto.q||[];AUTO.acc=d.auto.acc||0}
-  for(const t of d.belts){const o={k:'belt',x:t[0],y:t[1],dir:t[2],item:t[3]==null?-1:t[3],prog:t[4]||0,from:t[5]==null?t[2]:t[5],feed:[t[2]]};grid[o.y*MW+o.x]=o;belts.push(o)}
+  for(const t of d.belts){const o={k:'belt',x:t[0],y:t[1],dir:t[2],item:t[3]==null?-1:t[3],prog:t[4]||0,from:t[5]==null?t[2]:t[5],feed:[t[2]]};if(t[6])o.b={item:t[6][0],prog:t[6][1],from:t[6][2]};grid[o.y*MW+o.x]=o;belts.push(o)}
   for(const q of d.blds){const b=mkB(q.k,q.x,q.y,q.paid);if(q.dir!=null)b.dir=q.dir;if(q.filter!=null)b.filter=q.filter;
     if(q.k==='station')b.buf=q.buf||[];else if(q.k==='cross'){if(q.it)b.it=q.it;if(q.dr)b.dr=q.dr}
     else if(q.k==='split'||q.k==='sort'){if(q.item!=null&&q.item>=0){b.item=q.item;b.from=q.from||0;b.wait=0.15}}
     else if(BT[q.k].inp){Object.assign(b.buf,q.buf);b.out=q.out||0;b.made=q.made||0;if(q.t!=null)b.t=q.t}placeB(b)}
   cam.x=p.x;cam.y=p.y}catch(e){}}
 
-export {beltSwap,build,buildPlan,buyUp,canBuild,canMove,confirmPlan,crossOver,toggleCross,planBelt,planEnds,demolish,freeTile,load,moveTo,placeB,price,rec,save,setBelt,stepBegin,stepEnd,topo,undo};
+export {beltSwap,build,buildPlan,buyUp,canBuild,canMove,confirmPlan,crossOver,toggleCross,planBelt,planEnds,demolish,freeTile,load,moveTo,placeB,price,rec,save,setBelt,stepBegin,stepEnd,topo,undo,widen};

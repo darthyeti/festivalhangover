@@ -133,7 +133,7 @@ Band 0,50 € je Feld, Verteiler 3 €, Sortierer 5 €, Sammelstation 15 € (j
 
 Größere Tüte (25, je Stufe +10), Laufschuhe (110 px/s, je Stufe +18), mehr Sammler (je Stufe +1 pro Station, bis 8), größerer Umkreis (8, 11, 14, 17 Felder), schnellere Bänder (3 bis 6 Stück pro Sekunde in zwei Stufen zu 60 und 150 €).
 
-Seit Version 18 (Entscheidung E-015): Jede weitere Maschine derselben Art kostet 20 % mehr als die vorige (Dosenpresse 40, 48, 57,60, 69,10 €). Vorher war es das 1,5-Fache (E-014), das hat Pressen vor Ort bei den Stationen bestraft. Bandstufen über der zweiten werden beim Laden erstattet. Offen aus E-015: das Doppelband als Bauteil. Der Abriss erstattet weiter den gezahlten Preis.
+Seit Version 18 (Entscheidung E-015): Jede weitere Maschine derselben Art kostet 20 % mehr als die vorige (Dosenpresse 40, 48, 57,60, 69,10 €). Vorher war es das 1,5-Fache (E-014), das hat Pressen vor Ort bei den Stationen bestraft. Bandstufen über der zweiten werden beim Laden erstattet. Seit Version 19 gibt es das Doppelband: Ein vorhandenes Bandfeld bekommt für 1 € Aufpreis eine zweite Spur und trägt bei gleichem Tempo doppelt so viel (frei ab Ziel 3). Sortierer, Verteiler und Kreuzungen bleiben einspurig. Der Abriss erstattet weiter den gezahlten Preis.
 
 **Messwerte (20.11.2026, per `__G.step`)**
 

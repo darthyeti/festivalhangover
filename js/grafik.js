@@ -1,6 +1,6 @@
 // Montagmorgen: Grafik
 // Vorgerenderte Ebenen, Sprites, Zeichenfunktionen, Oberflaeche.
-import {AUTO_CAP,AUTO_RATE,MEDALS,BT,DX,DY,FONT,H,LS,MH,MW,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WW,euro,rng} from './konstanten.js';
+import {AUTO_CAP,AUTO_RATE,MEDALS,BT,DX,DY,FONT,H,LS,MH,MW,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WIDE_COST,WW,euro,rng} from './konstanten.js';
 import {bspd,cam,isOpen,st,stR,toast,ui,upPrice} from './zustand.js';
 import {belts,blds,blocked,camps,cells,grid,items,near,pathDist,pathX,pathY} from './welt.js';
 import {buyUp,canBuild,canMove,confirmPlan,demolish,freeTile,price,save,toggleCross,topo,undo} from './bauen.js';
@@ -115,18 +115,19 @@ function lamp(x,y,col,blink){const on=!blink||(st.t*4%1)<0.6;ctx.fillStyle='#101
   if(on){const g=ctx.createRadialGradient(x,y,0,x,y,8);g.addColorStop(0,col);g.addColorStop(0.45,col);g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,8,0,6.3);ctx.fill()}}
 function arrow(x,y,d,s,col){ctx.save();ctx.translate(x,y);ctx.rotate(d*Math.PI/2);ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(s,0);ctx.lineTo(-s*0.5,-s*0.75);ctx.lineTo(-s*0.15,0);ctx.lineTo(-s*0.5,s*0.75);ctx.closePath();ctx.fill();ctx.restore()}
 
-function beltStrip(len0,len1,off){// im gedrehten System: von x=len0 bis len1
-  ctx.fillStyle='#14181a';ctx.fillRect(len0,-10,len1-len0,20);ctx.fillStyle=lg(ctx,0,-8,0,8,['#3d464c','#343c42','#2a3136']);ctx.fillRect(len0,-8,len1-len0,16);
-  ctx.strokeStyle='rgba(255,255,255,.13)';ctx.lineWidth=1.3;ctx.beginPath();for(let px=len0-8+off;px<len1;px+=8){if(px<len0||px+3>len1)continue;ctx.moveTo(px,-5);ctx.lineTo(px+3,0);ctx.lineTo(px,5)}ctx.stroke();
-  ctx.fillStyle='#7d878d';ctx.fillRect(len0,-10,len1-len0,1.6);ctx.fillRect(len0,8.4,len1-len0,1.6)}
+function beltStrip(len0,len1,off,h){h=h||10;// im gedrehten System: von x=len0 bis len1, h = halbe Breite (Doppelband 14)
+  ctx.fillStyle='#14181a';ctx.fillRect(len0,-h,len1-len0,2*h);ctx.fillStyle=lg(ctx,0,2-h,0,h-2,['#3d464c','#343c42','#2a3136']);ctx.fillRect(len0,2-h,len1-len0,2*h-4);
+  ctx.strokeStyle='rgba(255,255,255,.13)';ctx.lineWidth=1.3;ctx.beginPath();for(let px=len0-8+off;px<len1;px+=8){if(px<len0||px+3>len1)continue;if(h>10){ctx.moveTo(px,-11);ctx.lineTo(px+3,-6.5);ctx.lineTo(px,-2);ctx.moveTo(px,2);ctx.lineTo(px+3,6.5);ctx.lineTo(px,11)}else{ctx.moveTo(px,-5);ctx.lineTo(px+3,0);ctx.lineTo(px,5)}}ctx.stroke();if(h>10){ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(len0,-0.6,len1-len0,1.2)}
+  ctx.fillStyle=h>10?'#c9a13a':'#7d878d';ctx.fillRect(len0,-h,len1-len0,1.6);ctx.fillRect(len0,h-1.6,len1-len0,1.6)}
 // Haelften eines Bandfelds: f(anfang,waagerecht) je Zulauf und fuer den Ablauf
 function beltHalves(t,f){const x=t.x*T,y=t.y*T;for(const d of t.feed){if(d%2)f(d===1?y:y+16,false);else f(d===0?x:x+16,true)}if(t.dir%2)f(t.dir===1?y+16:y,false);else f(t.dir===0?x+16:x,true)}
-function drawBelt(t){const cx=t.x*T+16,cy=t.y*T+16,off=(st.t*bspd()*T)%8;
-  for(const d of t.feed){ctx.save();ctx.translate(cx,cy);ctx.rotate(d*Math.PI/2);beltStrip(-16,0,off);ctx.restore()}
-  ctx.save();ctx.translate(cx,cy);ctx.rotate(t.dir*Math.PI/2);beltStrip(0,16,off);ctx.restore();
-  if(t.feed.length>1||t.feed[0]!==t.dir){ctx.fillStyle='#343c42';ctx.beginPath();ctx.arc(cx,cy,8,0,6.3);ctx.fill();arrow(cx,cy,t.dir,4,'rgba(255,255,255,.25)')}}
-function beltItem(t){const cx=t.x*T+16,cy=t.y*T+16,p=t.prog;let x,y;if(p<0.5){x=cx-DX[t.from]*(0.5-p)*T;y=cy-DY[t.from]*(0.5-p)*T}else{x=cx+DX[t.dir]*(p-0.5)*T;y=cy+DY[t.dir]*(p-0.5)*T}
-  mini(t.item,x,y,t.item>=RAW?0.95:0.85,(t.x*3+t.y)%12,(t.x+t.y)%4)}
+function drawBelt(t){const cx=t.x*T+16,cy=t.y*T+16,off=(st.t*bspd()*T)%8,h=t.b?14:10;
+  for(const d of t.feed){ctx.save();ctx.translate(cx,cy);ctx.rotate(d*Math.PI/2);beltStrip(-16,0,off,h);ctx.restore()}
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(t.dir*Math.PI/2);beltStrip(0,16,off,h);ctx.restore();
+  if(t.feed.length>1||t.feed[0]!==t.dir){ctx.fillStyle='#343c42';ctx.beginPath();ctx.arc(cx,cy,h-2,0,6.3);ctx.fill();arrow(cx,cy,t.dir,4,'rgba(255,255,255,.25)')}}
+function beltItem(t,l){const cx=t.x*T+16,cy=t.y*T+16,p=Math.min(1,l.prog),f=l.from;let x,y;if(p<0.5){x=cx-DX[f]*(0.5-p)*T;y=cy-DY[f]*(0.5-p)*T}else{x=cx+DX[t.dir]*(p-0.5)*T;y=cy+DY[t.dir]*(p-0.5)*T}
+  if(t.b){const s=l===t?-6.5:6.5;x+=s*(-DY[f]*(1-p)-DY[t.dir]*p);y+=s*(DX[f]*(1-p)+DX[t.dir]*p)}// Spur links oder rechts der Laufrichtung
+  mini(l.item,x,y,(l.item>=RAW?0.95:0.85)*(t.b?0.82:1),(t.x*3+t.y)%12,(t.x+t.y)%4)}
 function drawCross(b){const x=b.x*T,y=b.y*T,cx=x+16,cy=y+16,off=(st.t*24)%8;
   ctx.save();ctx.translate(cx,cy);if(b.dr&&b.dr[0]===2)ctx.rotate(Math.PI);beltStrip(-16,16,off);ctx.restore();if(b.it[0]>=0)mini(b.it[0],cx,cy,0.85,3,1);
   ctx.fillStyle='rgba(0,0,0,.38)';ctx.fillRect(x+29,y+3,6,29);ctx.fillStyle=lg(ctx,x,y,x+32,y,['#aab4ba','#6d777d']);ctx.fillRect(x+3,y,26,32);
@@ -215,7 +216,7 @@ const toW=(x,y)=>({x:cam.x+(x-VIEW.x-VIEW.w/2)/cam.z,y:cam.y+(y-VIEW.y-VIEW.h/2)
 function movePos(){const b=ui.move;return{x:Math.floor(ptr.wx/T-(b.w-1)/2),y:Math.floor(ptr.wy/T-(b.h-1)/2)}}
 function warnBadge(x,y){const s=Math.max(1,0.75/cam.z),k=0.5+0.5*Math.sin(st.t*5);ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(10.5,8);ctx.lineTo(-10.5,8);ctx.closePath();
   ctx.fillStyle='rgb(255,'+Math.round(176+40*k)+',40)';ctx.fill();ctx.strokeStyle='#3a2a08';ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.stroke();ctx.fillStyle='#3a2a08';ctx.fillRect(-1.3,-5,2.6,7.5);ctx.fillRect(-1.3,4,2.6,2.4);ctx.restore()}
-function ghostPos(){const D=BT[ui.tool];return{x:Math.floor(ptr.wx/T-(D.w-1)/2),y:Math.floor(ptr.wy/T-(D.h-1)/2)}}
+function ghostPos(){const D=BT[ui.tool]||{w:1,h:1};return{x:Math.floor(ptr.wx/T-(D.w-1)/2),y:Math.floor(ptr.wy/T-(D.h-1)/2)}}
 function clampCam(){const hw=VIEW.w/2/cam.z,hh=VIEW.h/2/cam.z;cam.x=Math.max(Math.min(hw,WW/2)-16,Math.min(WW-Math.min(hw,WW/2)+16,cam.x));cam.y=Math.max(Math.min(hh,WH/2)-16-130/cam.z,Math.min(WH-Math.min(hh,WH/2)+16+56/cam.z,cam.y))}// oben und unten Luft, damit Zielanzeige, Karte und Planleiste nichts von der Wiese verdecken
 function drawWorld(){ctx.save();ctx.beginPath();ctx.rect(VIEW.x,VIEW.y,VIEW.w,VIEW.h);ctx.clip();ctx.fillStyle='#1b2420';ctx.fillRect(VIEW.x,VIEW.y,VIEW.w,VIEW.h);
   ctx.translate(VIEW.x+VIEW.w/2,VIEW.y+VIEW.h/2);ctx.scale(cam.z,cam.z);ctx.translate(-cam.x,-cam.y);
@@ -224,10 +225,10 @@ function drawWorld(){ctx.save();ctx.beginPath();ctx.rect(VIEW.x,VIEW.y,VIEW.w,VI
   const vis=(x,y,m)=>x>x0-m&&x<x1+m&&y>y0-m&&y<y1+m,building=ui.tool!=='walk'||!!ui.move;
   if(building&&cam.z>=0.6){ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=1/cam.z;ctx.beginPath();for(let x=Math.ceil(x0/T)*T;x<=x1;x+=T){ctx.moveTo(x,y0);ctx.lineTo(x,y1)}for(let y=Math.ceil(y0/T)*T;y<=y1;y+=T){ctx.moveTo(x0,y);ctx.lineTo(x1,y)}ctx.stroke();
     ctx.fillStyle='rgba(255,70,50,.16)';for(let ty=Math.max(0,(y0/T)|0);ty<=Math.min(MH-1,(y1/T)|0);ty++)for(let tx=Math.max(0,(x0/T)|0);tx<=Math.min(MW-1,(x1/T)|0);tx++){const i=ty*MW+tx;if(!grid[i]&&(blocked[i]||cells[i].length))ctx.fillRect(tx*T,ty*T,T,T)}}
-  ctx.fillStyle='rgba(10,20,8,.3)';for(const t of belts)if(vis(t.x*T,t.y*T,40))beltHalves(t,(hx,hz)=>{if(hz)ctx.fillRect(hx,t.y*T+9,16,23);else ctx.fillRect(t.x*T+9,hx,23,16)});
-  for(const t of belts)if(vis(t.x*T,t.y*T,40))beltHalves(t,(hx,hz)=>{if(hz){ctx.fillStyle='#4b5459';ctx.fillRect(hx,t.y*T+26,16,3.5);ctx.fillStyle='#262c2f';ctx.fillRect(hx,t.y*T+28.6,16,0.9)}});
+  ctx.fillStyle='rgba(10,20,8,.3)';for(const t of belts)if(vis(t.x*T,t.y*T,40))beltHalves(t,(hx,hz)=>{const e=t.b?4:0;if(hz)ctx.fillRect(hx,t.y*T+9-e,16,23+2*e);else ctx.fillRect(t.x*T+9-e,hx,23+2*e,16)});
+  for(const t of belts)if(vis(t.x*T,t.y*T,40))beltHalves(t,(hx,hz)=>{const e=t.b?4:0;if(hz){ctx.fillStyle='#4b5459';ctx.fillRect(hx,t.y*T+26+e,16,3.5);ctx.fillStyle='#262c2f';ctx.fillRect(hx,t.y*T+28.6+e,16,0.9)}});
   for(const t of belts)if(vis(t.x*T,t.y*T,40))drawBelt(t);
-  for(const t of belts)if(t.item>=0&&vis(t.x*T,t.y*T,40))beltItem(t);
+  for(const t of belts)if(vis(t.x*T,t.y*T,40)){if(t.item>=0)beltItem(t,t);if(t.b&&t.b.item>=0)beltItem(t,t.b)}
   const ents=[];for(const b of blds){if(!vis(b.x*T,b.y*T,360))continue;ents.push([(b.y+b.h)*T-6,0,b]);if(b.k==='station')for(const h of b.helpers)ents.push([h.y,1,h])}
   ents.push([st.player.y,2,null]);ents.sort((a,b)=>a[0]-b[0]);
   for(const e of ents){if(e[1]===1)drawHelper(e[2]);else if(e[1]===2)drawPlayer();else{const b=e[2];if(b.k==='cross')drawCross(b);else if(b.k==='split'||b.k==='sort')drawSmall(b);else if(b.k==='station')drawStation(b);else if(b.k==='auto')drawAuto(b);else drawMachine(b)}}
@@ -239,7 +240,8 @@ function drawWorld(){ctx.save();ctx.beginPath();ctx.rect(VIEW.x,VIEW.y,VIEW.w,VI
   if(ui.move&&ptr.inView){const b=ui.move,g=movePos(),ok=canMove(b,g.x,g.y);ctx.fillStyle=ok?'rgba(110,230,120,.35)':'rgba(255,80,60,.4)';ctx.fillRect(g.x*T,g.y*T,b.w*T,b.h*T);ctx.strokeStyle=ok?'#9be28a':'#ff7a6b';ctx.lineWidth=2/cam.z;ctx.strokeRect(g.x*T,g.y*T,b.w*T,b.h*T);
     ctx.strokeStyle='rgba(255,226,122,.8)';ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo((b.x+b.w/2)*T,(b.y+b.h/2)*T);ctx.lineTo((g.x+b.w/2)*T,(g.y+b.h/2)*T);ctx.stroke();ctx.setLineDash([]);
     if(b.k==='station'){ctx.strokeStyle='rgba(255,255,255,.7)';ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc((g.x+1)*T,(g.y+1)*T,stR(),0,6.3);ctx.stroke();ctx.setLineDash([])}}
-  if(building&&!ui.move&&ptr.inView&&ui.tool!=='demo'){const D=BT[ui.tool],g=ghostPos(),onBelt=g.x>=0&&g.y>=0&&g.x<MW&&g.y<MH&&grid[g.y*MW+g.x]&&grid[g.y*MW+g.x].k==='belt',ok=ui.tool==='belt'?(freeTile(g.x,g.y)||onBelt):((ui.tool==='cross'||ui.tool==='split'||ui.tool==='sort')&&onBelt)||canBuild(g.x,g.y,D.w,D.h);
+  if(ui.tool==='wide'&&ptr.inView){const tx=(ptr.wx/T)|0,ty=(ptr.wy/T)|0,o=tx<MW&&ty<MH?grid[ty*MW+tx]:null;ctx.strokeStyle=o&&o.k==='belt'&&!o.b?'#ffe27a':'rgba(255,255,255,.35)';ctx.lineWidth=2/cam.z;ctx.strokeRect(tx*T,ty*T,T,T)}
+  if(building&&!ui.move&&ptr.inView&&ui.tool!=='demo'&&ui.tool!=='wide'){const D=BT[ui.tool],g=ghostPos(),onBelt=g.x>=0&&g.y>=0&&g.x<MW&&g.y<MH&&grid[g.y*MW+g.x]&&grid[g.y*MW+g.x].k==='belt',ok=ui.tool==='belt'?(freeTile(g.x,g.y)||onBelt):((ui.tool==='cross'||ui.tool==='split'||ui.tool==='sort')&&onBelt)||canBuild(g.x,g.y,D.w,D.h);
     ctx.fillStyle=ok?'rgba(110,230,120,.35)':'rgba(255,80,60,.4)';ctx.fillRect(g.x*T,g.y*T,D.w*T,D.h*T);ctx.strokeStyle=ok?'#9be28a':'#ff7a6b';ctx.lineWidth=2/cam.z;ctx.strokeRect(g.x*T,g.y*T,D.w*T,D.h*T);
     if(ui.tool==='belt'||ui.tool==='sort')arrow(g.x*T+16,g.y*T+16,ui.rot,9,'#fff');
     if(ui.tool==='station'){ctx.strokeStyle='rgba(255,255,255,.7)';ctx.setLineDash([8,6]);ctx.beginPath();ctx.arc((g.x+1)*T,(g.y+1)*T,stR(),0,6.3);ctx.stroke();ctx.setLineDash([])}}
@@ -265,6 +267,7 @@ function drawToast(){const t=ui.toast;if(!t)return;const a=(performance.now()-t.
 function toolIcon(id,x,y){ctx.save();ctx.translate(x,y);
   if(id==='walk')drawFigure(0,9,0,0,false,'#2fb9c9','#d9482b',false);
   else if(id==='belt'){ctx.translate(-14,0);beltStrip(0,28,(st.t*24)%8)}
+  else if(id==='wide'){ctx.translate(-14,0);beltStrip(0,28,(st.t*24)%8,14)}
   else if(id==='cross'){ctx.scale(0.85,0.85);ctx.translate(-16,-16);drawCross({x:0,y:0,it:[-1,-1]})}
   else if(id==='split'||id==='sort'){ctx.scale(0.85,0.85);ctx.translate(-16,-16);const s=cam.z;drawSmall({k:id,x:0,y:0,item:-1,filter:0,dir:ui.rot})}
   else if(id==='station'){ctx.fillStyle='#ff9a3a';ctx.beginPath();ctx.moveTo(0,-2);ctx.lineTo(-14,-12);ctx.lineTo(14,-12);ctx.closePath();ctx.fill();ctx.fillStyle='#f6f1e4';ctx.beginPath();ctx.moveTo(0,-2);ctx.lineTo(14,-12);ctx.lineTo(14,12);ctx.closePath();ctx.fill();ctx.fillStyle='#e0650a';ctx.beginPath();ctx.moveTo(0,-2);ctx.lineTo(14,12);ctx.lineTo(-14,12);ctx.closePath();ctx.fill();ctx.fillStyle='#f6f1e4';ctx.beginPath();ctx.moveTo(0,-2);ctx.lineTo(-14,12);ctx.lineTo(-14,-12);ctx.closePath();ctx.fill()}
@@ -273,14 +276,14 @@ function toolIcon(id,x,y){ctx.save();ctx.translate(x,y);
   else{const D=BT[id];rr(ctx,-14,-13,28,24,3);ctx.fillStyle=lg(ctx,-14,-13,14,11,[shade(D.col,0.3),shade(D.col,-0.3)]);ctx.fill();ctx.fillStyle='#0f1315';ctx.fillRect(-8,-9,16,13);mini(D.out,0,-2,0.6,0,0)}
   ctx.restore()}
 function drawToolbar(){ctx.fillStyle=lg(ctx,0,726,0,800,['#232a2c','#161b1a']);ctx.fillRect(0,726,W,74);
-  const now=performance.now();TOOLS.forEach((id,i)=>{const x=4+i*106,y=730,w=102,h=66,on=ui.tool===id,D=BT[id],p=D?price(id):0,can=!D||st.money>=p,open=isOpen(id),fresh=open&&OPEN[id]===st.ph&&now-ui.newT<9000;
+  const now=performance.now();TOOLS.forEach((id,i)=>{const x=3+i*98,y=730,w=95,h=66,on=ui.tool===id,D=BT[id],p=id==='wide'?WIDE_COST:D?price(id):0,can=!D||st.money>=p,open=isOpen(id),fresh=open&&OPEN[id]===st.ph&&now-ui.newT<9000;
     rr(ctx,x,y,w,h,8);ctx.fillStyle=on?lg(ctx,0,y,0,y+h,['#3f7a8a','#2a5561']):open?'#2c3338':'#1f2427';ctx.fill();ctx.strokeStyle=fresh?'#ffe27a':on?'#7fd0e2':'#3c454b';ctx.lineWidth=fresh?2+Math.sin(now/150):on?2:1;ctx.stroke();
-    ctx.globalAlpha=open?1:0.28;toolIcon(id,x+24,y+30);ctx.globalAlpha=1;
-    const nm=id==='walk'?'Laufen':id==='demo'?'Abriss':id==='rot'?'Drehen':D.name;
-    ctx.font='600 11px '+FONT;const parts=({station:['Sammel-','station'],pd:['Dosen-','presse'],pp:['PET-','Presse'],kp:['Kisten-','packer'],pal:['Palet-','tierer']})[id]||[nm];
-    parts.forEach((s,j)=>txt(s,x+48,y+(parts.length>1?21:27)+j*12,11,open?'#fff':'#727c82','left',true));
-    if(!open){txt('nach Ziel '+OPEN[id],x+48,y+56,9.5,'#727c82');button(x,y,w,h,()=>toast(D.name+' kommt nach Ziel '+OPEN[id]));return}
-    if(D)txt(euro(p),x+48,y+56,10.5,can?'#ffe27a':'#8a949a');else txt(id==='rot'?'Taste R':id==='walk'?'Esc':'erstattet',x+48,y+56,9.5,'#8f9aa0');
+    ctx.globalAlpha=open?1:0.28;toolIcon(id,x+22,y+30);ctx.globalAlpha=1;
+    const nm=id==='walk'?'Laufen':id==='demo'?'Abriss':id==='rot'?'Drehen':id==='wide'?'Doppelband':D.name;
+    ctx.font='600 11px '+FONT;const parts=({wide:['Doppel-','band'],split:['Ver-','teiler'],sort:['Sor-','tierer'],cross:['Kreu-','zung'],station:['Sammel-','station'],pd:['Dosen-','presse'],pp:['PET-','Presse'],kp:['Kisten-','packer'],pal:['Palet-','tierer']})[id]||[nm];
+    parts.forEach((s,j)=>txt(s,x+43,y+(parts.length>1?21:27)+j*12,11,open?'#fff':'#727c82','left',true));
+    if(!open){txt('nach Ziel '+OPEN[id],x+43,y+56,9.5,'#727c82');button(x,y,w,h,()=>toast(nm+' kommt nach Ziel '+OPEN[id]));return}
+    if(D||id==='wide')txt((D?'':'+')+euro(p),x+43,y+56,10.5,can?'#ffe27a':'#8a949a');else txt(id==='rot'?'Taste R':id==='walk'?'Esc':'erstattet',x+43,y+56,9.5,'#8f9aa0');
     button(x,y,w,h,()=>{if(id==='rot')ui.rot=(ui.rot+1)%4;else{ui.tool=id;ui.move=null;if(id!=='walk')ui.sel=null}})})}
 function drawTop(){ctx.fillStyle=lg(ctx,0,0,0,46,['#232a2c','#161b1a']);ctx.fillRect(0,0,W,46);
   txt('MONTAGMORGEN 2',14,22,16,'#f3efe2','left',true);txt('Prototyp Fabrikbau',14,38,10.5,'#8f9aa0');
@@ -339,7 +342,7 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#161b1a';ctx.fillRe
   const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;
   drawWorld();
   drawGoal();
-  if(ui.move||ui.tool!=='walk'){const tip=ui.move?'Neuen Platz antippen · Laufen oder Esc bricht ab':ui.tool==='belt'?(ui.plan?'Vorschlag prüfen · anderes Ziel ändert ihn':ui.planA?'Ziel antippen · Start nochmal: Einzelfeld':'Start antippen, dann Ziel · Ziehen legt direkt'):ui.tool==='demo'?'Tippen oder ziehen reißt ab · Zelt antippen baut es für '+euro(TENT_COST)+' ab':ui.tool==='sort'?'Tippen setzt, auch direkt auf ein Band · auf vorhandenen Sortierer tippen wechselt die Sorte':ui.tool==='split'?'Tippen setzt, auch direkt auf ein Band':'Tippen setzt · Karte mit zwei Fingern, rechter Maustaste oder WASD verschieben';
+  if(ui.move||ui.tool!=='walk'){const tip=ui.move?'Neuen Platz antippen · Laufen oder Esc bricht ab':ui.tool==='belt'?(ui.plan?'Vorschlag prüfen · anderes Ziel ändert ihn':ui.planA?'Ziel antippen · Start nochmal: Einzelfeld':'Start antippen, dann Ziel · Ziehen legt direkt'):ui.tool==='demo'?'Tippen oder ziehen reißt ab · Zelt antippen baut es für '+euro(TENT_COST)+' ab':ui.tool==='sort'?'Tippen setzt, auch direkt auf ein Band · auf vorhandenen Sortierer tippen wechselt die Sorte':ui.tool==='split'?'Tippen setzt, auch direkt auf ein Band':ui.tool==='wide'?'Über vorhandene Bänder tippen oder ziehen: zweite Spur, doppelte Menge':'Tippen setzt · Karte mit zwei Fingern, rechter Maustaste oder WASD verschieben';
     ctx.font='11px '+FONT;const tw=ctx.measureText(tip).width+24;rr(ctx,20,VIEW.y+VIEW.h-32,tw,22,11);ctx.fillStyle='rgba(16,22,20,.8)';ctx.fill();txt(tip,32,VIEW.y+VIEW.h-17,11,'#cfd8dc')}
   drawMiniMap();drawPanel();drawTop();drawToolbar();drawPlanBar();drawToast();
   if(st.done){ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);rr(ctx,W/2-250,H/2-120,500,240,16);ctx.fillStyle='#22302a';ctx.fill();ctx.strokeStyle='#a4c964';ctx.lineWidth=2;ctx.stroke();

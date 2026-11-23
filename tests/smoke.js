@@ -329,6 +329,18 @@ function serve() {
       gs.item = 0; gs.from = 1; gs.wait = 0; for (let k = 0; k < 360; k++) { G.step(1 / 60); if (top.item >= 0 && top.prog >= 1) { top.item = -1; got++; } }
       o.sortRescue = gs.item < 0 && got === 7; o.sortDetail = got + '/' + gs.item + '/' + ks.item;
       G.demolish(6, 30); G.demolish(6, 29); G.st.player.bag.length = 0; }
+    // Doppelband: traegt bei gleichem Tempo das Doppelte, zwei Zulaeufe laufen beide voll weiter. Abriss und Rueckgaengig erstatten.
+    while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
+    { for (let x = 8; x >= 4; x--) G.setBelt(x, 30, 2); G.setBelt(7, 29, 1); G.setBelt(7, 28, 1);
+      const end = G.grid[30 * G.MW + 4], run = () => { let c = 0, a1 = 0, a2 = 0; for (let i = 0; i < 1500; i++) { a1 = Math.min(1, a1 + 0.05); a2 = Math.min(1, a2 + 0.05);
+        if (a1 >= 0.999999 && G.tryPush(8, 30, 0, 2)) a1 -= 1; if (a2 >= 0.999999 && G.tryPush(7, 28, 1, 1)) a2 -= 1; G.step(1 / 60);
+        for (const l of [end, end.b]) if (l && l.item >= 0 && l.prog >= 1) { l.item = -1; if (i >= 300) c++; } } return c / 20; };
+      const single = run(); G.belts.forEach(t => { t.item = -1; });
+      const m0 = G.st.money; for (let x = 7; x >= 4; x--) G.widen(x, 30); const paid = m0 - G.st.money;
+      const dbl = run(); o.wideRate = single > 2.9 && single < 3.1 && dbl > 5.8 && dbl < 6.1; o.wideDetail = single.toFixed(2) + '/' + dbl.toFixed(2) + '/' + paid;
+      G.save(); const sv = JSON.parse(localStorage.getItem('montagmorgen2-v1')); o.wideSaved = sv.belts.filter(t => t[6]).length === 4;
+      G.belts.forEach(t => { t.item = -1; if (t.b) t.b.item = -1; }); const m1 = G.st.money; G.demolish(4, 30); const refund = G.st.money - m1; G.undo();
+      o.wideMoney = paid === 400 && refund === 150 && !!G.grid[30 * G.MW + 4] && !!G.grid[30 * G.MW + 4].b && G.widen(20, 40) === false; o.wideDetail += '/' + refund; }
     // Kreuzung zwischen zwei Sortierern: Die Linie laeuft durch, das querende Band auch.
     while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
     { G.setRot(1); const s1 = G.build('sort', 7, 29), s2 = G.build('sort', 5, 29); s1.filter = 3; s2.filter = 1; G.setBelt(9, 29, 2); G.setBelt(8, 29, 2); G.setBelt(6, 29, 2); G.setBelt(4, 29, 2); G.setBelt(3, 29, 2);
@@ -432,6 +444,8 @@ function serve() {
     ['Weitere Maschine derselben Art kostet 20 Prozent mehr, Abriss erstattet den gezahlten Preis', m3.priceUp && m3.priceRefund, m3.priceDetail],
     ['Sortierer laesst sich direkt auf ein Band setzen, Band erstattet, Stueck bleibt', m3.swapOk && m3.swapNeedsBelt, `${m3.swapOk}/${m3.swapNeedsBelt}`],
     ['Ein Rueckgaengig macht daraus wieder das Band', m3.swapUndo, String(m3.swapUndo)],
+    ['Doppelband traegt das Doppelte, zwei Zulaeufe laufen voll weiter', m3.wideRate, m3.wideDetail],
+    ['Doppelband kostet 1 Euro Aufpreis, Abriss erstattet 1,50 Euro, Spielstand merkt sich die Spur', m3.wideMoney && m3.wideSaved, `${m3.wideMoney}/${m3.wideSaved} ${m3.wideDetail}`],
     ['Kreuzung zwischen zwei Sortierern laesst die Linie durch', m3.crossBetween, m3.crossBetweenDetail],
     ['Kurve am Sortierer: Rest geht aufs Band daneben, mit geradem Ausgang geradeaus', m3.sortCurve && m3.sortStraight, `${m3.sortCurve}/${m3.sortStraight} ${m3.curveDetail}`],
     ['Sortierer uebereinander mit seitlichem Zulauf: kein Stueck strandet, Festsitzendes kommt frei', m3.sortSide && m3.sortRescue, `${m3.sortSide}/${m3.sortRescue} ${m3.sortDetail}`],

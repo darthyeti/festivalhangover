@@ -9,11 +9,13 @@ function msg(txt,x,y){if(st.t-st.lastMsg>1){st.lastMsg=st.t;st.pops.push({x:x==n
 function pay(c,x,y,col,big){ui.busyT=st.t;st.money+=c;st.earned+=c;if(x!=null)pop(x,y,'+'+euro(c),col,big)}
 function fly(ty,x0,y0,x1,y1,d){st.fly.push({ty,x0,y0,x1,y1,t:0,d:d||0.3,rot:Math.random()*6.28})}
 // Ein Stueck kommt in Fahrtrichtung dir auf Feld x,y an
-function tryPush(x,y,ty,dir){if(x<0||y<0||x>=MW||y>=MH)return false;const o=grid[y*MW+x];if(!o)return false;
-  if(o.k==='belt'){if(o.item>=0||o.dir===(dir+2)%4||(o.from===dir&&rival(o,dir)))return false;o.item=ty;o.prog=0;o.from=dir;return true}
+// Doppelband: Die zweite Spur haengt als b am Feld. pref waehlt sie zuerst, lane merkt sich die belegte Spur
+let lane=null;
+function tryPush(x,y,ty,dir,pref){if(x<0||y<0||x>=MW||y>=MH)return false;const o=grid[y*MW+x];if(!o)return false;
+  if(o.k==='belt'){if(o.dir===(dir+2)%4)return false;const l=o.b&&pref&&o.b.item<0?o.b:o.item<0?o:o.b&&o.b.item<0?o.b:null;if(!l||((o.lf==null?o.from:o.lf)===dir&&rival(o,dir)))return false;l.item=ty;l.prog=0;l.from=dir;o.lf=dir;lane=l;return true}
   return accept(o,ty,dir)}
 // Reissverschluss: Kam das letzte Stueck aus derselben Richtung und wartet ein anderes Band fertig am Feld, ist das zuerst dran
-function rival(o,dir){for(let d=0;d<4;d++){if(d===dir)continue;const x=o.x-DX[d],y=o.y-DY[d];if(x<0||y<0||x>=MW||y>=MH)continue;const n=grid[y*MW+x];if(n&&n.k==='belt'&&n.dir===d&&n.item>=0&&n.prog>=1)return true}return false}
+function rival(o,dir){for(let d=0;d<4;d++){if(d===dir)continue;const x=o.x-DX[d],y=o.y-DY[d];if(x<0||y<0||x>=MW||y>=MH)continue;const n=grid[y*MW+x];if(n&&n.k==='belt'&&n.dir===d&&((n.item>=0&&n.prog>=1)||(n.b&&n.b.item>=0&&n.b.prog>=1)))return true}return false}
 function accept(b,ty,dir){
   if(b.k==='auto'){if(ty>=RAW){st.viaBelt++;st.sold[ty]++;pay(TY[ty].val,b.x*T+50,b.y*T+20,'#ffd23e',true);return true}if(b.q.length<AUTO_CAP){st.viaBelt++;b.q.push(ty);return true}return false}
   if(b.k==='cross'){const a=dir%2;if(b.it[a]>=0)return false;b.it[a]=ty;b.dr[a]=dir;b.wt[a]=0.45/bspd();return true}
@@ -47,9 +49,10 @@ let order=[];
 function beltOrder(){ui.orderDirty=false;order=[];const seen=new Set(),stack=[];
   for(const t0 of belts){let t=t0;while(t&&!seen.has(t)){seen.add(t);stack.push(t);const x=t.x+DX[t.dir],y=t.y+DY[t.dir],o=x<0||y<0||x>=MW||y>=MH?null:grid[y*MW+x];t=o&&o.k==='belt'?o:null}
     while(stack.length)order.push(stack.pop())}}
-function updBelts(dt){if(ui.orderDirty||order.length!==belts.length)beltOrder();const v=bspd();for(const t of order){if(t.item<0)continue;t.prog+=v*dt;if(t.prog<0.999999)continue;
+function updBelts(dt){if(ui.orderDirty||order.length!==belts.length)beltOrder();const v=bspd();for(const t of order){if(!t.b)mvLane(t,t,v,dt);else if(t.alt=!t.alt){mvLane(t,t,v,dt);mvLane(t,t.b,v,dt)}else{mvLane(t,t.b,v,dt);mvLane(t,t,v,dt)}}}
+function mvLane(t,l,v,dt){if(l.item<0)return;l.prog+=v*dt;if(l.prog<0.999999)return;
     // Der Ueberschuss geht mit aufs naechste Feld, sonst haengt der Durchsatz an der Bildrate
-    const c=Math.max(0,Math.min(t.prog-1,v*dt)),x=t.x+DX[t.dir],y=t.y+DY[t.dir];if(tryPush(x,y,t.item,t.dir)){t.item=-1;ui.busyT=st.t;const o=grid[y*MW+x];if(o.k==='belt')o.prog=c}else t.prog=1}}
+    const c=Math.max(0,Math.min(t.prog-1,v*dt)),x=t.x+DX[t.dir],y=t.y+DY[t.dir];if(tryPush(x,y,l.item,t.dir,l!==t)){l.item=-1;ui.busyT=st.t;const o=grid[y*MW+x];if(o.k==='belt')lane.prog=c}else l.prog=1}
 function updBld(b,dt){
   // Kreuzung: je Achse ein Platz, das Stueck faehrt in seiner Richtung geradeaus weiter
   if(b.k==='cross'){for(let a=0;a<2;a++){if(b.it[a]<0)continue;b.wt[a]-=dt;if(b.wt[a]<=0&&tryPush(b.x+DX[b.dr[a]],b.y+DY[b.dr[a]],b.it[a],b.dr[a]))b.it[a]=-1}return}
@@ -96,12 +99,12 @@ function updPlayer(dt){const p=st.player,sp=110+18*st.up.shoe,cap=25+10*st.up.ba
 // Spielende: Die Wiese ist leer, Tuete, Stationen und Annahme auch, und seit drei Sekunden bewegt sich nichts mehr
 // (kein Band, keine Maschine, kein Verkauf). Was dann noch in der Anlage haengt, wird zu seinem Wert gutgeschrieben.
 function finish(){let n=0,v=0;const add=(ty,k)=>{if(ty>=0&&k>0){n+=k;v+=TY[ty].val*k;st.sold[ty]+=k}};
-  for(const t of belts){add(t.item,1);t.item=-1}
+  for(const t of belts){add(t.item,1);t.item=-1;if(t.b){add(t.b.item,1);t.b.item=-1}}
   for(const b of blds){if(b.k==='cross'){add(b.it[0],1);add(b.it[1],1);b.it=[-1,-1]}else if(b.k==='split'||b.k==='sort'){add(b.item,1);b.item=-1}
     else if(BT[b.k].inp){for(const k in b.buf){add(+k,b.buf[k]);b.buf[k]=0}add(BT[b.k].out,b.out);b.out=0}}
   st.money+=v;st.earned+=v;st.rest={n,v};st.done=true}
 // Ziele: Ist das aktuelle erreicht, beginnt das naechste und schaltet seine Bauteile frei.
-function goals(){while(st.ph<GOALS.length-1&&GOALS[st.ph].val(st)>=GOALS[st.ph].need){st.ph++;const neu=Object.keys(OPEN).filter(k=>OPEN[k]===st.ph).map(k=>BT[k].name);
+function goals(){while(st.ph<GOALS.length-1&&GOALS[st.ph].val(st)>=GOALS[st.ph].need){st.ph++;const neu=Object.keys(OPEN).filter(k=>OPEN[k]===st.ph).map(k=>BT[k]?BT[k].name:'Doppelband');
     toast('Ziel erreicht'+(neu.length?' · Neu: '+neu.join(', '):''));ui.newT=performance.now()}}
 function update(dt){if(st.done)return;st.t+=dt;updBelts(dt);for(const b of blds)updBld(b,dt);updPlayer(dt);
   for(let k=st.fly.length-1;k>=0;k--){st.fly[k].t+=dt;if(st.fly[k].t>=st.fly[k].d)st.fly.splice(k,1)}
