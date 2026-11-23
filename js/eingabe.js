@@ -4,7 +4,7 @@ import {DX,DY,MH,MW,RAW,T,TOOLS,VIEW,WH,WW} from './konstanten.js';
 import {cam,isOpen,resetState,st,ui} from './zustand.js';
 import {AUTO,belts,blds,blocked,cells,findPath,genWorld,grid,los,removeItem} from './welt.js';
 import {jam,msg,tryPush,update} from './logik.js';
-import {beltSwap,build,buildPlan,buyUp,crossOver,demolish,load,moveTo,planBelt,planEnds,rec,save,setBelt,stepBegin,stepEnd,undo} from './bauen.js';
+import {beltSwap,build,buildPlan,buyUp,crossOver,demolish,load,moveTo,planBelt,planEnds,rec,save,setBelt,stepBegin,stepEnd,undo,widen} from './bauen.js';
 import {MM,S,movePos,btns,buildGround,buildItemLayer,buildMini,buildSprites,cv,draw,dropItemLayer,ghostPos,groundL,offX,offY,panelRect,ptr,resize,spr,toW} from './grafik.js';
 
 const toL=e=>({x:(e.clientX-offX)/S,y:(e.clientY-offY)/S});
@@ -32,6 +32,7 @@ cv.addEventListener('pointerdown',e=>{e.preventDefault();const p=toL(e);pts.set(
   if(ui.tool==='walk'){if(o&&o.k!=='belt'){ui.sel=o;return}ui.sel=null;act={type:'walk'};st.player.tx=Math.max(8,Math.min(WW-8,w.x));st.player.ty=Math.max(8,Math.min(WH-8,w.y));cam.follow=true}
   else if(ui.tool==='belt')act={type:'belt',lx:tx,ly:ty,dir:ui.rot,moved:false}
   else if(ui.tool==='demo'){act={type:'demo'};demolish(tx,ty)}
+  else if(ui.tool==='wide'){act={type:'wide'};widen(tx,ty)}
   else act={type:'place'}});
 cv.addEventListener('pointermove',e=>{const p=toL(e);if(pts.has(e.pointerId))pts.set(e.pointerId,p);ptr.x=p.x;ptr.y=p.y;ptr.inView=inRect(p,VIEW)&&!inRect(p,MM)&&!inRect(p,panelRect);
   if(gest&&pts.size===2){const a=[...pts.values()],cx=(a[0].x+a[1].x)/2,cy=(a[0].y+a[1].y)/2,d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);cam.z=Math.max(0.4,Math.min(2.2,gest.z*d/Math.max(20,gest.d)));cam.x=gest.camx-(cx-gest.cx)/cam.z;cam.y=gest.camy-(cy-gest.cy)/cam.z;return}
@@ -40,7 +41,8 @@ cv.addEventListener('pointermove',e=>{const p=toL(e);if(pts.has(e.pointerId))pts
   else if(act.type==='mini')miniTo(p)
   else if(act.type==='walk'){st.player.tx=Math.max(8,Math.min(WW-8,w.x));st.player.ty=Math.max(8,Math.min(WH-8,w.y))}
   else if(act.type==='belt')beltTo(Math.floor(w.x/T),Math.floor(w.y/T))
-  else if(act.type==='demo')demolish(Math.floor(w.x/T),Math.floor(w.y/T),true)});
+  else if(act.type==='demo')demolish(Math.floor(w.x/T),Math.floor(w.y/T),true)
+  else if(act.type==='wide')widen(Math.floor(w.x/T),Math.floor(w.y/T),true)});
 function pUp(e){const had=pts.has(e.pointerId);pts.delete(e.pointerId);if(pts.size<2)gest=null;if(!act||!had)return;const a=act;act=null;
   if(a.type==='belt'){if(a.moved){ui.planA=null;ui.plan=null;setBelt(a.lx,a.ly,a.dir)}else beltTap(a.lx,a.ly)}
   else if(a.type==='place'&&ptr.inView){const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;const g=ghostPos(),o=g.x>=0&&g.y>=0&&g.x<MW&&g.y<MH?grid[g.y*MW+g.x]:null;
@@ -58,7 +60,7 @@ let last=0,saveT=0;function frame(t){const dt=Math.min(0.05,(t-last)/1000||0);la
   const pv=260*dt/cam.z;if(keys.a||keys.arrowleft){cam.x-=pv;cam.follow=false}if(keys.d||keys.arrowright){cam.x+=pv;cam.follow=false}if(keys.w||keys.arrowup){cam.y-=pv;cam.follow=false}if(keys.s||keys.arrowdown){cam.y+=pv;cam.follow=false}
   if(!ui.menu)update(dt);draw();saveT+=dt;if(saveT>15){saveT=0;save()}requestAnimationFrame(frame)}
 start(false);requestAnimationFrame(frame);
-window.__G={get st(){return st},get ui(){return ui},crossOver,beltSwap,save,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,isOpen,los,findPath,
+window.__G={widen,get st(){return st},get ui(){return ui},crossOver,beltSwap,save,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,isOpen,los,findPath,
   step(sec,dt){dt=dt||1/60;for(let t=0;t<sec;t+=dt)update(dt)},build,setBelt,demolish,buyUp,tryPush,undo,moveTo,jam,planBelt,buildPlan,setTool(t){ui.tool=t},setRot(r){ui.rot=r},
   clear(x0,y0,x1,y1){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)for(const it of cells[y*MW+x].slice())removeItem(it)}};
 

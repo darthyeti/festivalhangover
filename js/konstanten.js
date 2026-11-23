@@ -11,7 +11,7 @@ const QI=typeof location!=='undefined'?+new URLSearchParams(location.search).get
 // Sorten: 0-3 liegen auf der Wiese, 4-7 entstehen in Maschinen
 const TY=[{n:'Dosen',val:25,col:'#c9d2d8'},{n:'PET',val:25,col:'#7fc4e8'},{n:'Glas',val:8,col:'#a8712f'},{n:'Leerkästen',val:150,col:'#d14b3c'},
  {n:'Dosenballen',val:450,col:'#e4eaed'},{n:'PET-Ballen',val:300,col:'#8fd0f0'},{n:'Volle Kästen',val:465,col:'#b23a2e'},{n:'Paletten',val:6750,col:'#c9a16a'}];
-const VERSION=18,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
+const VERSION=19,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
 const RAW=4,TENT_COST=500,MORE=1.2; // MORE: jede weitere Maschine derselben Art kostet so viel mal mehr (E-014, gesenkt mit E-015) // Zelt oder Pavillon abbauen, in Cent
 const BT={
  belt:{name:'Band',cost:50,w:1,h:1,info:['Ziehen legt eine Strecke.']},
@@ -25,7 +25,7 @@ const BT={
  pal:{name:'Palettierer',cost:15000,w:2,h:2,inp:{4:8,5:3},out:7,time:24,col:'#c98a2a'},
  auto:{name:'Leergutannahme',w:2,h:3}
 };
-const TOOLS=['walk','belt','split','sort','cross','station','pd','pp','kp','pal','demo','rot'];
+const TOOLS=['walk','belt','wide','split','sort','cross','station','pd','pp','kp','pal','demo','rot'];
 const UPS=[
  {k:'bag',name:'Größere Tüte',base:400,g:1.6,max:6,sub:l=>'fasst '+(25+10*l)},
  {k:'shoe',name:'Laufschuhe',base:500,g:1.6,max:5,sub:l=>'Tempo '+(110+18*l)},
@@ -47,8 +47,9 @@ const GOALS=[
 ];
 // Zeitwertung am Ende, Grenzen in Minuten
 const MEDALS=[{m:45,n:'Gold',col:'#ffd23e'},{m:60,n:'Silber',col:'#cfd8dc'},{m:80,n:'Bronze',col:'#d08a4a'}];
-const OPEN={belt:1,station:1,sort:2,pd:2,pp:3,split:3,cross:3,kp:4,pal:5};
+const WIDE_COST=100; // Aufpreis je Bandfeld fuer die zweite Spur (E-015), in Cent
+const OPEN={wide:3,belt:1,station:1,sort:2,pd:2,pp:3,split:3,cross:3,kp:4,pal:5};
 const euro=c=>(c/100).toFixed(2).replace('.',',')+' €';
 function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 
-export {AUTO_CAP,AUTO_RATE,MEDALS,MORE,BT,DX,DY,FONT,H,LS,MH,MW,N_CRATES,N_ITEMS,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WORLD_SEED,WW,euro,rng};
+export {AUTO_CAP,AUTO_RATE,MEDALS,MORE,BT,DX,DY,FONT,H,LS,MH,MW,N_CRATES,N_ITEMS,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,WIDE_COST,TY,UPS,VERSION,VIEW,W,WH,WORLD_SEED,WW,euro,rng};
