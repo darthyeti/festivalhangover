@@ -91,7 +91,7 @@ bewusst und nach Freigabe aendern.
 - Preise: `price(k)` in `bauen.js`. Stationen werden je Stueck 12 % teurer, Maschinen je weiterer
   derselben Art um den Faktor `MORE`. Der Abriss erstattet immer den gezahlten Preis (`b.paid`).
 - Weiterreichen zwischen Kleinteilen (`pushOut` in `logik.js`): Ein Sortierer gibt an einen benachbarten
-  Sortierer oder Verteiler nur geradeaus weiter. Sitzt ein Stueck laenger als zwei Sekunden fest, ist jeder Nachbar recht.
+  Sortierer oder Verteiler nur geradeaus weiter, Verteiler und Sortierer in eine Kreuzung ebenfalls nur geradeaus. Sitzt ein Stueck laenger als zwei Sekunden fest, ist jeder Nachbar recht.
 - Kurve am Verteiler oder Sortierer: Hat er keinen geraden Ausgang, gibt er auch auf ein Band direkt daneben ab,
   das quer wegfuehrt (`sideOuts`, `straightOut` in `logik.js`). `topo()` zeichnet dem Band dafuer einen Zulauf.
 - `beltSwap(k,x,y)` setzt Verteiler oder Sortierer direkt auf ein Bandfeld, wie `crossOver`.

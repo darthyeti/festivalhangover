@@ -20,20 +20,20 @@ function accept(b,ty,dir){
   if(b.k==='split'||b.k==='sort'){if(b.item>=0)return false;b.item=ty;b.wait=0.45/bspd();b.from=dir;return true}
   const R=BT[b.k].inp;if(R&&R[ty]!=null&&b.buf[ty]<R[ty]*2){b.buf[ty]++;return true}return false}
 // Ausgang = angrenzendes Band, das vom Gebaeude wegfuehrt. Ein Sortierer reicht an einen Nachbarn nur geradeaus weiter,
-// sonst landet ein Stueck in einem Nachbarn ohne Ausweg. Haengt es laenger als zwei Sekunden fest, ist jeder Nachbar recht.
+// in eine Kreuzung ebenso, sonst landet ein Stueck in einem Nachbarn ohne Ausweg. Haengt es laenger als zwei Sekunden fest, ist jeder Nachbar recht.
 function pushOut(b,ty,ex){const c=[],pass=b.k==='split'||b.k==='sort';
   for(let d=0;d<4;d++){if(d===ex)continue;const n=d%2?b.w:b.h;for(let k=0;k<n;k++){const x=d===0?b.x+b.w:d===2?b.x-1:b.x+k,y=d===1?b.y+b.h:d===3?b.y-1:b.y+k;
-    if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];if(o&&((o.k==='belt'&&o.dir===d)||(pass&&(o.k==='split'||o.k==='sort')&&(b.wait<-2||(b.k==='sort'?d===b.from:d!==(b.from+2)%4)))))c.push(x,y,d)}}
+    if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];if(o&&((o.k==='belt'&&o.dir===d)||(pass&&(o.k==='split'||o.k==='sort')&&(b.wait<-2||(b.k==='sort'?d===b.from:d!==(b.from+2)%4)))||(pass&&o.k==='cross'&&d===b.from)))c.push(x,y,d)}}
   if(pass&&!c.length)c.push(...sideOuts(b,ex));
   const n=c.length/3;for(let i=0;i<n;i++){const j=((b.rr+i)%n)*3;if(tryPush(c[j],c[j+1],ty,c[j+2])){b.rr=(b.rr+i+1)%n;return true}}return false}
 // Kurve direkt am Verteiler oder Sortierer: Ohne geraden Ausgang nimmt auch ein Band daneben, das quer wegfuehrt
 function sideOuts(b,ex){const c=[];for(let d=0;d<4;d++){if(d===ex)continue;const x=b.x+DX[d],y=b.y+DY[d];if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];if(o&&o.k==='belt'&&o.dir%2!==d%2)c.push(x,y,d)}return c}
 // Hat ein Verteiler oder Sortierer einen geraden Ausgang fuer durchlaufende Ware? Sonst gilt die Kurve
-function straightOut(b){const ex=b.k==='sort'?b.dir:-1;for(let d=0;d<4;d++){if(d===ex)continue;const x=b.x+DX[d],y=b.y+DY[d];if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];if(o&&((o.k==='belt'&&o.dir===d)||o.k==='split'||o.k==='sort'))return true}return false}
+function straightOut(b){const ex=b.k==='sort'?b.dir:-1;for(let d=0;d<4;d++){if(d===ex)continue;const x=b.x+DX[d],y=b.y+DY[d];if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];if(o&&((o.k==='belt'&&o.dir===d)||o.k==='split'||o.k==='sort'||o.k==='cross'))return true}return false}
 // Zahl der moeglichen Ausgaenge eines Gebaeudes, gleiche Nachbarschaft wie pushOut
 function outCount(b){let c=0;const pass=b.k==='split'||b.k==='sort';
   for(let d=0;d<4;d++){const n=d%2?b.w:b.h;for(let k=0;k<n;k++){const x=d===0?b.x+b.w:d===2?b.x-1:b.x+k,y=d===1?b.y+b.h:d===3?b.y-1:b.y+k;
-    if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];if(o&&((o.k==='belt'&&o.dir===d)||(pass&&(o.k==='split'||o.k==='sort'))))c++}}return c+(pass?sideOuts(b,-1).length/3:0)}
+    if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];if(o&&((o.k==='belt'&&o.dir===d)||(pass&&(o.k==='split'||o.k==='sort'||o.k==='cross'))))c++}}return c+(pass?sideOuts(b,-1).length/3:0)}
 // Warum ein Gebaeude gerade nicht weiterkommt, leer wenn alles laeuft. Aendert nichts am Zustand.
 function jam(b){const stuck=()=>outCount(b)?'Stau am Ausgang':'Kein Ausgang: Band wegführen';
   if(b.k==='auto')return b.q.length>=AUTO_CAP?(st.ph>=2?'Voll. Pressen entlasten':'Warteschlange voll'):'';

@@ -329,6 +329,14 @@ function serve() {
       gs.item = 0; gs.from = 1; gs.wait = 0; for (let k = 0; k < 360; k++) { G.step(1 / 60); if (top.item >= 0 && top.prog >= 1) { top.item = -1; got++; } }
       o.sortRescue = gs.item < 0 && got === 7; o.sortDetail = got + '/' + gs.item + '/' + ks.item;
       G.demolish(6, 30); G.demolish(6, 29); G.st.player.bag.length = 0; }
+    // Kreuzung zwischen zwei Sortierern: Die Linie laeuft durch, das querende Band auch.
+    while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
+    { G.setRot(1); const s1 = G.build('sort', 7, 29), s2 = G.build('sort', 5, 29); s1.filter = 3; s2.filter = 1; G.setBelt(9, 29, 2); G.setBelt(8, 29, 2); G.setBelt(6, 29, 2); G.setBelt(4, 29, 2); G.setBelt(3, 29, 2);
+      G.setBelt(6, 28, 1); G.setBelt(6, 30, 1); G.setBelt(6, 31, 1); G.setBelt(5, 30, 1); G.setBelt(5, 31, 1);
+      const cx = G.crossOver(6, 29); G.tryPush(9, 29, 0, 2); G.step(1.5); G.tryPush(9, 29, 1, 2); G.tryPush(6, 28, 2, 1); G.step(6);
+      const at = (x, y) => { const q = G.grid[y * G.MW + x]; return q && q.k === 'belt' ? q.item : -2; };
+      o.crossBetween = !!cx && at(3, 29) === 0 && at(5, 31) === 1 && at(6, 31) === 2 && !G.jam(s1) && !G.jam(s2); o.crossBetweenDetail = [!!cx, at(3, 29), at(5, 31), at(6, 31), s1.item, s2.item].join('/');
+      G.demolish(7, 29); G.demolish(5, 29); G.demolish(6, 29); G.st.player.bag.length = 0; }
     // Kurve am Sortierer: ohne geraden Ausgang geht der Rest auf ein Band daneben, das quer wegfuehrt. Mit geradem Ausgang nicht.
     while (G.belts.length) G.demolish(G.belts[0].x, G.belts[0].y);
     { G.setRot(3); const sb = G.build('sort', 6, 29); sb.filter = 1; G.setBelt(8, 29, 2); G.setBelt(7, 29, 2); G.setBelt(6, 30, 2); G.setBelt(5, 30, 2); G.setBelt(4, 30, 2);
@@ -424,6 +432,7 @@ function serve() {
     ['Weitere Maschine derselben Art kostet das Anderthalbfache, Abriss erstattet den gezahlten Preis', m3.priceUp && m3.priceRefund, m3.priceDetail],
     ['Sortierer laesst sich direkt auf ein Band setzen, Band erstattet, Stueck bleibt', m3.swapOk && m3.swapNeedsBelt, `${m3.swapOk}/${m3.swapNeedsBelt}`],
     ['Ein Rueckgaengig macht daraus wieder das Band', m3.swapUndo, String(m3.swapUndo)],
+    ['Kreuzung zwischen zwei Sortierern laesst die Linie durch', m3.crossBetween, m3.crossBetweenDetail],
     ['Kurve am Sortierer: Rest geht aufs Band daneben, mit geradem Ausgang geradeaus', m3.sortCurve && m3.sortStraight, `${m3.sortCurve}/${m3.sortStraight} ${m3.curveDetail}`],
     ['Sortierer uebereinander mit seitlichem Zulauf: kein Stueck strandet, Festsitzendes kommt frei', m3.sortSide && m3.sortRescue, `${m3.sortSide}/${m3.sortRescue} ${m3.sortDetail}`],
     ['Spiel endet bei leerer Wiese auch mit Resten in der Anlage und schreibt sie gut', m3.notDoneYet && m3.waitsBeforeEnd && m3.endsWithRest, `${m3.notDoneYet}/${m3.waitsBeforeEnd}/${m3.endDetail}`],
