@@ -373,6 +373,9 @@ function serve() {
     o.endDetail = JSON.stringify(G.st.rest) + ' ' + (G.st.money - m0);
     G.st.done = false; // der Rest des Durchgangs prueft nur noch den Spielstand
 
+    // Zeichnen darf bei keinem Ziel und mit keinem Werkzeug abstuerzen (Absturz in Version 19 bei Ziel 3).
+    { let bad = ''; const ph0 = G.st.ph, t0 = G.ui.tool; for (let p = 0; p < 8; p++) for (const tl of ['walk', 'belt', 'wide', 'sort', 'demo']) { G.st.ph = p; G.ui.tool = tl; try { G.draw(); } catch (e) { bad += p + '/' + tl + ': ' + e.message + ' '; } } G.st.ph = ph0; G.ui.tool = t0; o.drawAll = bad; }
+
     // Alter Spielstand: ohne Zielstand ist alles frei, die Verbesserung der Annahme wird erstattet.
     G.save();
     const d = JSON.parse(localStorage.getItem('montagmorgen2-v1'));
@@ -450,6 +453,7 @@ function serve() {
     ['Kurve am Sortierer: Rest geht aufs Band daneben, mit geradem Ausgang geradeaus', m3.sortCurve && m3.sortStraight, `${m3.sortCurve}/${m3.sortStraight} ${m3.curveDetail}`],
     ['Sortierer uebereinander mit seitlichem Zulauf: kein Stueck strandet, Festsitzendes kommt frei', m3.sortSide && m3.sortRescue, `${m3.sortSide}/${m3.sortRescue} ${m3.sortDetail}`],
     ['Spiel endet bei leerer Wiese auch mit Resten in der Anlage und schreibt sie gut', m3.notDoneYet && m3.waitsBeforeEnd && m3.endsWithRest, `${m3.notDoneYet}/${m3.waitsBeforeEnd}/${m3.endDetail}`],
+    ['Zeichnen laeuft bei jedem Ziel und Werkzeug ohne Fehler', m3.drawAll === '', m3.drawAll],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
     ['Alter Spielstand: alles frei, Ausbau der Annahme und gestrichene Bandstufen erstattet', oldSave.ph === 7 && oldSave.money === 2300 + 37500 + 93750 && oldSave.up.belt === 2 && oldSave.up.auto === undefined && oldSave.up.range === 0, JSON.stringify(oldSave)],
     ['Versionsnummer in index.html und konstanten.js stimmt ueberein', versionOk, String(version)],
