@@ -39,8 +39,8 @@ function outCount(b){let c=0;const pass=b.k==='split'||b.k==='sort';
 // Warum ein Gebaeude gerade nicht weiterkommt, leer wenn alles laeuft. Aendert nichts am Zustand.
 function jam(b){const stuck=()=>outCount(b)?'Stau am Ausgang':'Kein Ausgang: Band wegführen';
   if(b.k==='auto')return b.q.length>=AUTO_CAP?(st.ph>=2?'Voll. Pressen entlasten':'Warteschlange voll'):'';
-  if(b.k==='station')return b.buf.length>=ST_CAP?stuck():b.empty&&!b.buf.length?'Umkreis leer: versetzen':'';
-  if(b.k==='ab')return b.buf.length>=ST_CAP?stuck():b.empty&&!b.buf.length?(st.tl?'Keine Zelte im Umkreis: versetzen':'Alle Zelte sind weg'):'';
+  if(b.k==='station')return b.buf.length>=ST_CAP?stuck():b.empty&&!b.buf.length&&st.left[0]+st.left[1]+st.left[2]+st.left[3]>0?'Umkreis leer: versetzen':''; // ist die Wiese leer, gibt es nichts mehr zu warnen
+  if(b.k==='ab')return b.buf.length>=ST_CAP?stuck():'';
   if(b.k==='split'||b.k==='sort')return b.item>=0&&b.wait<-1?stuck():'';
   if(b.k==='cross')return(b.it[0]>=0&&b.wt[0]<-1)||(b.it[1]>=0&&b.wt[1]<-1)?'Stau hinter der Kreuzung':'';
   return BT[b.k].inp&&b.out>=2?stuck():''}

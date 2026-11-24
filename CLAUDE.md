@@ -103,7 +103,7 @@ bewusst und nach Freigabe aendern.
   damit sich Ballen von Pressen draussen aus dem gemischten Band holen lassen.
 - `beltSwap(k,x,y)` setzt Verteiler oder Sortierer direkt auf ein Bandfeld, wie `crossOver`.
 - Zelte als Sperrmuell (E-019): Der Abbautrupp (`ab`) ist eine Station mit anderem Ziel, `isSt(b)` in `zustand.js` gilt fuer beide.
-  Seine zwei Arbeiter (`h.ab`) suchen mit `nearTent()` ein Zelt im Umkreis `abR()`, bauen es in `TENT_TIME` ab (`setTentGone`)
+  Seine zwei Arbeiter (`h.ab`) suchen mit `nearTent()` das naechste Zelt auf der ganzen Wiese (`abR()` ist seit Version 28 unbegrenzt, von Till nach T-014 so gewuenscht), bauen es in `TENT_TIME` ab (`setTentGone`)
   und bringen `TENT_LOAD` als Ladung zurueck. Sorten 8 (Planen) und 9 (Gestaenge) sind Rohware (`JUNK`), 10 und 11 ihre Ballen
   aus `pl` und `sc`. `st.tl` und `st.tt` (Zelte uebrig, gesamt) setzt `goals()` in jedem Schritt. Die Partie endet erst bei `st.tl===0`.
   Die Sorten sind nicht mehr fortlaufend: `sorts()` liefert die waehlbaren, `nextSort(f)` die naechste. Arrays ueber Sorten haben zwoelf Plaetze.

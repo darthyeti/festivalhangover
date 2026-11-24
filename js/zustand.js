@@ -11,10 +11,10 @@ function newState(){return{money:0,earned:0,t:0,done:false,up:{bag:0,shoe:0,crew
 const upPrice=u=>Math.round(u.base*Math.pow(u.g,st.up[u.k])/10)*10;
 
 // Abgeleitete Werte aus Verbesserungen und Zielen
-// Abbautrupp: anderthalbfacher Umkreis, Zelte stehen weiter auseinander als Pfand
-const stR=()=>(8+3*st.up.range)*T,abR=()=>stR()*1.5,rOf=b=>b.k==='ab'?abR():stR(),bspd=()=>3+1.5*st.up.belt,isOpen=k=>!(OPEN[k]>st.ph),isSt=b=>b.k==='station'||b.k==='ab';
+// Abbautrupp: kein Umkreis, die Arbeiter laufen ueber die ganze Wiese (Wunsch von Till nach T-014). Weite Wege kosten Zeit, das ist die Grenze
+const stR=()=>(8+3*st.up.range)*T,abR=()=>1e9,bspd=()=>3+1.5*st.up.belt,isOpen=k=>!(OPEN[k]>st.ph),isSt=b=>b.k==='station'||b.k==='ab';
 // Sorten, die ein Sortierer waehlen kann. Mit jeder Presse kommt ihr Ballen dazu, mit dem Abbautrupp Plane und Gestaenge
 const sorts=()=>{const a=[0,1,2,3];if(isOpen('pd'))a.push(4);if(isOpen('pp'))a.push(5);if(isOpen('ab'))a.push(8,9);return a},nSort=()=>sorts().length,nextSort=f=>{const a=sorts();return a[(a.indexOf(f)+1)%a.length]};
 function toast(txt){ui.toast={txt,t:performance.now()}}
 
-export {abR,rOf,bspd,cam,isOpen,isSt,nSort,nextSort,sorts,resetState,st,stR,toast,ui,upPrice};
+export {abR,bspd,cam,isOpen,isSt,nSort,nextSort,sorts,resetState,st,stR,toast,ui,upPrice};
