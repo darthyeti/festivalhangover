@@ -2,10 +2,11 @@
 // Spielregeln: Baender, Maschinen, Sammelstationen, Spielfigur. Zeichnet nichts.
 import {JUNK,TENT_LOAD,TENT_TIME,AUTO_CAP,AUTO_RATE,BT,DX,DY,GOALS,MH,MW,OPEN,RAW,ST_CAP,T,TY,euro} from './konstanten.js';
 import {abR,bspd,isSt,st,stR,toast,ui} from './zustand.js';
+import {sfx} from './ton.js';
 import {AUTO,belts,blds,findPath,foot,grid,los,near,nearTent,nearestIn,removeItem,setTentGone,tentsLeft} from './welt.js';
 
 function pop(x,y,txt,col,big){st.pops.push({x,y,txt,col:col||'#ffe27a',t:0,big:!!big})}
-function msg(txt,x,y){if(st.t-st.lastMsg>1){st.lastMsg=st.t;st.pops.push({x:x==null?st.player.x:x,y:y==null?st.player.y-34:y,txt,col:'#ff9a7a',t:0})}}
+function msg(txt,x,y){if(st.t-st.lastMsg>1){st.lastMsg=st.t;if(txt!=='Tüte voll')sfx('err');st.pops.push({x:x==null?st.player.x:x,y:y==null?st.player.y-34:y,txt,col:'#ff9a7a',t:0})}}
 function pay(c,x,y,col,big){ui.busyT=st.t;st.money+=c;st.earned+=c;if(x!=null)pop(x,y,'+'+euro(c),col,big)}
 function fly(ty,x0,y0,x1,y1,d){st.fly.push({ty,x0,y0,x1,y1,t:0,d:d||0.3,rot:Math.random()*6.28})}
 // Ein Stueck kommt in Fahrtrichtung dir auf Feld x,y an
@@ -17,7 +18,7 @@ function tryPush(x,y,ty,dir,pref){if(x<0||y<0||x>=MW||y>=MH)return false;const o
 // Reissverschluss: Kam das letzte Stueck aus derselben Richtung und wartet ein anderes Band fertig am Feld, ist das zuerst dran
 function rival(o,dir){for(let d=0;d<4;d++){if(d===dir)continue;const x=o.x-DX[d],y=o.y-DY[d];if(x<0||y<0||x>=MW||y>=MH)continue;const n=grid[y*MW+x];if(n&&n.k==='belt'&&n.dir===d&&((n.item>=0&&n.prog>=1)||(n.b&&n.b.item>=0&&n.b.prog>=1)))return true}return false}
 function accept(b,ty,dir){
-  if(b.k==='auto'){if(ty>=RAW&&!JUNK(ty)){st.viaBelt++;st.sold[ty]++;pay(TY[ty].val,b.x*T+50,b.y*T+20,'#ffd23e',true);return true}if(b.q.length<AUTO_CAP){st.viaBelt++;b.q.push(ty);return true}return false}
+  if(b.k==='auto'){if(ty>=RAW&&!JUNK(ty)){sfx(ty===7?'pal':'sale',b.x*T+32,b.y*T+48);st.viaBelt++;st.sold[ty]++;pay(TY[ty].val,b.x*T+50,b.y*T+20,'#ffd23e',true);return true}if(b.q.length<AUTO_CAP){st.viaBelt++;b.q.push(ty);return true}return false}
   if(b.k==='cross'){const a=dir%2;if(b.it[a]>=0)return false;b.it[a]=ty;b.dr[a]=dir;b.wt[a]=0.45/bspd();return true}
   if(b.k==='split'||b.k==='sort'){if(b.item>=0)return false;b.item=ty;b.wait=0.45/bspd();b.from=dir;return true}
   const R=BT[b.k].inp;if(R&&R[ty]!=null&&b.buf[ty]<R[ty]*2){b.buf[ty]++;return true}return false}
@@ -62,10 +63,10 @@ function updBld(b,dt){
     else if(pushOut(b,b.item,b.k==='sort'?b.dir:-1))b.item=-1;return}
   if(isSt(b)){updStation(b,dt);return}
   if(b.k==='auto'){b.acc+=AUTO_RATE*dt;if(b.bon>0)b.bon-=dt;
-    if(b.q.length){b.spin+=dt*9;while(b.acc>=1&&b.q.length){const m=b.q.shift();b.acc-=1;b.bon=0.5;st.sold[m]++;pay(TY[m].val,b.x*T+40+Math.random()*24,b.y*T+34,'#e9eef0')}}else b.acc=Math.min(b.acc,1);return}
+    if(b.q.length){b.spin+=dt*9;while(b.acc>=1&&b.q.length){const m=b.q.shift();b.acc-=1;b.bon=0.5;st.sold[m]++;sfx('coin',b.x*T+32,b.y*T+48);pay(TY[m].val,b.x*T+40+Math.random()*24,b.y*T+34,'#e9eef0')}}else b.acc=Math.min(b.acc,1);return}
   const R=BT[b.k];
   if(b.t<0){if(b.out<2){let ok=true;for(const k in R.inp)if(b.buf[k]<R.inp[k])ok=false;if(ok){for(const k in R.inp)b.buf[k]-=R.inp[k];b.t=0}}}
-  else{ui.busyT=st.t;b.t+=dt;b.anim+=dt;if(b.t>=R.time){b.t=-1;b.out++;b.made++}}
+  else{ui.busyT=st.t;b.t+=dt;b.anim+=dt;if(b.t>=R.time){b.t=-1;b.out++;b.made++;sfx('press',(b.x+1)*T,(b.y+1)*T)}}
   if(b.out>0&&pushOut(b,R.out,-1))b.out--}
 // Naechster Wegpunkt fuer eine Figur m auf dem Weg nach tx,ty. null heisst: geradeaus, kein Zelt im Weg.
 // Sonst fuehrt ein Weg aussen um die Zelte (E-004). Der Weg haengt an der Figur und wird neu gesucht, wenn das Ziel das Feld wechselt.
@@ -86,7 +87,7 @@ function updHelper(h,b,cx,cy,dt){const cap=10,sp=85;h.walk=false;
     if(h.state==='seek'){if(h.load.length)h.state='return';else{const n=nearTent(h.x,h.y,cx,cy,abR());if(n){n.cl=true;h.target=n;h.state='walk'}else h.state='idle'}}
     else if(f.o.gone){f.cl=false;h.target=null;h.state='seek'}
     else if(h.state==='walk'){if(go(f.x,f.y+6,f.r+10)){h.state='pick';h.cool=TENT_TIME}}
-    else{h.cool-=dt;ui.busyT=st.t;h.ph+=dt*9;if(h.cool<=0){setTentGone(f,true);f.cl=false;for(const m of TENT_LOAD[f.o.t]||TENT_LOAD.tent){h.load.push(m);fly(m,f.x,f.y-10,h.wx,h.wy-4,0.3)}h.target=null;h.state='return'}}}
+    else{h.cool-=dt;ui.busyT=st.t;h.ph+=dt*9;if(h.cool<=0){setTentGone(f,true);sfx('tent',f.x,f.y);f.cl=false;for(const m of TENT_LOAD[f.o.t]||TENT_LOAD.tent){h.load.push(m);fly(m,f.x,f.y-10,h.wx,h.wy-4,0.3)}h.target=null;h.state='return'}}}
   else if(h.state==='seek'){if(h.load.length>=cap)h.state='return';else{const it=nearestIn(h.x,h.y,cx,cy,stR());
       if(it){it.claimed=true;h.target=it;h.state='walk'}else h.state=h.load.length?'return':'idle'}}
   else if(h.state==='walk'){const it=h.target;if(!it.alive)h.state='seek';else if(go(it.x,it.y,13)){h.state='pick';h.cool=0.2}}
@@ -98,7 +99,7 @@ function updHelper(h,b,cx,cy,dt){const cap=10,sp=85;h.walk=false;
 function updPlayer(dt){const p=st.player,sp=110+18*st.up.shoe,cap=25+10*st.up.bag,dx=p.tx-p.x,dy=p.ty-p.y,d=Math.hypot(dx,dy);p.walk=false;
   if(d>3){const w=wayTo(p,p.tx,p.ty),ex=w?w.x-p.x:dx,ey=w?w.y-p.y:dy,e=Math.hypot(ex,ey)||1,s=Math.min(e,sp*dt);p.x+=ex/e*s;p.y+=ey/e*s;p.dir=Math.atan2(ey,ex);p.walk=true;p.ph+=dt*12}
   p.cool-=dt;if(p.cool<=0&&p.bag.length<cap){let best=null,bd=1e9;near(p.x,p.y,28,it=>{const q=Math.hypot(it.x-p.x,it.y-p.y);if(q<bd){bd=q;best=it}});
-    if(best){removeItem(best);p.bag.push(best.m);fly(best.m,best.x,best.y,p.x,p.y-12,0.18);p.cool=0.085}}
+    if(best){sfx('pick',p.x,p.y);removeItem(best);p.bag.push(best.m);fly(best.m,best.x,best.y,p.x,p.y-12,0.18);p.cool=0.085}}
   else if(p.cool<=0&&p.bag.length>=cap){let any=false;near(p.x,p.y,28,()=>{any=true});if(any)msg('Tüte voll')}
   p.ucool-=dt;if(p.ucool<=0&&p.bag.length){const ax=(AUTO.x+1)*T,ay=(AUTO.y+1.5)*T;
     if(Math.hypot(p.x-ax,p.y-ay)<88){if(AUTO.q.length<AUTO_CAP){const m=p.bag.pop();AUTO.q.push(m);fly(m,p.x,p.y-12,ax,ay-10,0.3);p.ucool=0.07}}
@@ -109,15 +110,17 @@ function finish(){let n=0,v=0;const add=(ty,k)=>{if(ty>=0&&k>0){n+=k;v+=TY[ty].v
   for(const t of belts){add(t.item,1);t.item=-1;if(t.b){add(t.b.item,1);t.b.item=-1}}
   for(const b of blds){if(b.k==='cross'){add(b.it[0],1);add(b.it[1],1);b.it=[-1,-1]}else if(b.k==='split'||b.k==='sort'){add(b.item,1);b.item=-1}
     else if(BT[b.k].inp){for(const k in b.buf){add(+k,b.buf[k]);b.buf[k]=0}add(BT[b.k].out,b.out);b.out=0}}
-  st.money+=v;st.earned+=v;st.rest={n,v};st.done=true}
+  st.money+=v;st.earned+=v;st.rest={n,v};st.done=true;sfx('win')}
 // Ziele: Ist das aktuelle erreicht, beginnt das naechste und schaltet seine Bauteile frei.
 function goals(){st.tl=tentsLeft();st.tt=foot.length;while(st.ph<GOALS.length-1&&GOALS[st.ph].val(st)>=GOALS[st.ph].need){st.ph++;const neu=Object.keys(OPEN).filter(k=>OPEN[k]===st.ph).map(k=>BT[k]?BT[k].name:'Doppelband');
-    toast('Ziel erreicht'+(neu.length?' · Neu: '+neu.join(', '):''));ui.newT=performance.now()}}
+    toast('Ziel erreicht'+(neu.length?' · Neu: '+neu.join(', '):''));sfx('goal');ui.newT=performance.now()}}
+let jamT=0,jamN=0; // Warnton: einmal je Sekunde zaehlen, wie viele Bauteile stocken
 function update(dt){if(st.done)return;st.t+=dt;updBelts(dt);for(const b of blds)updBld(b,dt);updPlayer(dt);
   for(let k=st.fly.length-1;k>=0;k--){st.fly[k].t+=dt;if(st.fly[k].t>=st.fly[k].d)st.fly.splice(k,1)}
   for(let k=st.pops.length-1;k>=0;k--){st.pops[k].t+=dt;if(st.pops[k].t>1.3)st.pops.splice(k,1)}
   if(ui.resetArm>0)ui.resetArm-=dt;
   goals();
+  if(st.t-jamT>1||st.t<jamT){jamT=st.t;let n=0;for(const b of blds)if(jam(b))n++;if(n>jamN)sfx('warn');jamN=n}
   if(ui.busyT>st.t)ui.busyT=st.t;
   if(st.left[0]+st.left[1]+st.left[2]+st.left[3]===0&&!st.tl&&!st.player.bag.length&&!AUTO.q.length&&st.t-ui.busyT>3&&blds.every(b=>!isSt(b)||(!b.buf.length&&b.helpers.every(h=>!h.load.length))))finish()}
 

@@ -4,6 +4,7 @@ import {DX,DY,HOT,MH,MW,RAW,T,TOOLS,VIEW,WH,WW} from './konstanten.js';
 import {cam,isOpen,nSort,nextSort,resetState,st,ui} from './zustand.js';
 import {AUTO,belts,blds,blocked,cells,findPath,foot,genWorld,grid,los,removeItem} from './welt.js';
 import {jam,msg,tryPush,update} from './logik.js';
+import {FX,SEL,amb,pause,setup,sfx,wake} from './ton.js';
 import {beltSwap,build,buildPlan,buyUp,crossOver,demolish,load,moveTo,planBelt,planEnds,rec,save,setBelt,stepBegin,stepEnd,undo,widen} from './bauen.js';
 import {MM,S,movePos,btns,buildGround,buildItemLayer,buildMini,buildSprites,cv,draw,dropItemLayer,ghostPos,groundL,offX,offY,panelRect,ptr,resize,spr,toW} from './grafik.js';
 
@@ -19,17 +20,17 @@ function beltTap(x,y){if(x<0||y<0||x>=MW||y>=MH)return;const A=ui.planA,o=grid[y
   if(!A){if(planEnds(x,y,true).length)ui.planA={x,y};else msg('Hier kann kein Band beginnen',x*T+16,y*T-4);return}
   const p=planBelt(A.x,A.y,x,y);ui.plan=p;if(!p)msg('Kein freier Weg',x*T+16,y*T-4)}
 function miniTo(p){cam.x=(p.x-MM.x)/MM.w*WW;cam.y=(p.y-MM.y)/MM.h*WH;cam.follow=false}
-cv.addEventListener('pointerdown',e=>{e.preventDefault();const p=toL(e);pts.set(e.pointerId,p);ptr.x=p.x;ptr.y=p.y;ptr.inView=inRect(p,VIEW);try{cv.setPointerCapture(e.pointerId)}catch(_){}
+cv.addEventListener('pointerdown',e=>{e.preventDefault();wake();const p=toL(e);pts.set(e.pointerId,p);ptr.x=p.x;ptr.y=p.y;ptr.inView=inRect(p,VIEW);try{cv.setPointerCapture(e.pointerId)}catch(_){}
   if(pts.size===2){act=null;stepEnd();const a=[...pts.values()];gest={cx:(a[0].x+a[1].x)/2,cy:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),camx:cam.x,camy:cam.y,z:cam.z};cam.follow=false;return}
   if(e.button===1||e.button===2){act={type:'pan',x:p.x,y:p.y,camx:cam.x,camy:cam.y};cam.follow=false;return}
-  for(let k=btns.length-1;k>=0;k--){const b=btns[k];if(p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y&&p.y<=b.y+b.h){if(b.on)b.cb();return}}
+  for(let k=btns.length-1;k>=0;k--){const b=btns[k];if(p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y&&p.y<=b.y+b.h){if(b.on){sfx('click');b.cb()}return}}
   if(ui.menu)return;
   if(inRect(p,MM)){act={type:'mini'};miniTo(p);return}
   if(inRect(p,panelRect)||!ptr.inView||st.done)return;
   const w=toW(p.x,p.y),tx=Math.floor(w.x/T),ty=Math.floor(w.y/T),o=tx>=0&&ty>=0&&tx<MW&&ty<MH?grid[ty*MW+tx]:null;ptr.wx=w.x;ptr.wy=w.y;
   if(ui.move){act={type:'move'};return}
   if(ui.tool!=='walk')stepBegin();
-  if(ui.tool==='walk'){if(o&&o.k!=='belt'){ui.sel=o;return}ui.sel=null;act={type:'walk'};st.player.tx=Math.max(8,Math.min(WW-8,w.x));st.player.ty=Math.max(8,Math.min(WH-8,w.y));cam.follow=true}
+  if(ui.tool==='walk'){if(o&&o.k!=='belt'){ui.sel=o;sfx('sel',null,null,o.k);return}ui.sel=null;act={type:'walk'};st.player.tx=Math.max(8,Math.min(WW-8,w.x));st.player.ty=Math.max(8,Math.min(WH-8,w.y));cam.follow=true}
   else if(ui.tool==='belt')act={type:'belt',lx:tx,ly:ty,dir:ui.rot,moved:false}
   else if(ui.tool==='demo'){act={type:'demo'};demolish(tx,ty)}
   else if(ui.tool==='wide'){act={type:'wide'};widen(tx,ty)}
@@ -51,16 +52,16 @@ function pUp(e){const had=pts.has(e.pointerId);pts.delete(e.pointerId);if(pts.si
   stepEnd();if(e.pointerType!=='mouse')ptr.inView=false}
 cv.addEventListener('pointerup',pUp);cv.addEventListener('pointercancel',pUp);cv.addEventListener('contextmenu',e=>e.preventDefault());
 cv.addEventListener('wheel',e=>{e.preventDefault();const p=toL(e),w0=toW(p.x,p.y);cam.z=Math.max(0.4,Math.min(2.2,cam.z*(e.deltaY<0?1.12:1/1.12)));const w1=toW(p.x,p.y);cam.x+=w0.x-w1.x;cam.y+=w0.y-w1.y;cam.follow=false},{passive:false});
-const keys={};window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if(k==='escape'&&ui.menu){ui.menu=false;ui.resetArm=0}else if(k==='r')ui.rot=(ui.rot+1)%4;else if(k==='escape'){ui.tool='walk';ui.move=null}else if(k==='z')undo();else if(HOT[k]&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&isOpen(HOT[k])){ui.tool=HOT[k];ui.sel=null;ui.move=null}});
+const keys={};window.addEventListener('keydown',e=>{wake();const k=e.key.toLowerCase();keys[k]=true;if(k==='escape'&&ui.menu){ui.menu=false;ui.resetArm=0}else if(k==='r')ui.rot=(ui.rot+1)%4;else if(k==='escape'){ui.tool='walk';ui.move=null}else if(k==='z')undo();else if(HOT[k]&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&isOpen(HOT[k])){ui.tool=HOT[k];ui.sel=null;ui.move=null}});
 window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(resize,120)});
-document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save();pause(document.hidden)});
 function start(fresh){resetState();dropItemLayer();ui.tool='walk';ui.sel=null;ui.undo=[];ui.step=null;ui.move=null;ui.planA=null;ui.plan=null;ui.menu=false;ui.resetArm=0;ui.toast=null;ui.newT=-9;genWorld();if(!fresh)load();st.tt=foot.length;st.tl=foot.filter(f=>!f.o.gone).length;ui.busyT=st.t;cam.x=st.player.x+200;cam.y=st.player.y;cam.follow=true;resize();if(!spr.length)buildSprites();ui.groundDirty=false;buildGround();buildItemLayer();buildMini();ui.topoDirty=ui.orderDirty=true}
 let last=0,saveT=0;function frame(t){const dt=Math.min(0.05,(t-last)/1000||0);last=t;
   const pv=260*dt/cam.z;if(keys.a||keys.arrowleft){cam.x-=pv;cam.follow=false}if(keys.d||keys.arrowright){cam.x+=pv;cam.follow=false}if(keys.w||keys.arrowup){cam.y-=pv;cam.follow=false}if(keys.s||keys.arrowdown){cam.y+=pv;cam.follow=false}
-  if(!ui.menu)update(dt);draw();saveT+=dt;if(saveT>15){saveT=0;save()}requestAnimationFrame(frame)}
+  if(!ui.menu)update(dt);draw();{let n=0;const hw=VIEW.w/2/cam.z+64,hh=VIEW.h/2/cam.z+64;for(const b of blds)if(b.t>=0&&Math.abs((b.x+1)*T-cam.x)<hw&&Math.abs((b.y+1)*T-cam.y)<hh)n++;amb(dt,n,ui.menu||st.done)}saveT+=dt;if(saveT>15){saveT=0;save()}requestAnimationFrame(frame)}
 start(false);requestAnimationFrame(frame);
-window.__G={widen,draw,nSort,nextSort,get foot(){return foot},get st(){return st},get ui(){return ui},crossOver,beltSwap,save,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,isOpen,los,findPath,
+window.__G={ton:{FX,SEL,setup,sfx,wake},widen,draw,nSort,nextSort,get foot(){return foot},get st(){return st},get ui(){return ui},crossOver,beltSwap,save,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,isOpen,los,findPath,
   step(sec,dt){dt=dt||1/60;for(let t=0;t<sec;t+=dt)update(dt)},build,setBelt,demolish,buyUp,tryPush,undo,moveTo,jam,planBelt,buildPlan,setTool(t){ui.tool=t},setRot(r){ui.rot=r},
   clear(x0,y0,x1,y1){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)for(const it of cells[y*MW+x].slice())removeItem(it)}};
 
