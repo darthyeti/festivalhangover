@@ -125,7 +125,7 @@ bewusst und nach Freigabe aendern.
 - Ton (E-020): `sfx(name,x,y,k)` aus `ton.js` spielt ein Geraeusch aus `FX`, mit `name==='sel'` den Klang der Bauteilart `k` aus `SEL`.
   Mit Ort klingt es nur im Bild und von der passenden Seite. `GAP` begrenzt, wie oft dasselbe Geraeusch je Sekunde kommt.
   Der Tonkontext entsteht erst beim ersten Tippen (`wake()`), vorher und im Testspieler ist alles stumm. `amb()` laeuft in der Spielschleife
-  (Wind, Voegel, Brummen nach Zahl laufender Maschinen im Bild). Lautstaerken stehen im Menue und in `localStorage` unter `montagmorgen2-ton`.
+  (heller Wind und Voegel. Kein Brummen und nichts unter 500 Hz: Till hoerte in Version 29 ein Wummern und fand es stoerend). Lautstaerken stehen im Menue und in `localStorage` unter `montagmorgen2-ton`.
   Der Lead Dev kann nicht hoeren: Der Rauchtest rechnet jedes Geraeusch per `OfflineAudioContext` und prueft nur Pegel. Wie es klingt, beurteilt Till.
   Kein `DynamicsCompressor` verwenden, er macht in Chromium kurze Geraeusche um den Faktor vier leiser.
 - Alle Grafiken entstehen per Code, es gibt keine Bilddateien.
