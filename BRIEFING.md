@@ -206,7 +206,7 @@ Geordnet nach Dringlichkeit für eine Alpha.
 
 ### Ton (seit Version 29, Entscheidung E-020)
 
-Geräusche und Ambiente entstehen per Code im Browser, ohne Dateien: Aufsammeln, Verkauf, Presse, Bauen, Abriss, Zeltabbau, Ziel, Warnton bei neuem Stau, dazu ein eigener Klang je Bauteilart beim Antippen. Ambiente: Wind, Vögel, Brummen der Anlage. Lautstärke in vier Stufen im Menü, getrennt für Geräusche und Ambiente. Musik folgt später als Datei mit freier Lizenz. Die Klänge sind vom Lead Dev nur gemessen, nicht gehört, und werden nach Tills Urteil nachgestellt.
+Geräusche und Ambiente entstehen per Code im Browser, ohne Dateien: Aufsammeln, Verkauf, Presse, Bauen, Abriss, Zeltabbau, Ziel, Warnton bei neuem Stau, dazu ein eigener Klang je Bauteilart beim Antippen. Ambiente: heller Wind und Vögel. Das Brummen der Anlage und das tiefe Windrauschen sind seit Version 32 gestrichen, Till empfand sie als Wummern. Lautstärke in vier Stufen im Menü, getrennt für Geräusche und Ambiente. Musik folgt später als Datei mit freier Lizenz. Die Klänge sind vom Lead Dev nur gemessen, nicht gehört, und werden nach Tills Urteil nachgestellt.
 
 ## 9. Ideen für nach der Alpha
 
