@@ -14,13 +14,13 @@ const TY=[{n:'Dosen',val:25,col:'#c9d2d8'},{n:'PET',val:25,col:'#7fc4e8'},{n:'Gl
  {n:'Planen',val:5,col:'#3fa392'},{n:'Gestänge',val:10,col:'#b9c2c8'},{n:'Planenballen',val:400,col:'#58b8a6'},{n:'Schrottbündel',val:600,col:'#9aa4aa'}];
 // Sperrmuell aus Zelten: zaehlt in der Annahme wie Rohware (Warteschlange), bringt ungepresst fast nichts
 const JUNK=t=>t===8||t===9,TENT_LOAD={tent:[8,8,8,9,9],pav:[8,8,9,9,9,9]},TENT_TIME=6,LAST_TENTS=12;
-const VERSION=30,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
+const VERSION=31,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
 const RAW=4,TENT_COST=500,MORE=1.2; // MORE: jede weitere Maschine derselben Art kostet so viel mal mehr (E-014, gesenkt mit E-015) // Zelt oder Pavillon abbauen, in Cent
 const BT={
  belt:{name:'Band',cost:50,w:1,h:1,info:['Ziehen legt eine Strecke.']},
  split:{name:'Verteiler',cost:300,w:1,h:1,info:['Verteilt reihum auf alle','Bänder, die wegführen.']},
  cross:{name:'Kreuzung',cost:400,w:1,h:1,info:['Zwei Bänder kreuzen sich,','ohne sich zu mischen.','Es geht nur geradeaus','weiter, nie um die Ecke.']},
- sort:{name:'Sortierer',cost:500,w:1,h:1,info:['Wirft seine Sorte in','Pfeilrichtung aus, der','Rest läuft weiter. Ist der','Auswurf voll, läuft auch','die Sorte weiter. Braucht','darum immer einen Weiterweg.']},
+ sort:{name:'Sortierer',cost:500,w:1,h:1,info:['Wirft seine Sorte in','Pfeilrichtung aus, der','Rest läuft weiter. Ist der','Auswurf voll, läuft auch','die Sorte weiter, wenn sie','dort abgenommen wird.']},
  station:{name:'Sammelstation',cost:1500,w:2,h:2,info:['Sammler räumen den','Umkreis leer und geben','so viel ab, wie ein Band trägt.']},
  pd:{name:'Dosenpresse',cost:4000,w:2,h:2,inp:{0:12},out:4,time:6,col:'#7d8a93'},
  pp:{name:'PET-Presse',cost:4000,w:2,h:2,inp:{1:8},out:5,time:8,col:'#3f86b8'},

@@ -47,10 +47,23 @@ function jam(b){const stuck=()=>outCount(b)?'Stau am Ausgang':'Kein Ausgang: Ban
   if(b.k==='split'||b.k==='sort')return b.item>=0&&b.wait<-1?stuck():'';
   if(b.k==='cross')return(b.it[0]>=0&&b.wt[0]<-1)||(b.it[1]>=0&&b.wt[1]<-1)?'Stau hinter der Kreuzung':'';
   return BT[b.k].inp&&b.out>=2?stuck():''}
+// Ueberlauf am Sortierer: Ist der Auswurf voll, laeuft die eigene Sorte nur weiter, wenn der Weiterweg irgendwo ankommt, wo sie
+// angenommen wird (Annahme oder passende Maschine). Sonst wartet sie, bis der Auswurf frei ist. Ohne diese Pruefung landet sie in
+// einem Sortierer ohne Weiterweg und blockiert die Strecke fuer immer (Tills Zeltkette, Version 29).
+// Das Ergebnis haengt nur am Aufbau und wird gemerkt, bis sich Baender oder Bauteile aendern (beltOrder leert den Speicher).
+const drainC=new Map();
+function drains(b){const c=drainC.get(b);if(c&&c.f===b.filter&&c.d===b.dir&&c.from===b.from)return c.v;const ty=b.filter,seen=new Set([b.y*MW+b.x]),st=[];let v=false;
+  const outs=(o,inD,skip)=>{for(let d=0;d<4;d++){if(d===(inD+2)%4||d===skip)continue;const x=o.x+DX[d],y=o.y+DY[d];if(x<0||y<0||x>=MW||y>=MH)continue;const n=grid[y*MW+x];if(n&&!(n.k==='belt'&&n.dir===(d+2)%4))st.push(x,y,d)}};
+  outs(b,b.from,b.dir);
+  while(st.length&&!v){const d=st.pop(),y=st.pop(),x=st.pop();if(x<0||y<0||x>=MW||y>=MH)continue;const o=grid[y*MW+x];if(!o)continue;
+    if(o.k==='auto'){v=true;break}if(o.k!=='belt'&&o.k!=='split'&&o.k!=='sort'&&o.k!=='cross'){const R=BT[o.k].inp;if(R&&R[ty]!=null)v=true;continue}
+    const q=(y*MW+x)*2+(o.k==='cross'?d%2:0);if(seen.has(-q-1))continue;seen.add(-q-1);
+    if(o.k==='belt')st.push(x+DX[o.dir],y+DY[o.dir],o.dir);else if(o.k==='cross')st.push(x+DX[d],y+DY[d],d);else outs(o,d,o.k==='sort'&&o.filter!==ty?o.dir:-1)}
+  drainC.set(b,{f:b.filter,d:b.dir,from:b.from,v});return v}
 // Baender werden vom Ende jeder Kette her abgearbeitet. So rueckt eine volle Strecke im selben Takt dicht auf,
 // unabhaengig davon, in welcher Reihenfolge sie gebaut wurde.
 let order=[];
-function beltOrder(){ui.orderDirty=false;order=[];const seen=new Set(),stack=[];
+function beltOrder(){ui.orderDirty=false;drainC.clear();order=[];const seen=new Set(),stack=[];
   for(const t0 of belts){let t=t0;while(t&&!seen.has(t)){seen.add(t);stack.push(t);const x=t.x+DX[t.dir],y=t.y+DY[t.dir],o=x<0||y<0||x>=MW||y>=MH?null:grid[y*MW+x];t=o&&o.k==='belt'?o:null}
     while(stack.length)order.push(stack.pop())}}
 function updBelts(dt){if(ui.orderDirty||order.length!==belts.length)beltOrder();const v=bspd();for(const t of order){if(!t.b)mvLane(t,t,v,dt);else if(t.alt=!t.alt){mvLane(t,t,v,dt);mvLane(t,t.b,v,dt)}else{mvLane(t,t.b,v,dt);mvLane(t,t,v,dt)}}}
@@ -61,7 +74,7 @@ function updBld(b,dt){
   // Kreuzung: je Achse ein Platz, das Stueck faehrt in seiner Richtung geradeaus weiter
   if(b.k==='cross'){for(let a=0;a<2;a++){if(b.it[a]<0)continue;b.wt[a]-=dt;if(b.wt[a]<=0&&tryPush(b.x+DX[b.dr[a]],b.y+DY[b.dr[a]],b.it[a],b.dr[a]))b.it[a]=-1}return}
   if(b.k==='split'||b.k==='sort'){if(b.item<0)return;b.wait-=dt;if(b.wait>0)return;
-    if(b.k==='sort'&&b.item===b.filter){if(tryPush(b.x+DX[b.dir],b.y+DY[b.dir],b.item,b.dir))b.item=-1;else if(b.wait<-0.5&&pushOut(b,b.item,b.dir))b.item=-1}
+    if(b.k==='sort'&&b.item===b.filter){if(tryPush(b.x+DX[b.dir],b.y+DY[b.dir],b.item,b.dir))b.item=-1;else if(b.wait<-0.5&&drains(b)&&pushOut(b,b.item,b.dir))b.item=-1}
     else if(pushOut(b,b.item,b.k==='sort'?b.dir:-1))b.item=-1;return}
   if(isSt(b)){updStation(b,dt);return}
   if(b.k==='auto'){b.acc+=AUTO_RATE*dt;if(b.bon>0)b.bon-=dt;

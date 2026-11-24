@@ -408,6 +408,12 @@ function serve() {
     // Sortierer ohne Weiterweg: Eine fremde Sorte steckt fest, die Warnung nennt den Grund statt 'Stau'.
     { const sd = G.build('sort', 6, 20); sd.filter = 9; sd.dir = 3; G.setBelt(6, 19, 3); G.setBelt(5, 20, 0); G.tryPush(5, 20, 8, 0); G.step(3); o.deadSort = G.jam(sd); G.setBelt(7, 20, 0); G.step(1); o.deadSortFixed = sd.item < 0 && G.jam(sd) === '';
       for (const p of [[6, 20], [6, 19], [5, 20], [7, 20]]) G.demolish(p[0], p[1]); G.st.player.bag.length = 0; }
+    // Ueberlauf nur mit Abnehmer: Zwei Sortierer hintereinander, der zweite ohne Weiterweg. Volle Planen warten am ersten, statt den zweiten zu verstopfen.
+    { const m1 = G.st.money, bl = G.blocked.slice(); G.blocked.fill(0); G.st.money = 1e7; for (let x = 3; x <= 6; x++) G.setBelt(x, 24, 0); G.setRot(3); const a = G.build('sort', 7, 24); a.filter = 8; a.dir = 3; G.setBelt(7, 23, 3); const pl = G.build('pl', 7, 21);
+      G.setBelt(8, 24, 0); G.setBelt(9, 24, 0); const b2 = G.build('sort', 10, 24); b2.filter = 9; b2.dir = 3; G.setBelt(10, 23, 3); const sc = G.build('sc', 10, 21);
+      let wrong = 0; for (let t = 0; t < 120; t++) { G.tryPush(3, 24, t % 5 < 3 ? 8 : 9, 0); G.step(0.4); if (b2.item === 8) wrong++; }
+      const held = a.item >= 0 && wrong === 0; G.setBelt(7, 20, 3); G.setBelt(12, 21, 0); G.step(30); o.overflowHolds = held; o.overflowFlows = pl.made >= 3 && sc.made >= 2 && b2.item !== 8; o.overflowDetail = held + ' ' + a.item + '/' + wrong + ' ' + pl.made + '/' + sc.made;
+      for (const p of [[7, 21], [10, 21], [7, 24], [10, 24], [7, 23], [10, 23], [3, 24], [4, 24], [5, 24], [6, 24], [8, 24], [9, 24], [7, 20], [12, 21]]) G.demolish(p[0], p[1]); G.st.player.bag.length = 0; G.st.money = m1; for (let i = 0; i < bl.length; i++) G.blocked[i] = bl[i]; }
     // Zeichnen darf bei keinem Ziel und mit keinem Werkzeug abstuerzen (Absturz in Version 19 bei Ziel 3).
     { let bad = ''; const ph0 = G.st.ph, t0 = G.ui.tool; for (let p = 0; p < 8; p++) for (const tl of ['walk', 'belt', 'wide', 'sort', 'demo', 'ab', 'pl']) { G.st.ph = p; G.ui.tool = tl; try { G.draw(); } catch (e) { bad += p + '/' + tl + ': ' + e.message + ' '; } } G.st.ph = ph0; G.ui.tool = t0; o.drawAll = bad; }
 
@@ -496,6 +502,7 @@ function serve() {
     ['Annahme zaehlt rohe Planen fuer 5 Cent und zahlt Planenballen voll', m3.junkRaw && m3.junkSold, m3.junkRaw + ' ' + m3.junkSell],
     ['Jedes Geraeusch klingt und uebersteuert nicht, jede Bauteilart hat ihren Klang', m3.soundsOk, m3.sounds],
     ['Sortierer ohne Weiterweg meldet die falsche Sorte, mit Weiterweg laeuft sie ab', m3.deadSort === 'Falsche Sorte, kein Weiterweg' && m3.deadSortFixed, m3.deadSort + ' ' + m3.deadSortFixed],
+    ['Volle Sorte laeuft nur weiter, wo sie abgenommen wird, sonst wartet sie am Sortierer', m3.overflowHolds && m3.overflowFlows, m3.overflowDetail],
     ['Tasten waehlen alle Werkzeuge, gesperrte nicht', m3.hotkeys === 'belt/pal/ab/pl/sc/demo walk', m3.hotkeys],
     ['Zeichnen laeuft bei jedem Ziel und Werkzeug ohne Fehler', m3.drawAll === '', m3.drawAll],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
