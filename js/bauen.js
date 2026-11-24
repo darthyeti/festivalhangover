@@ -1,11 +1,12 @@
 // Montagmorgen: Bauen
 // Bauen, Abriss, Verbesserungen, Speichern und Laden.
 import {BT,DX,DY,GOALS,MH,MORE,MW,SAVE_KEY,T,TENT_COST,UPS,WIDE_COST,WORLD_SEED,euro} from './konstanten.js';
-import {cam,isOpen,st,toast,ui,upPrice} from './zustand.js';
+import {cam,isOpen,isSt,st,toast,ui,upPrice} from './zustand.js';
 import {AUTO,belts,blds,blocked,cells,goneTents,grid,items,loadTents,setTentGone,tentAt,tentTiles} from './welt.js';
 import {msg,pop,straightOut} from './logik.js';
 
 function price(k){if(k==='station')return Math.round(1500*Math.pow(1.12,blds.filter(b=>b.k==='station').length)/10)*10;
+  if(k==='ab')return Math.round(BT.ab.cost*Math.pow(1.2,blds.filter(b=>b.k==='ab').length)/10)*10;
   if(BT[k].inp)return Math.round(BT[k].cost*Math.pow(MORE,blds.filter(b=>b.k===k).length)/10)*10;return BT[k].cost}
 function freeTile(x,y){if(x<0||y<0||x>=MW||y>=MH)return false;const i=y*MW+x;return!grid[i]&&!blocked[i]&&!cells[i].length}
 function canBuild(x,y,w,h){for(let j=0;j<h;j++)for(let i=0;i<w;i++)if(!freeTile(x+i,y+j))return false;return true}
@@ -13,7 +14,7 @@ function placeB(b){for(let j=0;j<b.h;j++)for(let i=0;i<b.w;i++)grid[(b.y+j)*MW+b
 function mkB(k,x,y,paid){const D=BT[k],b={k,x,y,w:D.w,h:D.h,paid,rr:0};
   if(k==='cross'){b.it=[-1,-1];b.dr=[0,1];b.wt=[0,0]}
   else if(k==='split'||k==='sort'){b.item=-1;b.wait=0;b.dir=ui.rot;b.filter=0;b.from=0}
-  else if(k==='station'){b.buf=[];b.cool=0;b.helpers=[];b.empty=false}
+  else if(k==='station'||k==='ab'){b.buf=[];b.cool=0;b.helpers=[];b.empty=false}
   else{b.buf={};for(const t in D.inp)b.buf[t]=0;b.out=0;b.t=-1;b.anim=0;b.made=0}
   return b}
 function build(k,x,y){const D=BT[k],p=price(k),mx=(x+D.w/2)*T,my=y*T-4;if(!canBuild(x,y,D.w,D.h)){msg(blockReason(x,y,D.w,D.h),mx,my);return null}if(st.money<p){msg('Zu wenig Geld',mx,my);return null}
@@ -31,14 +32,14 @@ function removeTent(f,x,y){if(st.money<TENT_COST){msg('Abbauen kostet '+euro(TEN
 function unloadTo(o,bag){const n0=bag.length;
   if(o.k==='belt'||o.k==='split'||o.k==='sort'){if(o.item>=0){bag.push(o.item);o.item=-1}if(o.b&&o.b.item>=0){bag.push(o.b.item);o.b.item=-1}}
   else if(o.k==='cross'){for(let a=0;a<2;a++)if(o.it[a]>=0){bag.push(o.it[a]);o.it[a]=-1}}
-  else if(o.k==='station'){for(const m of o.buf)bag.push(m);o.buf.length=0;for(const h of o.helpers){for(const m of h.load)bag.push(m);h.load.length=0}}
+  else if(isSt(o)){for(const m of o.buf)bag.push(m);o.buf.length=0;for(const h of o.helpers){for(const m of h.load)bag.push(m);h.load.length=0}}
   else if(BT[o.k].inp){const R=BT[o.k];if(o.t>=0){for(const k in R.inp)o.buf[k]+=R.inp[k];o.t=-1}for(const k in o.buf){for(let i=0;i<o.buf[k];i++)bag.push(+k);o.buf[k]=0}for(let i=0;i<o.out;i++)bag.push(R.out);o.out=0}
   return bag.length-n0}
 function demolish(x,y,noTent){if(x<0||y<0||x>=MW||y>=MH)return;const o=grid[y*MW+x];if(!o){const f=noTent?null:tentAt(x,y);if(f)removeTent(f,x,y);return}if(o.k==='auto')return;
   const got=unloadTo(o,st.player.bag);if(got)pop(x*T+16,y*T-6,'+'+got+' in die Tüte','#cfe8ff');
   if(o.k==='belt'){grid[y*MW+x]=null;belts.splice(belts.indexOf(o),1);st.money+=50+(o.b?WIDE_COST:0)}
   else{for(let j=0;j<o.h;j++)for(let i=0;i<o.w;i++)grid[(o.y+j)*MW+o.x+i]=null;blds.splice(blds.indexOf(o),1);st.money+=o.paid;
-    if(o.k==='station')for(const h of o.helpers)if(h.target)h.target.claimed=false}
+    if(isSt(o))for(const h of o.helpers)if(h.target)h.target.claimed=h.target.cl=false}
   if(ui.sel===o)ui.sel=null;if(ui.move===o)ui.move=null;ui.topoDirty=ui.orderDirty=true;rec({t:'del',o})}
 // Rueckgaengig: Ein Schritt sammelt alles, was eine Geste gebaut, gedreht, abgerissen oder versetzt hat.
 // Ohne offenen Schritt (Knopf im Panel, Skript ueber __G) ist jede Aenderung ein eigener Schritt.
@@ -49,7 +50,7 @@ function rec(e){if(ui.undoing)return;if(ui.step)ui.step.push(e);else pushStep([e
 function restore(o){const px=(o.x+(o.w||1)/2)*T,py=o.y*T-4;
   if(o.k==='belt'){if(!freeTile(o.x,o.y)){msg('Platz ist nicht mehr frei',px,py);return}{const c=50+(o.b?WIDE_COST:0);if(st.money<c){msg('Zu wenig Geld',px,py);return}st.money-=c}grid[o.y*MW+o.x]=o;belts.push(o);ui.topoDirty=ui.orderDirty=true;return}
   if(!canBuild(o.x,o.y,o.w,o.h)){msg('Platz ist nicht mehr frei',px,py);return}if(st.money<o.paid){msg('Zu wenig Geld',px,py);return}
-  st.money-=o.paid;if(o.k==='station')for(const h of o.helpers){h.target=null;if(h.state==='walk'||h.state==='pick')h.state='seek'}placeB(o)}
+  st.money-=o.paid;if(isSt(o))for(const h of o.helpers){h.target=null;if(h.state==='walk'||h.state==='pick')h.state='seek'}placeB(o)}
 function undo(){stepEnd();const s=ui.undo.pop();if(!s)return false;ui.undoing=true;
   for(let i=s.length-1;i>=0;i--){const e=s[i],o=e.o;
     if(e.t==='tent'){if(tentTiles(o).some(q=>grid[q]))msg('Platz ist nicht mehr frei',o.x,o.y-20);else{setTentGone(o,false);st.money+=TENT_COST}continue}
@@ -110,10 +111,10 @@ function buyUp(i){const u=UPS[i],p=upPrice(u);if(st.up[u.k]>=u.max||st.money<p)r
 function save(){try{const bits=new Uint8Array(Math.ceil(items.length/8));items.forEach((it,i)=>{if(!it.alive)bits[i>>3]|=1<<(i&7)});let s='';for(let i=0;i<bits.length;i++)s+=String.fromCharCode(bits[i]);
   localStorage.setItem(SAVE_KEY,JSON.stringify({v:2,seed:WORLD_SEED,n:items.length,money:st.money,earned:st.earned,t:st.t,up:st.up,sold:st.sold,ph:st.ph,viaBelt:st.viaBelt,rest:st.rest,px:st.player.x,py:st.player.y,bag:st.player.bag,dead:btoa(s),tents:goneTents(),
     auto:{q:AUTO.q,acc:AUTO.acc},belts:belts.map(t=>t.b?[t.x,t.y,t.dir,t.item,t.prog,t.from,[t.b.item,t.b.prog,t.b.from]]:[t.x,t.y,t.dir,t.item,t.prog,t.from]),
-    blds:blds.filter(b=>b.k!=='auto').map(b=>({k:b.k,x:b.x,y:b.y,dir:b.dir,filter:b.filter,paid:b.paid,buf:b.k==='station'?b.buf.concat(...b.helpers.map(h=>h.load)):b.buf,out:b.out,made:b.made,t:b.t,item:b.item,from:b.from,it:b.it,dr:b.dr}))}))}catch(e){}}
+    blds:blds.filter(b=>b.k!=='auto').map(b=>({k:b.k,x:b.x,y:b.y,dir:b.dir,filter:b.filter,paid:b.paid,buf:isSt(b)?b.buf.concat(...b.helpers.map(h=>h.load)):b.buf,out:b.out,made:b.made,t:b.t,item:b.item,from:b.from,it:b.it,dr:b.dr}))}))}catch(e){}}
 function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;const d=JSON.parse(raw);if(d.v!==1&&d.v!==2)return;if(d.seed!=null&&d.seed!==WORLD_SEED)return;
   if((d.n||8260)!==items.length){toast('Die Wiese ist neu angelegt. Der alte Spielstand passt nicht mehr.');return}
-  st.money=d.money;st.earned=d.earned;st.t=d.t;Object.assign(st.up,d.up);st.sold=d.sold;st.ph=d.ph==null?GOALS.length-1:d.ph;st.viaBelt=d.viaBelt||0;st.rest=d.rest||null;
+  st.money=d.money;st.earned=d.earned;st.t=d.t;Object.assign(st.up,d.up);st.sold=d.sold;while(st.sold.length<12)st.sold.push(0);st.ph=d.ph==null?GOALS.length-1:d.ph;st.viaBelt=d.viaBelt||0;st.rest=d.rest||null;
   // Die Verbesserung der Annahme gibt es nicht mehr (die Annahme soll der Engpass bleiben). Bezahlte Stufen werden erstattet.
   {let r=0;for(const u of UPS)while(st.up[u.k]>u.max){st.up[u.k]--;r+=upPrice(u)}if(r){st.money+=r;toast('Gestrichene Stufen erstattet: '+euro(r))}}// E-015: Stufen ueber dem Hoechstwert zurueckzahlen
   if(st.up.auto){let r=0;for(let l=0;l<st.up.auto;l++)r+=Math.round(500*Math.pow(1.6,l)/10)*10;st.money+=r;toast('Ausbau der Annahme erstattet: '+euro(r))}delete st.up.auto;
@@ -122,7 +123,7 @@ function load(){try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return;cons
   if(d.auto){AUTO.q=d.auto.q||[];AUTO.acc=d.auto.acc||0}
   for(const t of d.belts){const o={k:'belt',x:t[0],y:t[1],dir:t[2],item:t[3]==null?-1:t[3],prog:t[4]||0,from:t[5]==null?t[2]:t[5],feed:[t[2]]};if(t[6])o.b={item:t[6][0],prog:t[6][1],from:t[6][2]};grid[o.y*MW+o.x]=o;belts.push(o)}
   for(const q of d.blds){const b=mkB(q.k,q.x,q.y,q.paid);if(q.dir!=null)b.dir=q.dir;if(q.filter!=null)b.filter=q.filter;
-    if(q.k==='station')b.buf=q.buf||[];else if(q.k==='cross'){if(q.it)b.it=q.it;if(q.dr)b.dr=q.dr}
+    if(q.k==='station'||q.k==='ab')b.buf=q.buf||[];else if(q.k==='cross'){if(q.it)b.it=q.it;if(q.dr)b.dr=q.dr}
     else if(q.k==='split'||q.k==='sort'){if(q.item!=null&&q.item>=0){b.item=q.item;b.from=q.from||0;b.wait=0.15}}
     else if(BT[q.k].inp){Object.assign(b.buf,q.buf);b.out=q.out||0;b.made=q.made||0;if(q.t!=null)b.t=q.t}placeB(b)}
   cam.x=p.x;cam.y=p.y}catch(e){}}

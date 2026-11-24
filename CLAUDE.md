@@ -99,9 +99,17 @@ bewusst und nach Freigabe aendern.
   Sortierer oder Verteiler nur geradeaus weiter, Verteiler und Sortierer in eine Kreuzung ebenfalls nur geradeaus. Sitzt ein Stueck laenger als zwei Sekunden fest, ist jeder Nachbar recht.
 - Kurve am Verteiler oder Sortierer: Hat er keinen geraden Ausgang, gibt er auch auf ein Band direkt daneben ab,
   das quer wegfuehrt (`sideOuts`, `straightOut` in `logik.js`). `topo()` zeichnet dem Band dafuer einen Zulauf.
-- Sorten am Sortierer: `nSort()` in `zustand.js`. Rohware immer, mit freier Dosenpresse auch Dosenballen, mit freier PET-Presse auch PET-Ballen,
+- Sorten am Sortierer: `sorts()` in `zustand.js`. Rohware immer, mit freier Dosenpresse auch Dosenballen, mit freier PET-Presse auch PET-Ballen,
   damit sich Ballen von Pressen draussen aus dem gemischten Band holen lassen.
 - `beltSwap(k,x,y)` setzt Verteiler oder Sortierer direkt auf ein Bandfeld, wie `crossOver`.
+- Zelte als Sperrmuell (E-019): Der Abbautrupp (`ab`) ist eine Station mit anderem Ziel, `isSt(b)` in `zustand.js` gilt fuer beide.
+  Seine zwei Arbeiter (`h.ab`) suchen mit `nearTent()` ein Zelt im Umkreis `abR()`, bauen es in `TENT_TIME` ab (`setTentGone`)
+  und bringen `TENT_LOAD` als Ladung zurueck. Sorten 8 (Planen) und 9 (Gestaenge) sind Rohware (`JUNK`), 10 und 11 ihre Ballen
+  aus `pl` und `sc`. `st.tl` und `st.tt` (Zelte uebrig, gesamt) setzt `goals()` in jedem Schritt. Die Partie endet erst bei `st.tl===0`.
+  Die Sorten sind nicht mehr fortlaufend: `sorts()` liefert die waehlbaren, `nextSort(f)` die naechste. Arrays ueber Sorten haben zwoelf Plaetze.
+  Der Testspieler kennt die Kette nicht und baut Zelte von Hand ab, sobald Geld uebrig ist.
+- Boden nach Zeltabbau: `buildGround(R)` wuerfelt ausserhalb des Rechtecks nur und zeichnet nicht (`inR`), `grassNear` merkt sich die Halme am Weg.
+  Die Zufallsfolge muss dabei gleich bleiben, sonst passt der Ausschnitt nicht zum Rest.
 - Abriss verliert keine Ware: `unloadTo()` legt alles, was ein Bauteil traegt, in die
   Tuete der Spielfigur.
 - Auslieferung ohne gemischte Dateien: `VERSION` in `konstanten.js` und die

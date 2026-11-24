@@ -373,15 +373,33 @@ function serve() {
     o.notDoneYet = !G.st.done;
     G.clear(0, 0, G.MW - 1, G.MH - 1);
     G.tryPush(4, 28, 1, 0); G.step(0.5); // noch in Bewegung: das Ende wartet drei ruhige Sekunden ab
+    G.step(6); o.tentsHold = !G.st.done && G.st.tl > 200; // E-019: solange Zelte stehen, endet die Partie nicht
+    const standing = G.foot.filter(f => !f.o.gone); standing.forEach(f => { f.o.gone = true; });
     G.ui.busyT = G.st.t; const m0 = G.st.money; G.step(2); o.waitsBeforeEnd = !G.st.done; G.step(4);
     o.endsWithRest = G.st.done && !!G.st.rest && G.st.rest.n === 7 && G.st.rest.v === 5 * 25 + 8 + 25 && G.st.money - m0 === 158 && pd.buf[0] === 0;
     o.endDetail = JSON.stringify(G.st.rest) + ' ' + (G.st.money - m0);
-    G.st.done = false; // der Rest des Durchgangs prueft nur noch den Spielstand
+    G.st.done = false; standing.forEach(f => { f.o.gone = false; }); // der Rest des Durchgangs prueft nur noch den Spielstand
+
+    // Zelte als Sperrmuell (E-019): Der Abbautrupp zerlegt Zelte, die Pressen machen Ballen, die Annahme zahlt sie sofort.
+    { const m1 = G.st.money; G.st.money = 1e7; const f0 = G.foot.filter(f => !f.o.gone && f.x > 900)[0], fx = f0.x / G.T | 0, fy = f0.y / G.T | 0; let ab = null;
+      for (let r = 2; r < 9 && !ab; r++) for (let dy = -r; dy <= r && !ab; dy++) for (let dx = -r; dx <= r && !ab; dx++) { const x = fx + dx, y = fy + dy; let ok = x > 12 && y > 1 && x < G.MW - 3 && y < G.MH - 3; for (let j = 0; j < 2 && ok; j++) for (let i = 0; i < 2; i++) if (G.grid[(y + j) * G.MW + x + i] || G.blocked[(y + j) * G.MW + x + i]) ok = false; if (ok) ab = G.build('ab', x, y); }
+      const price2 = G.st.money; G.build('ab', 40, 2) ; const p2 = price2 - G.st.money; if (G.grid[2 * G.MW + 40]) G.demolish(40, 2);
+      G.step(0.1); const t0 = G.st.tl; G.step(40); const kinds = new Set(ab.buf); o.crewWorks = G.st.tl < t0 && ab.buf.length > 0 && [...kinds].every(k => k === 8 || k === 9) && ab.helpers.length === 2;
+      o.crewDetail = t0 + '>' + G.st.tl + ' Lager ' + ab.buf.length + ' Preis2 ' + p2; o.crewPrice = p2 === 36000;
+      G.demolish(ab.x, ab.y); G.st.player.bag.length = 0;
+      const pl = G.build('pl', 6, 20), sc = G.build('sc', 6, 23); for (let x = 3; x <= 5; x++) { G.setBelt(x, 20, 0); G.setBelt(x, 23, 0); } G.setBelt(8, 20, 0); G.setBelt(8, 23, 0);
+      const s10 = G.st.sold[10], s11 = G.st.sold[11];
+      for (let i = 0; i < 6; i++) { G.tryPush(3, 20, 8, 0); G.step(1); } for (let i = 0; i < 8; i++) { G.tryPush(3, 23, 9, 0); G.step(1); } G.step(12);
+      const bale = G.grid[20 * G.MW + 8].item === 10 || pl.out === 1 || pl.made === 1, bundle = sc.made === 1;
+      o.junkPress = bale && bundle; o.junkDetail = pl.made + '/' + sc.made;
+      const s8 = G.st.sold[8], e0 = G.st.earned; G.setBelt(3, 26, 2); G.tryPush(3, 26, 8, 2); const v0 = G.st.viaBelt; G.step(3.4); o.junkRaw = G.st.sold[8] === s8 + 1 && G.st.earned - e0 === 5 && G.st.viaBelt === v0 + 1;
+      G.tryPush(3, 26, 10, 2); G.step(1); o.junkSold = G.st.sold[10] === s10 + 1 && G.st.earned - e0 >= 400; o.junkSell = (G.st.sold[10] - s10) + ' ' + (G.st.earned - e0);
+      G.AUTO.q.length = 0; for (const p of [[6, 20], [6, 23], [3, 20], [4, 20], [5, 20], [8, 20], [3, 23], [4, 23], [5, 23], [8, 23], [3, 26]]) G.demolish(p[0], p[1]); G.st.player.bag.length = 0; G.st.money = m1; }
 
     // Sorten am Sortierer: Ballen sind waehlbar, sobald die jeweilige Presse frei ist.
-    { const ph0 = G.st.ph, n = p => { G.st.ph = p; return G.nSort(); }; o.sortKinds = [n(1), n(2), n(3), n(7)].join('/'); G.st.ph = ph0; }
+    { const ph0 = G.st.ph, n = p => { G.st.ph = p; return G.nSort(); }; o.sortKinds = [n(1), n(2), n(3), n(7)].join('/'); G.st.ph = 7; o.sortCycle = [0, 3, 5, 9].map(f => G.nextSort(f)).join('/'); G.st.ph = ph0; }
     // Zeichnen darf bei keinem Ziel und mit keinem Werkzeug abstuerzen (Absturz in Version 19 bei Ziel 3).
-    { let bad = ''; const ph0 = G.st.ph, t0 = G.ui.tool; for (let p = 0; p < 8; p++) for (const tl of ['walk', 'belt', 'wide', 'sort', 'demo']) { G.st.ph = p; G.ui.tool = tl; try { G.draw(); } catch (e) { bad += p + '/' + tl + ': ' + e.message + ' '; } } G.st.ph = ph0; G.ui.tool = t0; o.drawAll = bad; }
+    { let bad = ''; const ph0 = G.st.ph, t0 = G.ui.tool; for (let p = 0; p < 8; p++) for (const tl of ['walk', 'belt', 'wide', 'sort', 'demo', 'ab', 'pl']) { G.st.ph = p; G.ui.tool = tl; try { G.draw(); } catch (e) { bad += p + '/' + tl + ': ' + e.message + ' '; } } G.st.ph = ph0; G.ui.tool = t0; o.drawAll = bad; }
 
     // Alter Spielstand: ohne Zielstand ist alles frei, die Verbesserung der Annahme wird erstattet.
     G.save();
@@ -461,7 +479,11 @@ function serve() {
     ['Kurve am Sortierer: Rest geht aufs Band daneben, mit geradem Ausgang geradeaus', m3.sortCurve && m3.sortStraight, `${m3.sortCurve}/${m3.sortStraight} ${m3.curveDetail}`],
     ['Sortierer uebereinander mit seitlichem Zulauf: kein Stueck strandet, Festsitzendes kommt frei', m3.sortSide && m3.sortRescue, `${m3.sortSide}/${m3.sortRescue} ${m3.sortDetail}`],
     ['Spiel endet bei leerer Wiese auch mit Resten in der Anlage und schreibt sie gut', m3.notDoneYet && m3.waitsBeforeEnd && m3.endsWithRest, `${m3.notDoneYet}/${m3.waitsBeforeEnd}/${m3.endDetail}`],
-    ['Sortierer kennt Ballen, sobald die Presse frei ist', m3.sortKinds === '4/5/6/6', m3.sortKinds],
+    ['Sortierer kennt Ballen, sobald die Presse frei ist, und am Ende Planen und Gestaenge', m3.sortKinds === '4/5/6/8' && m3.sortCycle === '1/4/8/0', m3.sortKinds + ' ' + m3.sortCycle],
+    ['Solange Zelte stehen, endet die Partie nicht (E-019)', m3.tentsHold, String(m3.tentsHold)],
+    ['Abbautrupp zerlegt Zelte in Planen und Gestaenge, der zweite kostet 20 % mehr', m3.crewWorks && m3.crewPrice, m3.crewDetail],
+    ['Planenpresse und Schrottpresse machen Ballen und Buendel', m3.junkPress, m3.junkDetail],
+    ['Annahme zaehlt rohe Planen fuer 5 Cent und zahlt Planenballen voll', m3.junkRaw && m3.junkSold, m3.junkRaw + ' ' + m3.junkSell],
     ['Zeichnen laeuft bei jedem Ziel und Werkzeug ohne Fehler', m3.drawAll === '', m3.drawAll],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
     ['Alter Spielstand: alles frei, Ausbau der Annahme und gestrichene Bandstufen erstattet', oldSave.ph === 7 && oldSave.money === 2300 + 37500 + 93750 && oldSave.up.belt === 2 && oldSave.up.auto === undefined && oldSave.up.range === 0, JSON.stringify(oldSave)],
