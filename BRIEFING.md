@@ -94,7 +94,7 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
   5. 3 volle Kästen verkaufen: Palettierer
   6. 1 Palette verkaufen
   7. 10 Paletten verkaufen
-  8. Wiese leer räumen, mit Zeitwertung: Gold bis 45 Minuten, Silber bis 60, Bronze bis 80
+  8. Wiese leer räumen, mit Zeitwertung: Gold bis 38 Minuten, Silber bis 45, Bronze bis 60 (seit Version 25, Entscheidung E-017)
 - Laufen, Abriss und Drehen sind von Anfang an da.
 
 ## 4. Zahlen
