@@ -11,7 +11,7 @@ const QI=typeof location!=='undefined'?+new URLSearchParams(location.search).get
 // Sorten: 0-3 liegen auf der Wiese, 4-7 entstehen in Maschinen
 const TY=[{n:'Dosen',val:25,col:'#c9d2d8'},{n:'PET',val:25,col:'#7fc4e8'},{n:'Glas',val:8,col:'#a8712f'},{n:'Leerkästen',val:150,col:'#d14b3c'},
  {n:'Dosenballen',val:450,col:'#e4eaed'},{n:'PET-Ballen',val:300,col:'#8fd0f0'},{n:'Volle Kästen',val:465,col:'#b23a2e'},{n:'Paletten',val:6750,col:'#c9a16a'}];
-const VERSION=24,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
+const VERSION=25,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
 const RAW=4,TENT_COST=500,MORE=1.2; // MORE: jede weitere Maschine derselben Art kostet so viel mal mehr (E-014, gesenkt mit E-015) // Zelt oder Pavillon abbauen, in Cent
 const BT={
  belt:{name:'Band',cost:50,w:1,h:1,info:['Ziehen legt eine Strecke.']},
@@ -46,7 +46,7 @@ const GOALS=[
  {t:'Räum die Wiese leer',how:'Versetze Stationen, sobald ihr Umkreis leer ist. Die letzten Stücke blinken rot auf der Minikarte.',need:1,val:s=>s.total?(s.total-s.left[0]-s.left[1]-s.left[2]-s.left[3])/s.total:0,pct:true}
 ];
 // Zeitwertung am Ende, Grenzen in Minuten
-const MEDALS=[{m:45,n:'Gold',col:'#ffd23e'},{m:60,n:'Silber',col:'#cfd8dc'},{m:80,n:'Bronze',col:'#d08a4a'}];
+const MEDALS=[{m:38,n:'Gold',col:'#ffd23e'},{m:45,n:'Silber',col:'#cfd8dc'},{m:60,n:'Bronze',col:'#d08a4a'}]; // E-017, aus vier Partien von Till (39:00 bis 45:15)
 const WIDE_COST=100; // Aufpreis je Bandfeld fuer die zweite Spur (E-015), in Cent
 const OPEN={wide:3,belt:1,station:1,sort:2,pd:2,pp:3,split:3,cross:3,kp:4,pal:5};
 const euro=c=>(c/100).toFixed(2).replace('.',',')+' €';
