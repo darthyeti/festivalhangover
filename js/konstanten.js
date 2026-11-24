@@ -14,7 +14,7 @@ const TY=[{n:'Dosen',val:25,col:'#c9d2d8'},{n:'PET',val:25,col:'#7fc4e8'},{n:'Gl
  {n:'Planen',val:5,col:'#3fa392'},{n:'Gestänge',val:10,col:'#b9c2c8'},{n:'Planenballen',val:400,col:'#58b8a6'},{n:'Schrottbündel',val:600,col:'#9aa4aa'}];
 // Sperrmuell aus Zelten: zaehlt in der Annahme wie Rohware (Warteschlange), bringt ungepresst fast nichts
 const JUNK=t=>t===8||t===9,TENT_LOAD={tent:[8,8,8,9,9],pav:[8,8,9,9,9,9]},TENT_TIME=6,LAST_TENTS=12;
-const VERSION=27,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
+const VERSION=28,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
 const RAW=4,TENT_COST=500,MORE=1.2; // MORE: jede weitere Maschine derselben Art kostet so viel mal mehr (E-014, gesenkt mit E-015) // Zelt oder Pavillon abbauen, in Cent
 const BT={
  belt:{name:'Band',cost:50,w:1,h:1,info:['Ziehen legt eine Strecke.']},
@@ -26,7 +26,7 @@ const BT={
  pp:{name:'PET-Presse',cost:4000,w:2,h:2,inp:{1:8},out:5,time:8,col:'#3f86b8'},
  kp:{name:'Kistenpacker',cost:6000,w:2,h:2,inp:{2:20,3:1},out:6,time:10,col:'#a8553a'},
  pal:{name:'Palettierer',cost:15000,w:2,h:2,inp:{4:8,5:3},out:7,time:24,col:'#c98a2a'},
- ab:{name:'Abbautrupp',cost:30000,w:2,h:2,info:['Zwei Arbeiter bauen Zelte','und Pavillons im Umkreis ab.','Plane und Gestänge gehen','aufs Band zu den Pressen.']},
+ ab:{name:'Abbautrupp',cost:30000,w:2,h:2,info:['Zwei Arbeiter bauen Zelte','und Pavillons ab, auf der','ganzen Wiese. Nahe Zelte','gehen schneller.']},
  pl:{name:'Planenpresse',cost:40000,w:2,h:2,inp:{8:6},out:10,time:5,col:'#2f8f80'},
  sc:{name:'Schrottpresse',cost:40000,w:2,h:2,inp:{9:8},out:11,time:6,col:'#69737a'},
  auto:{name:'Leergutannahme',w:2,h:3}
