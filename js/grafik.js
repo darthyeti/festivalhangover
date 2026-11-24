@@ -1,6 +1,6 @@
 // Montagmorgen: Grafik
 // Vorgerenderte Ebenen, Sprites, Zeichenfunktionen, Oberflaeche.
-import {LAST_TENTS,TENT_TIME,AUTO_CAP,AUTO_RATE,MEDALS,BT,DX,DY,FONT,H,LS,MH,MW,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WIDE_COST,WW,euro,rng} from './konstanten.js';
+import {HOTKEY,LAST_TENTS,TENT_TIME,AUTO_CAP,AUTO_RATE,MEDALS,BT,DX,DY,FONT,H,LS,MH,MW,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WIDE_COST,WW,euro,rng} from './konstanten.js';
 import {abR,rOf,bspd,cam,isOpen,isSt,nextSort,st,stR,toast,ui,upPrice} from './zustand.js';
 import {belts,blds,blocked,camps,cells,foot,grid,items,near,pathDist,pathX,pathY} from './welt.js';
 import {buyUp,canBuild,canMove,confirmPlan,demolish,freeTile,price,save,toggleCross,topo,undo} from './bauen.js';
@@ -291,6 +291,7 @@ function toolIcon(id,x,y){ctx.save();ctx.translate(x,y);
 function drawToolbar(){ctx.fillStyle=lg(ctx,0,726,0,800,['#232a2c','#161b1a']);ctx.fillRect(0,726,W,74);
   const now=performance.now();TOOLS.forEach((id,i)=>{const tw=(W-4)/TOOLS.length,x=3+i*tw,y=730,w=tw-2,h=66,cx=x+w/2,on=ui.tool===id,D=BT[id],p=id==='wide'?WIDE_COST:D?price(id):0,can=!D||st.money>=p,open=isOpen(id),fresh=open&&OPEN[id]===st.ph&&now-ui.newT<9000;
     rr(ctx,x,y,w,h,8);ctx.fillStyle=on?lg(ctx,0,y,0,y+h,['#3f7a8a','#2a5561']):open?'#2c3338':'#1f2427';ctx.fill();ctx.strokeStyle=fresh?'#ffe27a':on?'#7fd0e2':'#3c454b';ctx.lineWidth=fresh?2+Math.sin(now/150):on?2:1;ctx.stroke();
+    if(HOTKEY[id])txt(HOTKEY[id],x+6,y+13,9.5,open?'#8f9aa0':'#4f585d','left',true);
     ctx.globalAlpha=open?1:0.28;ctx.save();ctx.translate(cx,y+17);ctx.scale(0.86,0.86);toolIcon(id,0,0);ctx.restore();ctx.globalAlpha=1;
     const nm=id==='walk'?'Laufen':id==='demo'?'Abriss':id==='rot'?'Drehen':id==='wide'?'Doppelband':D.name;
     ctx.font='600 11px '+FONT;const parts=({wide:['Doppel-','band'],split:['Ver-','teiler'],sort:['Sor-','tierer'],cross:['Kreu-','zung'],station:['Sammel-','station'],pd:['Dosen-','presse'],pp:['PET-','Presse'],kp:['Kisten-','packer'],pal:['Palet-','tierer'],ab:['Abbau-','trupp'],pl:['Planen-','presse'],sc:['Schrott-','presse']})[id]||[nm];

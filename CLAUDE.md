@@ -116,6 +116,8 @@ bewusst und nach Freigabe aendern.
   Importtabelle in `index.html` tragen dieselbe Nummer (`?v=N` an jedem Modul).
   Bei jedem Pull Request mit Spielcode beide um eins erhoehen. Der Rauchtest prueft,
   dass sie zusammenpassen und kein Modul fehlt. Das Menue zeigt die Version an.
+- Tasten am PC: `HOT` in `konstanten.js` ordnet 1 bis 0, Q, E, T und X den Werkzeugen zu, `HOTKEY` ist die Umkehrung fuer die Beschriftung der Leiste.
+  R dreht, Z macht rueckgaengig, Esc waehlt Laufen, W, A, S, D und die Pfeile bewegen die Kamera.
 - Alle Grafiken entstehen per Code, es gibt keine Bilddateien.
 - Optik: Bauteile haben einen Koerper (Deckflaeche nach oben versetzt, dunklere Vorderwand, Schlagschatten
   nach rechts unten). Maschinen unterscheiden sich durch Farbe und Sichtfenster, nicht durch Aufbauten

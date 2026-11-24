@@ -14,7 +14,7 @@ const TY=[{n:'Dosen',val:25,col:'#c9d2d8'},{n:'PET',val:25,col:'#7fc4e8'},{n:'Gl
  {n:'Planen',val:5,col:'#3fa392'},{n:'Gestänge',val:10,col:'#b9c2c8'},{n:'Planenballen',val:400,col:'#58b8a6'},{n:'Schrottbündel',val:600,col:'#9aa4aa'}];
 // Sperrmuell aus Zelten: zaehlt in der Annahme wie Rohware (Warteschlange), bringt ungepresst fast nichts
 const JUNK=t=>t===8||t===9,TENT_LOAD={tent:[8,8,8,9,9],pav:[8,8,9,9,9,9]},TENT_TIME=6,LAST_TENTS=12;
-const VERSION=26,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
+const VERSION=27,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
 const RAW=4,TENT_COST=500,MORE=1.2; // MORE: jede weitere Maschine derselben Art kostet so viel mal mehr (E-014, gesenkt mit E-015) // Zelt oder Pavillon abbauen, in Cent
 const BT={
  belt:{name:'Band',cost:50,w:1,h:1,info:['Ziehen legt eine Strecke.']},
@@ -32,6 +32,9 @@ const BT={
  auto:{name:'Leergutannahme',w:2,h:3}
 };
 const TOOLS=['walk','belt','wide','split','sort','cross','station','pd','pp','kp','pal','ab','pl','sc','demo','rot'];
+// Tasten fuer die Werkzeuge am PC: 1 bis 0 fuer die ersten zehn Bauteile, Q, E, T fuer die Zeltkette, X fuer den Abriss. W, A, S, D bleiben der Kamera
+const HOT={};'1234567890qet'.split('').forEach((c,i)=>{HOT[c]=TOOLS[i+1]});HOT.x='demo';
+const HOTKEY={};for(const c in HOT)HOTKEY[HOT[c]]=c.toUpperCase();
 const UPS=[
  {k:'bag',name:'Größere Tüte',base:400,g:1.6,max:6,sub:l=>'fasst '+(25+10*l)},
  {k:'shoe',name:'Laufschuhe',base:500,g:1.6,max:5,sub:l=>'Tempo '+(110+18*l)},
@@ -59,4 +62,4 @@ const OPEN={wide:3,belt:1,station:1,sort:2,pd:2,pp:3,split:3,cross:3,kp:4,pal:5,
 const euro=c=>(c/100).toFixed(2).replace('.',',')+' €';
 function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 
-export {JUNK,LAST_TENTS,TENT_LOAD,TENT_TIME,AUTO_CAP,AUTO_RATE,MEDALS,MORE,BT,DX,DY,FONT,H,LS,MH,MW,N_CRATES,N_ITEMS,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,WIDE_COST,TY,UPS,VERSION,VIEW,W,WH,WORLD_SEED,WW,euro,rng};
+export {HOT,HOTKEY,JUNK,LAST_TENTS,TENT_LOAD,TENT_TIME,AUTO_CAP,AUTO_RATE,MEDALS,MORE,BT,DX,DY,FONT,H,LS,MH,MW,N_CRATES,N_ITEMS,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,WIDE_COST,TY,UPS,VERSION,VIEW,W,WH,WORLD_SEED,WW,euro,rng};

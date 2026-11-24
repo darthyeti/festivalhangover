@@ -398,6 +398,9 @@ function serve() {
 
     // Sorten am Sortierer: Ballen sind waehlbar, sobald die jeweilige Presse frei ist.
     { const ph0 = G.st.ph, n = p => { G.st.ph = p; return G.nSort(); }; o.sortKinds = [n(1), n(2), n(3), n(7)].join('/'); G.st.ph = 7; o.sortCycle = [0, 3, 5, 9].map(f => G.nextSort(f)).join('/'); G.st.ph = ph0; }
+    // Tasten am PC: 1 bis 0, Q, E, T und X waehlen Werkzeuge, gesperrte Bauteile bleiben gesperrt.
+    { const ph0 = G.st.ph, t0 = G.ui.tool, key = k => { window.dispatchEvent(new KeyboardEvent('keydown', { key: k })); window.dispatchEvent(new KeyboardEvent('keyup', { key: k })); return G.ui.tool; };
+      G.st.ph = 7; const a = [key('1'), key('0'), key('q'), key('e'), key('t'), key('x')].join('/'); G.ui.tool = 'walk'; G.st.ph = 0; const b = key('7'); G.st.ph = ph0; G.ui.tool = t0; o.hotkeys = a + ' ' + b; }
     // Zeichnen darf bei keinem Ziel und mit keinem Werkzeug abstuerzen (Absturz in Version 19 bei Ziel 3).
     { let bad = ''; const ph0 = G.st.ph, t0 = G.ui.tool; for (let p = 0; p < 8; p++) for (const tl of ['walk', 'belt', 'wide', 'sort', 'demo', 'ab', 'pl']) { G.st.ph = p; G.ui.tool = tl; try { G.draw(); } catch (e) { bad += p + '/' + tl + ': ' + e.message + ' '; } } G.st.ph = ph0; G.ui.tool = t0; o.drawAll = bad; }
 
@@ -484,6 +487,7 @@ function serve() {
     ['Abbautrupp zerlegt Zelte in Planen und Gestaenge, der zweite kostet 20 % mehr', m3.crewWorks && m3.crewPrice, m3.crewDetail],
     ['Planenpresse und Schrottpresse machen Ballen und Buendel', m3.junkPress, m3.junkDetail],
     ['Annahme zaehlt rohe Planen fuer 5 Cent und zahlt Planenballen voll', m3.junkRaw && m3.junkSold, m3.junkRaw + ' ' + m3.junkSell],
+    ['Tasten waehlen alle Werkzeuge, gesperrte nicht', m3.hotkeys === 'belt/pal/ab/pl/sc/demo walk', m3.hotkeys],
     ['Zeichnen laeuft bei jedem Ziel und Werkzeug ohne Fehler', m3.drawAll === '', m3.drawAll],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
     ['Alter Spielstand: alles frei, Ausbau der Annahme und gestrichene Bandstufen erstattet', oldSave.ph === 7 && oldSave.money === 2300 + 37500 + 93750 && oldSave.up.belt === 2 && oldSave.up.auto === undefined && oldSave.up.range === 0, JSON.stringify(oldSave)],

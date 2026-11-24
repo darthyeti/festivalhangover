@@ -1,6 +1,6 @@
 // Montagmorgen: Eingabe und Schleife
 // Einstiegspunkt: Zeigerereignisse, Tastatur, Spielschleife, Testzugang window.__G.
-import {DX,DY,MH,MW,RAW,T,TOOLS,VIEW,WH,WW} from './konstanten.js';
+import {DX,DY,HOT,MH,MW,RAW,T,TOOLS,VIEW,WH,WW} from './konstanten.js';
 import {cam,isOpen,nSort,nextSort,resetState,st,ui} from './zustand.js';
 import {AUTO,belts,blds,blocked,cells,findPath,foot,genWorld,grid,los,removeItem} from './welt.js';
 import {jam,msg,tryPush,update} from './logik.js';
@@ -51,7 +51,7 @@ function pUp(e){const had=pts.has(e.pointerId);pts.delete(e.pointerId);if(pts.si
   stepEnd();if(e.pointerType!=='mouse')ptr.inView=false}
 cv.addEventListener('pointerup',pUp);cv.addEventListener('pointercancel',pUp);cv.addEventListener('contextmenu',e=>e.preventDefault());
 cv.addEventListener('wheel',e=>{e.preventDefault();const p=toL(e),w0=toW(p.x,p.y);cam.z=Math.max(0.4,Math.min(2.2,cam.z*(e.deltaY<0?1.12:1/1.12)));const w1=toW(p.x,p.y);cam.x+=w0.x-w1.x;cam.y+=w0.y-w1.y;cam.follow=false},{passive:false});
-const keys={};window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if(k==='escape'&&ui.menu){ui.menu=false;ui.resetArm=0}else if(k==='r')ui.rot=(ui.rot+1)%4;else if(k==='escape'){ui.tool='walk';ui.move=null}else if(k==='z')undo();else if(k>='1'&&k<='9'&&isOpen(TOOLS[+k])){ui.tool=TOOLS[+k];ui.sel=null;ui.move=null}});
+const keys={};window.addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if(k==='escape'&&ui.menu){ui.menu=false;ui.resetArm=0}else if(k==='r')ui.rot=(ui.rot+1)%4;else if(k==='escape'){ui.tool='walk';ui.move=null}else if(k==='z')undo();else if(HOT[k]&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&isOpen(HOT[k])){ui.tool=HOT[k];ui.sel=null;ui.move=null}});
 window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(resize,120)});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
