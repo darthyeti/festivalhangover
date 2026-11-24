@@ -42,6 +42,8 @@ function jam(b){const stuck=()=>outCount(b)?'Stau am Ausgang':'Kein Ausgang: Ban
   if(b.k==='auto')return b.q.length>=AUTO_CAP?(st.ph>=2?'Voll. Pressen entlasten':'Warteschlange voll'):'';
   if(b.k==='station')return b.buf.length>=ST_CAP?stuck():b.empty&&!b.buf.length&&st.left[0]+st.left[1]+st.left[2]+st.left[3]>0?'Umkreis leer: versetzen':''; // ist die Wiese leer, gibt es nichts mehr zu warnen
   if(b.k==='ab')return b.buf.length>=ST_CAP?stuck():'';
+  // Sortierer am Ende einer Strecke: Eine fremde Sorte (Ueberlauf von weiter vorn) kommt nie wieder heraus. Das ist kein Stau, es fehlt der Weiterweg
+  if(b.k==='sort'&&b.item>=0&&b.item!==b.filter&&b.wait<-1&&!straightOut(b)&&!sideOuts(b,b.dir).length)return'Falsche Sorte, kein Weiterweg';
   if(b.k==='split'||b.k==='sort')return b.item>=0&&b.wait<-1?stuck():'';
   if(b.k==='cross')return(b.it[0]>=0&&b.wt[0]<-1)||(b.it[1]>=0&&b.wt[1]<-1)?'Stau hinter der Kreuzung':'';
   return BT[b.k].inp&&b.out>=2?stuck():''}

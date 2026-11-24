@@ -405,6 +405,9 @@ function serve() {
     { const Tn = G.ton, bad = []; let n = 0; const one = async (label, fn) => { const c = new OfflineAudioContext(2, 44100 * 2.5, 44100); Tn.setup(c, true); fn({ v: 1, pan: 0 }); const d = (await c.startRendering()).getChannelData(0); let pk = 0; for (let i = 0; i < d.length; i++) pk = Math.max(pk, Math.abs(d[i])); n++; if (!(pk > 0.02 && pk < 0.8)) bad.push(label + ' ' + pk.toFixed(3)); };
       for (const k in Tn.FX) await one(k, Tn.FX[k]); for (const k in Tn.SEL) await one('sel:' + k, Tn.SEL[k]);
       const kinds = ['auto', 'station', 'ab', 'pd', 'pp', 'kp', 'pal', 'pl', 'sc', 'sort', 'split', 'cross'].filter(k => !Tn.SEL[k]); o.sounds = n + ' ' + bad.join(', ') + kinds.join(','); o.soundsOk = n >= 27 && !bad.length && !kinds.length; }
+    // Sortierer ohne Weiterweg: Eine fremde Sorte steckt fest, die Warnung nennt den Grund statt 'Stau'.
+    { const sd = G.build('sort', 6, 20); sd.filter = 9; sd.dir = 3; G.setBelt(6, 19, 3); G.setBelt(5, 20, 0); G.tryPush(5, 20, 8, 0); G.step(3); o.deadSort = G.jam(sd); G.setBelt(7, 20, 0); G.step(1); o.deadSortFixed = sd.item < 0 && G.jam(sd) === '';
+      for (const p of [[6, 20], [6, 19], [5, 20], [7, 20]]) G.demolish(p[0], p[1]); G.st.player.bag.length = 0; }
     // Zeichnen darf bei keinem Ziel und mit keinem Werkzeug abstuerzen (Absturz in Version 19 bei Ziel 3).
     { let bad = ''; const ph0 = G.st.ph, t0 = G.ui.tool; for (let p = 0; p < 8; p++) for (const tl of ['walk', 'belt', 'wide', 'sort', 'demo', 'ab', 'pl']) { G.st.ph = p; G.ui.tool = tl; try { G.draw(); } catch (e) { bad += p + '/' + tl + ': ' + e.message + ' '; } } G.st.ph = ph0; G.ui.tool = t0; o.drawAll = bad; }
 
@@ -492,6 +495,7 @@ function serve() {
     ['Planenpresse und Schrottpresse machen Ballen und Buendel', m3.junkPress, m3.junkDetail],
     ['Annahme zaehlt rohe Planen fuer 5 Cent und zahlt Planenballen voll', m3.junkRaw && m3.junkSold, m3.junkRaw + ' ' + m3.junkSell],
     ['Jedes Geraeusch klingt und uebersteuert nicht, jede Bauteilart hat ihren Klang', m3.soundsOk, m3.sounds],
+    ['Sortierer ohne Weiterweg meldet die falsche Sorte, mit Weiterweg laeuft sie ab', m3.deadSort === 'Falsche Sorte, kein Weiterweg' && m3.deadSortFixed, m3.deadSort + ' ' + m3.deadSortFixed],
     ['Tasten waehlen alle Werkzeuge, gesperrte nicht', m3.hotkeys === 'belt/pal/ab/pl/sc/demo walk', m3.hotkeys],
     ['Zeichnen laeuft bei jedem Ziel und Werkzeug ohne Fehler', m3.drawAll === '', m3.drawAll],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
