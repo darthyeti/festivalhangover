@@ -258,7 +258,7 @@ function serve() {
   page3.on('pageerror', e => errors.push(e.message));
   await page3.goto(url);
   await page3.waitForFunction(() => window.__G && window.__G.st, null, { timeout: 10000 });
-  const m3 = await page3.evaluate(() => {
+  const m3 = await page3.evaluate(async () => {
     const G = window.__G, o = {};
     o.startLocked = G.st.ph === 0 && !G.isOpen('belt') && !G.isOpen('pd') && G.isOpen('walk') && G.isOpen('demo');
     G.st.earned = 600; G.step(0.1);
@@ -401,6 +401,10 @@ function serve() {
     // Tasten am PC: 1 bis 0, Q, E, T und X waehlen Werkzeuge, gesperrte Bauteile bleiben gesperrt.
     { const ph0 = G.st.ph, t0 = G.ui.tool, key = k => { window.dispatchEvent(new KeyboardEvent('keydown', { key: k })); window.dispatchEvent(new KeyboardEvent('keyup', { key: k })); return G.ui.tool; };
       G.st.ph = 7; const a = [key('1'), key('0'), key('q'), key('e'), key('t'), key('x')].join('/'); G.ui.tool = 'walk'; G.st.ph = 0; const b = key('7'); G.st.ph = ph0; G.ui.tool = t0; o.hotkeys = a + ' ' + b; }
+    // Ton (E-020): Jedes Geraeusch wird ohne Lautsprecher gerechnet. Es muss hoerbar sein und darf nicht uebersteuern.
+    { const Tn = G.ton, bad = []; let n = 0; const one = async (label, fn) => { const c = new OfflineAudioContext(2, 44100 * 2.5, 44100); Tn.setup(c, true); fn({ v: 1, pan: 0 }); const d = (await c.startRendering()).getChannelData(0); let pk = 0; for (let i = 0; i < d.length; i++) pk = Math.max(pk, Math.abs(d[i])); n++; if (!(pk > 0.02 && pk < 0.8)) bad.push(label + ' ' + pk.toFixed(3)); };
+      for (const k in Tn.FX) await one(k, Tn.FX[k]); for (const k in Tn.SEL) await one('sel:' + k, Tn.SEL[k]);
+      const kinds = ['auto', 'station', 'ab', 'pd', 'pp', 'kp', 'pal', 'pl', 'sc', 'sort', 'split', 'cross'].filter(k => !Tn.SEL[k]); o.sounds = n + ' ' + bad.join(', ') + kinds.join(','); o.soundsOk = n >= 27 && !bad.length && !kinds.length; }
     // Zeichnen darf bei keinem Ziel und mit keinem Werkzeug abstuerzen (Absturz in Version 19 bei Ziel 3).
     { let bad = ''; const ph0 = G.st.ph, t0 = G.ui.tool; for (let p = 0; p < 8; p++) for (const tl of ['walk', 'belt', 'wide', 'sort', 'demo', 'ab', 'pl']) { G.st.ph = p; G.ui.tool = tl; try { G.draw(); } catch (e) { bad += p + '/' + tl + ': ' + e.message + ' '; } } G.st.ph = ph0; G.ui.tool = t0; o.drawAll = bad; }
 
@@ -487,6 +491,7 @@ function serve() {
     ['Abbautrupp zerlegt Zelte in Planen und Gestaenge, der zweite kostet 20 % mehr', m3.crewWorks && m3.crewPrice, m3.crewDetail],
     ['Planenpresse und Schrottpresse machen Ballen und Buendel', m3.junkPress, m3.junkDetail],
     ['Annahme zaehlt rohe Planen fuer 5 Cent und zahlt Planenballen voll', m3.junkRaw && m3.junkSold, m3.junkRaw + ' ' + m3.junkSell],
+    ['Jedes Geraeusch klingt und uebersteuert nicht, jede Bauteilart hat ihren Klang', m3.soundsOk, m3.sounds],
     ['Tasten waehlen alle Werkzeuge, gesperrte nicht', m3.hotkeys === 'belt/pal/ab/pl/sc/demo walk', m3.hotkeys],
     ['Zeichnen laeuft bei jedem Ziel und Werkzeug ohne Fehler', m3.drawAll === '', m3.drawAll],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],

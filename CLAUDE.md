@@ -23,6 +23,7 @@ bewusst und nach Freigabe aendern.
     `blocked`), raeumliche Suche `near()`.
   - `logik.js`: Spielregeln (Baender, Maschinen, Stationen, Spielfigur), `update(dt)`.
   - `bauen.js`: `build`, `setBelt`, `demolish`, `buyUp`, `save`, `load`.
+  - `ton.js`: Geraeusche und Ambiente per Web Audio, keine Dateien. Importiert nur `konstanten.js` und `zustand.js`.
   - `grafik.js`: Ebenen, Sprites, Zeichnen, Oberflaeche. Mit Abstand das groesste Modul.
   - `eingabe.js`: Einstiegspunkt mit Zeigerereignissen, Tastatur, Spielschleife und `__G`.
 - Regeln fuer Module:
@@ -118,6 +119,12 @@ bewusst und nach Freigabe aendern.
   dass sie zusammenpassen und kein Modul fehlt. Das Menue zeigt die Version an.
 - Tasten am PC: `HOT` in `konstanten.js` ordnet 1 bis 0, Q, E, T und X den Werkzeugen zu, `HOTKEY` ist die Umkehrung fuer die Beschriftung der Leiste.
   R dreht, Z macht rueckgaengig, Esc waehlt Laufen, W, A, S, D und die Pfeile bewegen die Kamera.
+- Ton (E-020): `sfx(name,x,y,k)` aus `ton.js` spielt ein Geraeusch aus `FX`, mit `name==='sel'` den Klang der Bauteilart `k` aus `SEL`.
+  Mit Ort klingt es nur im Bild und von der passenden Seite. `GAP` begrenzt, wie oft dasselbe Geraeusch je Sekunde kommt.
+  Der Tonkontext entsteht erst beim ersten Tippen (`wake()`), vorher und im Testspieler ist alles stumm. `amb()` laeuft in der Spielschleife
+  (Wind, Voegel, Brummen nach Zahl laufender Maschinen im Bild). Lautstaerken stehen im Menue und in `localStorage` unter `montagmorgen2-ton`.
+  Der Lead Dev kann nicht hoeren: Der Rauchtest rechnet jedes Geraeusch per `OfflineAudioContext` und prueft nur Pegel. Wie es klingt, beurteilt Till.
+  Kein `DynamicsCompressor` verwenden, er macht in Chromium kurze Geraeusche um den Faktor vier leiser.
 - Alle Grafiken entstehen per Code, es gibt keine Bilddateien.
 - Optik: Bauteile haben einen Koerper (Deckflaeche nach oben versetzt, dunklere Vorderwand, Schlagschatten
   nach rechts unten). Maschinen unterscheiden sich durch Farbe und Sichtfenster, nicht durch Aufbauten

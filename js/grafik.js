@@ -5,6 +5,7 @@ import {bspd,cam,isOpen,isSt,nextSort,st,stR,toast,ui,upPrice} from './zustand.j
 import {belts,blds,blocked,camps,cells,foot,grid,items,near,pathDist,pathX,pathY} from './welt.js';
 import {buyUp,canBuild,canMove,confirmPlan,demolish,freeTile,price,save,toggleCross,topo,undo} from './bauen.js';
 import {jam} from './logik.js';
+import {setVol,volName} from './ton.js';
 import {start} from './eingabe.js';
 
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
@@ -349,13 +350,14 @@ function drawPlanBar(){if(ui.tool!=='belt')return;const P=ui.plan,y=VIEW.y+VIEW.
     rr(ctx,x+310,y,110,34,7);ctx.fillStyle='#6a4a44';ctx.fill();txt('Abbrechen',x+365,y+22,12.5,'#fff','center',true);button(x+310,y,110,34,()=>{ui.plan=null;ui.planA=null})}
   if(!cr)return;
   rr(ctx,x+430,y,120,34,7);ctx.fillStyle=ui.planCross?'#8a6a2a':'#3c454b';ctx.fill();txt(ui.planCross?'Kreuzen: an':'Kreuzen: aus',x+490,y+22,12,'#fff','center',true);button(x+430,y,120,34,()=>toggleCross())}
-function drawMenu(){if(!ui.menu)return;btns=[];ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);const w=340,h=306,x=W/2-w/2,y=H/2-h/2;
+function drawMenu(){if(!ui.menu)return;btns=[];ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);const w=340,h=356,x=W/2-w/2,y=H/2-h/2;
   rr(ctx,x,y,w,h,14);ctx.fillStyle='#222b2d';ctx.fill();ctx.strokeStyle='#4a5257';ctx.lineWidth=1.5;ctx.stroke();
   txt('Menü',W/2,y+42,22,'#f3efe2','center',true);txt('Das Spiel ist angehalten.',W/2,y+64,11.5,'#8f9aa0','center');
   const mb=(k,label,col,cb)=>{const by=y+84+k*60;rr(ctx,x+30,by,w-60,48,9);ctx.fillStyle=col;ctx.fill();txt(label,W/2,by+30,14.5,'#fff','center',true);button(x+30,by,w-60,48,cb)};
   mb(0,'Weiterspielen','#3f7a8a',()=>{ui.menu=false;ui.resetArm=0});
   mb(1,ui.saved?'Gespeichert':'Jetzt speichern','#3c5a48',()=>{save();ui.saved=true});
   mb(2,ui.resetArm>0?'Wirklich? Der Spielstand wird gelöscht':'Spiel neu starten',ui.resetArm>0?'#a8553a':'#4a3f3c',()=>{if(ui.resetArm>0){try{localStorage.removeItem(SAVE_KEY)}catch(e){}start(true)}else ui.resetArm=3});
+  [['s','Geräusche'],['a','Ambiente']].forEach((q,i)=>{const bw=(w-70)/2,bx=x+30+i*(bw+10),by=y+264;rr(ctx,bx,by,bw,40,8);ctx.fillStyle=volName(q[0])==='aus'?'#3c454b':'#3a5a66';ctx.fill();txt(q[1]+': '+volName(q[0]),bx+bw/2,by+25,12.5,'#fff','center',true);button(bx,by,bw,40,()=>setVol(q[0]))});
   txt('Der Spielstand wird alle 15 Sekunden automatisch gespeichert.',W/2,y+h-26,10.5,'#8f9aa0','center');txt('Version '+VERSION,W/2,y+h-11,10,'#6f7a80','center')}
 function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#161b1a';ctx.fillRect(0,0,cv.width,cv.height);ctx.setTransform(S*DPR,0,0,S*DPR,offX*DPR,offY*DPR);btns=[];
   if(ui.tool!=='belt'&&(ui.planA||ui.plan)){ui.planA=null;ui.plan=null}

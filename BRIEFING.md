@@ -203,6 +203,10 @@ Geordnet nach Dringlichkeit für eine Alpha.
 | M4 Balancing | Partielänge und Preise per Simulation über `__G.step` einstellen, Leerkasten-Verhältnis klären | Partie dauert 45 bis 60 Minuten |
 | M5 Feinschliff | Ton, Grafikdurchgang für Gebäude, Endbildschirm mit Auswertung | Abnahme der Alpha |
 
+### Ton (seit Version 29, Entscheidung E-020)
+
+Geräusche und Ambiente entstehen per Code im Browser, ohne Dateien: Aufsammeln, Verkauf, Presse, Bauen, Abriss, Zeltabbau, Ziel, Warnton bei neuem Stau, dazu ein eigener Klang je Bauteilart beim Antippen. Ambiente: Wind, Vögel, Brummen der Anlage. Lautstärke in vier Stufen im Menü, getrennt für Geräusche und Ambiente. Musik folgt später als Datei mit freier Lizenz. Die Klänge sind vom Lead Dev nur gemessen, nicht gehört, und werden nach Tills Urteil nachgestellt.
+
 ## 9. Ideen für nach der Alpha
 
 Nicht beauftragt, nur festgehalten.
