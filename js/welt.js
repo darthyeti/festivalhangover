@@ -52,6 +52,9 @@ function tentAt(tx,ty){let best=null,bd=1e9;const px=tx*T+16,py=ty*T+16;for(cons
 function tentTiles(f){const r=[];const x0=Math.max(0,((f.x-f.r)/T)|0),x1=Math.min(MW-1,((f.x+f.r)/T)|0),y0=Math.max(0,((f.y-f.r)/T)|0),y1=Math.min(MH-1,((f.y+f.r)/T)|0);
   for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++)if(covers(f,tx,ty))r.push(ty*MW+tx);return r}
 function setTentGone(f,gone){f.o.gone=gone;calcBlocked();const R={x:Math.floor((f.x-60)/4)*4,y:Math.floor((f.y-52)/4)*4,w:120,h:92};ui.groundDirty=ui.groundDirty?true:R} // Vielfache von 4: bei Ebenenfaktor 1,25 liegen die Kanten auf ganzen Pixeln
+// Zelte fuer den Abbautrupp (E-019): wie viele stehen noch, und das naechste freie im Umkreis R um cx,cy
+function tentsLeft(){let n=0;for(const f of foot)if(!f.o.gone)n++;return n}
+function nearTent(x,y,cx,cy,R){let best=null,bd=1e9;for(const f of foot){if(f.o.gone||f.cl||Math.hypot(f.x-cx,f.y-cy)>R)continue;const d=Math.hypot(f.x-x,f.y-y);if(d<bd){bd=d;best=f}}return best}
 function goneTents(){const r=[];foot.forEach((f,i)=>{if(f.o.gone)r.push(i)});return r}
 function loadTents(list){for(const i of list||[])if(foot[i])foot[i].o.gone=true;calcBlocked()}
 function near(x,y,R,fn){const x0=Math.max(0,((x-R)/T)|0),x1=Math.min(MW-1,((x+R)/T)|0),y0=Math.max(0,((y-R)/T)|0),y1=Math.min(MH-1,((y+R)/T)|0);
@@ -76,4 +79,4 @@ function findPath(ax,ay,bx,by){const cl=(v,m)=>v<0?0:v>=m?m-1:v,sx=cl((ax/T)|0,M
   const pts=[];for(let q=found?g:best;q!==s&&q>=0;q=pF[q])pts.push({x:(q%MW)*T+16,y:((q/MW)|0)*T+16});pts.reverse();if(found&&pts.length)pts[pts.length-1]={x:bx,y:by};return pts}
 function removeItem(it){if(!it.alive)return;it.alive=false;const c=cells[it.c];c.splice(c.indexOf(it),1);st.left[it.m]--;eraseItem(it)}
 
-export {AUTO,belts,blds,blocked,camps,cells,findPath,genWorld,los,goneTents,grid,loadTents,setTentGone,tentAt,tentTiles,items,near,nearestIn,pathDist,pathX,pathY,removeItem};
+export {AUTO,belts,blds,blocked,camps,cells,foot,nearTent,tentsLeft,findPath,genWorld,los,goneTents,grid,loadTents,setTentGone,tentAt,tentTiles,items,near,nearestIn,pathDist,pathX,pathY,removeItem};

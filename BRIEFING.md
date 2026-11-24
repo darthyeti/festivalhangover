@@ -36,7 +36,8 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 **Bauen**
 
 - Ein Feld ist bebaubar, wenn dort kein Stück liegt, kein Zelt steht und nichts gebaut ist.
-- Zelte und Pavillons sind Hindernisse. Das Abriss-Werkzeug baut sie für 5 € je Stück ab, ohne Erstattung (Entscheidung E-005, Preis ist ein Startwert).
+- Zelte und Pavillons sind Hindernisse. Das Abriss-Werkzeug baut sie für 5 € je Stück ab, ohne Erstattung und ohne Material (Entscheidung E-005, Preis ist ein Startwert).
+- Zelte als Sperrmüll (seit Version 26, Entscheidung E-019, Stufe 1): Am Ende müssen alle 225 Zelte und Pavillons weg, sonst endet die Partie nicht. Der Abbautrupp (300 €, jeder weitere 20 % teurer, frei ab Ziel 6) hat zwei Arbeiter und den anderthalbfachen Umkreis einer Station. Ein Abbau dauert 6 Sekunden, ein Zelt gibt 3 Planen und 2 Gestänge, ein Pavillon 2 Planen und 4 Gestänge. Planenpresse (6 Planen, 5 s, Ballen 4 €) und Schrottpresse (8 Gestänge, 6 s, Bündel 6 €) kosten je 400 €. Rohe Planen (5 Cent) und Gestänge (10 Cent) nimmt die Annahme in die Warteschlange, sie bringen fast nichts und kosten Zeit. Alle Zahlen sind Startwerte.
 - Verteiler und Sortierer lassen sich direkt auf ein Bandfeld setzen. Das Band wird dabei erstattet, ein Stück darauf bleibt erhalten.
 - Abriss erstattet den gezahlten Preis vollständig. Das soll Ausprobieren billig machen.
 - Was ein abgerissenes Bauteil gerade trägt, landet in der Tüte der Spielfigur, auch über ihr Fassungsvermögen hinaus (seit M2).
@@ -94,7 +95,7 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
   5. 3 volle Kästen verkaufen: Palettierer
   6. 1 Palette verkaufen
   7. 10 Paletten verkaufen
-  8. Wiese leer räumen, mit Zeitwertung: Gold bis 38 Minuten, Silber bis 45, Bronze bis 60 (seit Version 25, Entscheidung E-017)
+  8. Wiese besenrein: Pfand und Zelte, mit Zeitwertung: Gold bis 38 Minuten, Silber bis 45, Bronze bis 60 (seit Version 25, Entscheidung E-017). Die Zeiten stammen aus Partien ohne Zeltkette und müssen nach den ersten Partien mit Version 26 neu eingestellt werden.
 - Laufen, Abriss und Drehen sind von Anfang an da.
 
 ## 4. Zahlen
@@ -206,7 +207,7 @@ Geordnet nach Dringlichkeit für eine Alpha.
 
 Nicht beauftragt, nur festgehalten.
 
-- Zurückgelassene Zelte, Pavillons und Campingstühle als abbaubarer Sperrmüll mit eigener Kette
+- Zurückgelassene Zelte und Pavillons als Sperrmüll mit eigener Kette: umgesetzt mit Version 26 (E-019). Campingstühle bleiben Kulisse.
 - Unterführung oder Brücke für sich kreuzende Bänder
 - Eigener LKW und Rampe als Ersatz für die Annahme im späten Spiel
 - Nächstes, größeres Festival als Wiedereinstieg mit dauerhaften Vorteilen

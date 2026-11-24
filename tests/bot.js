@@ -131,6 +131,8 @@ function play(cfg) {
     if (G.AUTO.q.length >= 40) autoFull++;
     for (const s of stations) { if (!s.b) continue; if (s.b.empty && !s.b.buf.length) stIdle++; else if (s.b.buf.length >= 30) stFull++; }
 
+    // 0. Zelte (E-019): Der Testspieler kennt die Zeltkette nicht. Er baut die Zelte von Hand ab, sobald Geld uebrig ist, damit die Partie endet.
+    if (st.ph >= 5 && (st.money >= 150000 || st.left.reduce((a, b) => a + b, 0) === 0 && st.money >= 500)) { const f = G.foot.find(q => !q.o.gone); if (f) { G.demolish(f.x / T | 0, f.y / T | 0); if (f.o.gone) tentsGone++; else f.skip = (f.skip || 0) + 1; } }
     // 1. Bauplan: erstes offenes Projekt, dessen Bauteile frei sind
     const proj = projects.find(p => !p.done && p.open());
     if (proj && tents(proj.tiles) && proj.tiles.every(t => free(t[0], t[1])) && st.money >= proj.cost()) {
