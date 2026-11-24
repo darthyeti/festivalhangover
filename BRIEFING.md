@@ -57,6 +57,7 @@ Diese Regeln sind der Kern. Bitte nur bewusst ändern.
 
 - Verteiler: nimmt von jeder Seite an und verteilt reihum auf alle wegführenden Bänder.
 - Sortierer: wirft seine eingestellte Sorte in Pfeilrichtung aus, alles andere geht über die übrigen Ausgänge weiter.
+- Überlauf: Ist der Auswurf voll, läuft auch die eigene Sorte weiter, aber nur, wenn der Weiterweg irgendwo ankommt, wo sie abgenommen wird (Annahme oder passende Maschine). Sonst wartet sie, bis der Auswurf frei ist (seit Version 31, mit Till am 24.11.2026 abgestimmt).
 - Überlauf: Ist der Auswurf länger als 0,5 Sekunden blockiert, läuft auch die eigene Sorte weiter. Ohne diese Regel blockieren überschüssige Leerkästen jede Linie.
 - Sortierer und Verteiler dürfen direkt aneinander stehen und reichen dann ohne Band weiter, aber nie zurück in die Richtung, aus der das Stück kam.
 

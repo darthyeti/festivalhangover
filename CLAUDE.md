@@ -98,6 +98,9 @@ bewusst und nach Freigabe aendern.
   Wer Bandware zaehlt oder leert, muss `t.b` mitnehmen. Werkzeug `wide` wirkt nur auf vorhandene Baender.
 - Weiterreichen zwischen Kleinteilen (`pushOut` in `logik.js`): Ein Sortierer gibt an einen benachbarten
   Sortierer oder Verteiler nur geradeaus weiter, Verteiler und Sortierer in eine Kreuzung ebenfalls nur geradeaus. Sitzt ein Stueck laenger als zwei Sekunden fest, ist jeder Nachbar recht.
+- Ueberlauf am Sortierer (seit Version 31): Ist der Auswurf voll, laeuft die eigene Sorte nur weiter, wenn `drains(b)` in `logik.js` auf dem Weiterweg
+  einen Abnehmer findet (Annahme oder Maschine mit passendem Rezept). Sonst wartet sie. Das Ergebnis liegt in `drainC` und gilt, bis `beltOrder()` neu laeuft.
+  Grund: Tills Zeltkette stand dauerhaft, weil uebergelaufene Planen in einem Sortierer ohne Weiterweg steckten.
 - Kurve am Verteiler oder Sortierer: Hat er keinen geraden Ausgang, gibt er auch auf ein Band direkt daneben ab,
   das quer wegfuehrt (`sideOuts`, `straightOut` in `logik.js`). `topo()` zeichnet dem Band dafuer einen Zulauf.
 - Sorten am Sortierer: `sorts()` in `zustand.js`. Rohware immer, mit freier Dosenpresse auch Dosenballen, mit freier PET-Presse auch PET-Ballen,
