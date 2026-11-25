@@ -59,10 +59,14 @@ function undo(){stepEnd();const s=ui.undo.pop();if(!s)return false;ui.undoing=tr
     if(e.t==='add'){if(here)demolish(o.x,o.y)}else if(e.t==='dir'){if(here){o.dir=e.d;ui.topoDirty=ui.orderDirty=true}}else if(e.t==='del'){if(!here)restore(o)}else if(e.t==='wide'){if(here&&o.b){if(o.b.item>=0)st.player.bag.push(o.b.item);delete o.b;st.money+=WIDE_COST}}else if(e.t==='move'){if(here)moveB(o,e.x,e.y)}}
   ui.undoing=false;return true}
 // Versetzen: Gebaeude behaelt Inhalt und Einstellungen, kostet nichts. Baender und die Annahme lassen sich nicht versetzen.
-function canMove(b,x,y){return b.k!=='belt'&&b.k!=='auto'&&blockReason(x,y,b.w,b.h,b)===''}
+// Sortierer und Verteiler duerfen beim Versetzen auch auf ein Bandfeld, wie beim Bauen (beltSwap): Das Band wird erstattet.
+const onBelt=(b,x,y)=>(b.k==='sort'||b.k==='split')&&x>=0&&y>=0&&x<MW&&y<MH&&!!grid[y*MW+x]&&grid[y*MW+x].k==='belt';
+function canMove(b,x,y){return b.k!=='belt'&&b.k!=='auto'&&(blockReason(x,y,b.w,b.h,b)===''||onBelt(b,x,y))}
 function moveB(b,x,y){if(!canMove(b,x,y))return false;for(let j=0;j<b.h;j++)for(let i=0;i<b.w;i++)grid[(b.y+j)*MW+b.x+i]=null;b.x=x;b.y=y;
   for(let j=0;j<b.h;j++)for(let i=0;i<b.w;i++)grid[(y+j)*MW+x+i]=b;ui.topoDirty=ui.orderDirty=true;return true}
-function moveTo(b,x,y){const ox=b.x,oy=b.y;if(ox===x&&oy===y)return false;if(!moveB(b,x,y)){msg(blockReason(x,y,b.w,b.h,b)||'Lässt sich nicht versetzen',(x+b.w/2)*T,y*T-4);return false}rec({t:'move',o:b,x:ox,y:oy});sfx('build',(x+b.w/2)*T,(y+b.h/2)*T);return true}
+function moveTo(b,x,y){const ox=b.x,oy=b.y;if(ox===x&&oy===y)return false;const swap=onBelt(b,x,y),own=swap&&!ui.step;let it=-1,d=0;
+  if(swap){const o=grid[y*MW+x];d=o.dir;if(b.item<0&&o.item>=0){it=o.item;o.item=-1}if(own)stepBegin();demolish(x,y,true)} // ein Stueck auf dem Band faehrt im Bauteil weiter
+  if(!moveB(b,x,y)){msg(blockReason(x,y,b.w,b.h,b)||'Lässt sich nicht versetzen',(x+b.w/2)*T,y*T-4);if(own)stepEnd();return false}if(it>=0){b.item=it;b.from=d;b.wait=0.15}rec({t:'move',o:b,x:ox,y:oy});if(own)stepEnd();sfx('build',(x+b.w/2)*T,(y+b.h/2)*T);return true}
 // Ersetzt ein Bandfeld durch eine Kreuzung. Das Band laeuft geradeaus durch, ein Stueck darauf faehrt mit.
 function crossOver(x,y){const o=grid[y*MW+x];if(!o||o.k!=='belt')return null;if(st.money<BT.cross.cost-50){msg('Zu wenig Geld',x*T+16,y*T-4);return null}
   const own=!ui.step,it=o.item,d=o.dir;o.item=-1;if(own)stepBegin();demolish(x,y);const b=build('cross',x,y);if(b){b.dr[d%2]=d;if(it>=0){b.it[d%2]=it;b.wt[d%2]=0.15}}if(own)stepEnd();return b}

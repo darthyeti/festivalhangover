@@ -414,8 +414,16 @@ function serve() {
       let wrong = 0; for (let t = 0; t < 120; t++) { G.tryPush(3, 24, t % 5 < 3 ? 8 : 9, 0); G.step(0.4); if (b2.item === 8) wrong++; }
       const held = a.item >= 0 && wrong === 0; G.setBelt(7, 20, 3); G.setBelt(12, 21, 0); G.step(30); o.overflowHolds = held; o.overflowFlows = pl.made >= 3 && sc.made >= 2 && b2.item !== 8; o.overflowDetail = held + ' ' + a.item + '/' + wrong + ' ' + pl.made + '/' + sc.made;
       for (const p of [[7, 21], [10, 21], [7, 24], [10, 24], [7, 23], [10, 23], [3, 24], [4, 24], [5, 24], [6, 24], [8, 24], [9, 24], [7, 20], [12, 21]]) G.demolish(p[0], p[1]); G.st.player.bag.length = 0; G.st.money = m1; for (let i = 0; i < bl.length; i++) G.blocked[i] = bl[i]; }
+    // Versetzen auf ein Band: Sortierer ersetzt das Bandfeld, das Band wird erstattet, Rueckgaengig stellt beides wieder her.
+    { const bl = G.blocked.slice(); G.blocked.fill(0); const m1 = G.st.money; G.st.money = 1e6; for (let x = 4; x <= 8; x++) G.setBelt(x, 20, 0); const sm = G.build('sort', 6, 22); const m2 = G.st.money;
+      const ok = G.moveTo(sm, 6, 20), g = G.grid[20 * G.MW + 6]; o.moveOnBelt = ok && g === sm && !G.grid[22 * G.MW + 6] && G.st.money === m2 + 50; G.tryPush(4, 20, 1, 0); G.step(2); o.moveRuns = G.grid[20 * G.MW + 8].item === 1 || G.grid[20 * G.MW + 7].item === 1;
+      G.undo(); const g2 = G.grid[20 * G.MW + 6]; o.moveUndo = !!g2 && g2.k === 'belt' && G.grid[22 * G.MW + 6] === sm && G.st.money === m2;
+      for (const p of [[4, 20], [5, 20], [6, 20], [7, 20], [8, 20], [6, 22]]) G.demolish(p[0], p[1]); G.st.player.bag.length = 0; G.st.money = m1; for (let i = 0; i < bl.length; i++) G.blocked[i] = bl[i]; }
     // Zeichnen darf bei keinem Ziel und mit keinem Werkzeug abstuerzen (Absturz in Version 19 bei Ziel 3).
-    { let bad = ''; const ph0 = G.st.ph, t0 = G.ui.tool; for (let p = 0; p < 8; p++) for (const tl of ['walk', 'belt', 'wide', 'sort', 'demo', 'ab', 'pl']) { G.st.ph = p; G.ui.tool = tl; try { G.draw(); } catch (e) { bad += p + '/' + tl + ': ' + e.message + ' '; } } G.st.ph = ph0; G.ui.tool = t0; o.drawAll = bad; }
+    { let bad = ''; const ph0 = G.st.ph, t0 = G.ui.tool; for (let p = 0; p < 8; p++) for (const tl of ['walk', 'belt', 'wide', 'sort', 'demo', 'ab', 'pl']) { G.st.ph = p; G.ui.tool = tl; try { G.draw(); } catch (e) { bad += p + '/' + tl + ': ' + e.message + ' '; } } G.st.ph = ph0; G.ui.tool = t0;
+      // Startbildschirm, Endbildschirm mit und ohne Medaille, Lkw in jeder Phase
+      for (const f of [() => { G.ui.start = true; }, () => { G.ui.start = false; G.st.done = true; G.ui.endT = performance.now() - 1000; }, () => { const t = G.st.t; G.st.t = 99999; G.draw(); G.st.t = t; }, () => { G.st.done = false; G.ui.trk = 1e6; G.cam.x = 300; G.cam.y = 900; }, () => { G.ui.trkS.t -= 3000; }, () => { G.ui.trkS.t -= 3000; }, () => { G.ui.trkS.t -= 3000; }]) { try { f(); G.draw(); } catch (e) { bad += 'Bildschirm: ' + e.message + ' '; } }
+      o.startHolds = !G.ui.start && navigator.webdriver === true; G.ui.trk = 0; o.drawAll = bad; }
 
     // Alter Spielstand: ohne Zielstand ist alles frei, die Verbesserung der Annahme wird erstattet.
     G.save();
@@ -503,8 +511,9 @@ function serve() {
     ['Jedes Geraeusch klingt und uebersteuert nicht, jede Bauteilart hat ihren Klang', m3.soundsOk, m3.sounds],
     ['Sortierer ohne Weiterweg meldet die falsche Sorte, mit Weiterweg laeuft sie ab', m3.deadSort === 'Falsche Sorte, kein Weiterweg' && m3.deadSortFixed, m3.deadSort + ' ' + m3.deadSortFixed],
     ['Volle Sorte laeuft nur weiter, wo sie abgenommen wird, sonst wartet sie am Sortierer', m3.overflowHolds && m3.overflowFlows, m3.overflowDetail],
+    ['Sortierer laesst sich auf ein Band versetzen, Rueckgaengig stellt Band und Platz wieder her', m3.moveOnBelt && m3.moveRuns && m3.moveUndo, m3.moveOnBelt + '/' + m3.moveRuns + '/' + m3.moveUndo],
     ['Tasten waehlen alle Werkzeuge, gesperrte nicht', m3.hotkeys === 'belt/pal/ab/pl/sc/demo walk', m3.hotkeys],
-    ['Zeichnen laeuft bei jedem Ziel und Werkzeug ohne Fehler', m3.drawAll === '', m3.drawAll],
+    ['Zeichnen laeuft bei jedem Ziel und Werkzeug ohne Fehler, auch Start, Ende und Lkw', m3.drawAll === '', m3.drawAll],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
     ['Alter Spielstand: alles frei, Ausbau der Annahme und gestrichene Bandstufen erstattet', oldSave.ph === 7 && oldSave.money === 2300 + 37500 + 93750 && oldSave.up.belt === 2 && oldSave.up.auto === undefined && oldSave.up.range === 0, JSON.stringify(oldSave)],
     ['Versionsnummer in index.html und konstanten.js stimmt ueberein', versionOk, String(version)],
