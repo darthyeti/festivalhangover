@@ -277,7 +277,7 @@ function movePos(){const b=ui.move;return{x:Math.floor(ptr.wx/T-(b.w-1)/2),y:Mat
 function warnBadge(x,y){const s=Math.max(1,0.75/cam.z),k=0.5+0.5*Math.sin(st.t*5);ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.beginPath();ctx.moveTo(0,-11);ctx.lineTo(10.5,8);ctx.lineTo(-10.5,8);ctx.closePath();
   ctx.fillStyle='rgb(255,'+Math.round(176+40*k)+',40)';ctx.fill();ctx.strokeStyle='#3a2a08';ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.stroke();ctx.fillStyle='#3a2a08';ctx.fillRect(-1.3,-5,2.6,7.5);ctx.fillRect(-1.3,4,2.6,2.4);ctx.restore()}
 function ghostPos(){const D=BT[ui.tool]||{w:1,h:1};return{x:Math.floor(ptr.wx/T-(D.w-1)/2),y:Math.floor(ptr.wy/T-(D.h-1)/2)}}
-function clampCam(){const hw=VIEW.w/2/cam.z,hh=VIEW.h/2/cam.z;cam.x=Math.max(Math.min(hw,WW/2)-16,Math.min(WW-Math.min(hw,WW/2)+16,cam.x));cam.y=Math.max(Math.min(hh,WH/2)-16-130/cam.z,Math.min(WH-Math.min(hh,WH/2)+16+56/cam.z,cam.y))}// oben und unten Luft, damit Zielanzeige, Karte und Planleiste nichts von der Wiese verdecken
+function clampCam(){const hw=VIEW.w/2/cam.z,hh=VIEW.h/2/cam.z;cam.x=Math.max(Math.min(hw,WW/2)-16,Math.min(WW-Math.min(hw,WW/2)+16+(ui.sel?240/cam.z:0),cam.x));cam.y=Math.max(Math.min(hh,WH/2)-16-130/cam.z,Math.min(WH-Math.min(hh,WH/2)+16+56/cam.z,cam.y))}// oben und unten Luft, damit Zielanzeige, Karte und Planleiste nichts von der Wiese verdecken. Ist das Auswahlfenster offen, auch rechts
 function drawWorld(){ctx.save();ctx.beginPath();ctx.rect(VIEW.x,VIEW.y,VIEW.w,VIEW.h);ctx.clip();ctx.fillStyle='#1b2420';ctx.fillRect(VIEW.x,VIEW.y,VIEW.w,VIEW.h);
   ctx.translate(VIEW.x+VIEW.w/2,VIEW.y+VIEW.h/2);ctx.scale(cam.z,cam.z);ctx.translate(-cam.x,-cam.y);
   const hw=VIEW.w/2/cam.z,hh=VIEW.h/2/cam.z,x0=Math.max(0,cam.x-hw),y0=Math.max(0,cam.y-hh),x1=Math.min(WW,cam.x+hw),y1=Math.min(WH,cam.y+hh);
@@ -391,6 +391,7 @@ function drawPanel(){panelRect=null;const b=ui.sel;if(!b)return;const x=1052,y=V
     if(b.k==='sort'){panelBtn(x+10,by,w-20,'Sorte wechseln',()=>{b.filter=nextSort(b.filter)});by+=34;panelBtn(x+10,by,w-20,'Auswurf drehen',()=>{b.dir=(b.dir+1)%4});by+=34}
     panelBtn(x+10,by,w-20,ui.move===b?'Versetzen abbrechen':'Versetzen',()=>{ui.move=ui.move===b?null:b;ui.tool='walk'},ui.move===b?'#8a6a2a':undefined);by+=34;
     panelBtn(x+10,by,w-20,'Abreißen (+'+euro(b.paid)+')',()=>demolish(b.x,b.y),'#6a4a44')}
+  rr(ctx,x+w-32,y+7,24,24,6);ctx.fillStyle='#3c454b';ctx.fill();txt('×',x+w-20,y+25,17,'#e6ecef','center',true);button(x+w-32,y+7,24,24,()=>{ui.sel=null;ui.move=null}); // Fenster schliessen
   panelRect={x,y,w,h}}
 function drawPlanBar(){if(ui.tool!=='belt')return;const P=ui.plan,y=VIEW.y+VIEW.h-48,x=W/2-275,cr=isOpen('cross');if(!P&&!cr)return;
   rr(ctx,P?x-8:x+422,y-7,P?(cr?566:436):136,48,11);ctx.fillStyle='rgba(16,22,20,.9)';ctx.fill();
