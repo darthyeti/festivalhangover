@@ -8,7 +8,7 @@ const KEY='montagmorgen2-ton',LV=[0,0.3,0.6,1],LN=['aus','leise','mittel','laut'
 const MS=1.1,MA=0.8; // Grundpegel fuer Geraeusche und Ambiente
 const vol={s:2,a:2}; // Stufen fuer Geraeusche und Ambiente, Index in LV
 try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){if(d.s>=0&&d.s<4)vol.s=d.s|0;if(d.a>=0&&d.a<4)vol.a=d.a|0}}catch(e){}
-let ac=null,sG=null,aG=null,nBuf=null,wind=null,birdT=3,windT=0;
+let ac=null,sG=null,aG=null,nBuf=null,ambOn=false,birdT=3,windT=8;
 const last={};
 
 // Der Browser erlaubt Ton erst nach einer Eingabe. eingabe.js ruft das bei jedem Tippen und Tastendruck auf.
@@ -19,7 +19,7 @@ function setup(ctx,noAmb){ac=ctx;// Weiche Begrenzung statt Kompressor: Der Komp
   const out=ac.createWaveShaper(),cv=new Float32Array(1025);for(let i=0;i<1025;i++){const x=(i-512)/512*2;cv[i]=Math.tanh(x)}out.curve=cv;const pre=ac.createGain();pre.gain.value=0.5;pre.connect(out);out.connect(ac.destination);
   sG=ac.createGain();sG.gain.value=LV[vol.s]*MS;sG.connect(pre);aG=ac.createGain();aG.gain.value=LV[vol.a]*MA;aG.connect(pre);
   nBuf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);const d=nBuf.getChannelData(0);let s=12345;for(let i=0;i<d.length;i++){s=(s*1103515245+12345)&0x7fffffff;d[i]=s/0x3fffffff-1}
-  wind=null;if(!noAmb)ambSetup()}
+  ambOn=!noAmb}
 function setVol(k){vol[k]=(vol[k]+3)%4;try{localStorage.setItem(KEY,JSON.stringify(vol))}catch(e){}if(ac){(k==='s'?sG:aG).gain.setTargetAtTime(LV[vol[k]]*(k==='s'?MS:MA),ac.currentTime,0.05)}if(k==='s')sfx('click')}
 const volName=k=>LN[vol[k]];
 function pause(on){if(!ac||!ac.suspend)return;try{if(on)ac.suspend();else ac.resume()}catch(e){}}
@@ -73,16 +73,15 @@ const off=()=>!ac||(ac.state==='suspended'&&!ac.length); // ein OfflineAudioCont
 function sfx(name,x,y,k){if(off()||!vol.s)return;const now=typeof performance!=='undefined'?performance.now():0,id=name==='sel'?'sel':name;
   if(now-(last[id]||-1e9)<(GAP[id]||0))return;const o=at(x,y);if(!o)return;last[id]=now;try{if(name==='sel')(SEL[k]||SEL.cross)(o);else if(FX[name])FX[name](o)}catch(e){}}
 
-// Ambiente: Wind als gefiltertes Rauschen, Voegel als kurze Pfiffe
-// Kein tiefes Brummen und kein tiefes Rauschen: Till hoerte in Version 29 ein undefinierbares Wummern im Hintergrund. Der Wind ist jetzt ein helles Rauschen
-// wie in Blaettern (alles unter 500 Hz ist weggefiltert), ein Dauerton fuer laufende Maschinen entfaellt. Die Pressen stampfen ohnehin.
-function ambSetup(){const w=ac.createBufferSource();w.buffer=nBuf;w.loop=true;const hp=ac.createBiquadFilter();hp.type='highpass';hp.frequency.value=500;const f=ac.createBiquadFilter();f.type='lowpass';f.frequency.value=2200;
-  const g=ac.createGain();g.gain.value=0.04;w.connect(hp);hp.connect(f);f.connect(g);g.connect(aG);w.start();wind={g,f}}
+// Ambiente: einzelne Windboeen und Voegel als kurze Pfiffe
+// Kein Dauerton und kein Dauerrauschen (Till, 25.11.2026: erst Wummern, dann zu starkes Rauschen). Im Ambiente laeuft nichts durchgehend:
+// ab und zu eine Windboe, die an- und abschwillt, dazwischen Voegel und Stille.
+function gust(){const len=3+Math.random()*3,v=0.05+Math.random()*0.05,pan=Math.random()*1.2-0.6;noise('bandpass',700+Math.random()*500,1100+Math.random()*900,0.6,len,v,{pan,dest:aG,att:len*0.45})}
 function bird(){const n=2+(Math.random()*4|0),base=2600+Math.random()*1800,pan=Math.random()*1.6-0.8,v=0.09+Math.random()*0.09;let d=0;
   for(let i=0;i<n;i++){const up=Math.random()<0.6,f=base*(0.9+Math.random()*0.25),len=0.05+Math.random()*0.07;tone('sine',f,f*(up?1.35:0.75),len,v,{d,pan,dest:aG,att:0.012});d+=len+0.03+Math.random()*0.05}}
 // dt in Sekunden. work und quiet werden derzeit nicht gebraucht, die Schleife uebergibt sie weiter
-function amb(dt,work,quiet){if(off()||!wind)return;const t=ac.currentTime;
-  windT-=dt;if(windT<=0){windT=3+Math.random()*6;wind.g.gain.setTargetAtTime(0.02+Math.random()*0.05,t,2.5);wind.f.frequency.setTargetAtTime(1600+Math.random()*1400,t,2.5)}
+function amb(dt,work,quiet){if(off()||!ambOn)return;
+  windT-=dt;if(windT<=0){windT=14+Math.random()*26;if(vol.a)try{gust()}catch(e){}}
   birdT-=dt;if(birdT<=0){birdT=1.5+Math.random()*6;if(vol.a)try{bird()}catch(e){}}}
 
 export {FX,SEL,amb,pause,setVol,setup,sfx,volName,wake};
