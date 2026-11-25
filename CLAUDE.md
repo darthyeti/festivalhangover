@@ -25,7 +25,7 @@ bewusst und nach Freigabe aendern.
     `blocked`), raeumliche Suche `near()`.
   - `logik.js`: Spielregeln (Baender, Maschinen, Stationen, Spielfigur), `update(dt)`.
   - `bauen.js`: `build`, `setBelt`, `demolish`, `buyUp`, `save`, `load`.
-  - `ton.js`: Geraeusche und Ambiente per Web Audio, keine Dateien. Importiert nur `konstanten.js` und `zustand.js`.
+  - `ton.js`: Geraeusche und Ambiente per Web Audio, dazu die Musik aus `musik/`. Importiert nur `konstanten.js` und `zustand.js`.
   - `grafik.js`: Ebenen, Sprites, Zeichnen, Oberflaeche. Mit Abstand das groesste Modul.
   - `eingabe.js`: Einstiegspunkt mit Zeigerereignissen, Tastatur, Spielschleife und `__G`.
 - Regeln fuer Module:
@@ -130,6 +130,9 @@ bewusst und nach Freigabe aendern.
   (einzelne Windboeen und Voegel, dazwischen Stille. Nichts laeuft durchgehend: Till fand erst das Brummen, dann das Dauerrauschen stoerend). Lautstaerken stehen im Menue und in `localStorage` unter `montagmorgen2-ton`.
   Der Lead Dev kann nicht hoeren: Der Rauchtest rechnet jedes Geraeusch per `OfflineAudioContext` und prueft nur Pegel. Wie es klingt, beurteilt Till.
   Kein `DynamicsCompressor` verwenden, er macht in Chromium kurze Geraeusche um den Faktor vier leiser.
+- Musik (E-020, Version 40): zwei gemeinfreie Stuecke (CC0) als MP3 in `musik/`, Quellen in `musik/LIZENZ.md`. `music(dt)` in `ton.js` spielt sie im Wechsel
+  ueber ein Audio-Element, dazwischen ein bis zwei Minuten Stille, das erste Stueck zwoelf Sekunden nach dem ersten Tippen. Eigene Lautstaerke im Menue (`vol.m`, Standard leise).
+  Die Liste steht in `MUSIC`, der Rauchtest prueft, dass jede Datei ausgeliefert wird. MP3 statt OGG, weil aeltere iPads kein OGG abspielen.
 - Alle Grafiken entstehen per Code, es gibt keine Bilddateien.
 - Optik: Bauteile haben einen Koerper (Deckflaeche nach oben versetzt, dunklere Vorderwand, Schlagschatten
   nach rechts unten). Maschinen unterscheiden sich durch Farbe und Sichtfenster, nicht durch Aufbauten

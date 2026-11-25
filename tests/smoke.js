@@ -7,7 +7,7 @@ const path = require('path');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mp3': 'audio/mpeg' };
 
 function serve() {
   return new Promise(resolve => {
@@ -405,6 +405,9 @@ function serve() {
     { const Tn = G.ton, bad = []; let n = 0; const one = async (label, fn) => { const c = new OfflineAudioContext(2, 44100 * 2.5, 44100); Tn.setup(c, true); fn({ v: 1, pan: 0 }); const d = (await c.startRendering()).getChannelData(0); let pk = 0; for (let i = 0; i < d.length; i++) pk = Math.max(pk, Math.abs(d[i])); n++; if (!(pk > 0.02 && pk < 0.8)) bad.push(label + ' ' + pk.toFixed(3)); };
       for (const k in Tn.FX) await one(k, Tn.FX[k]); for (const k in Tn.SEL) await one('sel:' + k, Tn.SEL[k]);
       const kinds = ['auto', 'station', 'ab', 'pd', 'pp', 'kp', 'pal', 'pl', 'sc', 'sort', 'split', 'cross'].filter(k => !Tn.SEL[k]); o.sounds = n + ' ' + bad.join(', ') + kinds.join(','); o.soundsOk = n >= 27 && !bad.length && !kinds.length; }
+    // Musik (E-020): Die Dateien aus der Liste muessen ausgeliefert werden und der Browser muss ihre Laenge lesen koennen.
+    { const r = []; for (const m of G.ton.MUSIC) { const res = await fetch(m[0]); const d = await new Promise(ok => { const a = new Audio(); a.preload = 'metadata'; a.onloadedmetadata = () => ok(a.duration); a.onerror = () => ok(0); setTimeout(() => ok(-1), 5000); a.src = m[0]; }); r.push(m[1] + ' ' + res.status + ' ' + Math.round(d) + 's'); }
+      o.music = r.join(', '); o.musicOk = r.length === 2 && r.every(x => / 200 (\d+)s$/.test(x) && +x.match(/ (\d+)s$/)[1] > 60); }
     // Sortierer ohne Weiterweg: Eine fremde Sorte steckt fest, die Warnung nennt den Grund statt 'Stau'.
     { const sd = G.build('sort', 6, 20); sd.filter = 9; sd.dir = 3; G.setBelt(6, 19, 3); G.setBelt(5, 20, 0); G.tryPush(5, 20, 8, 0); G.step(3); o.deadSort = G.jam(sd); G.setBelt(7, 20, 0); G.step(1); o.deadSortFixed = sd.item < 0 && G.jam(sd) === '';
       for (const p of [[6, 20], [6, 19], [5, 20], [7, 20]]) G.demolish(p[0], p[1]); G.st.player.bag.length = 0; }
@@ -510,6 +513,7 @@ function serve() {
     ['Planenpresse und Schrottpresse machen Ballen und Buendel', m3.junkPress, m3.junkDetail],
     ['Annahme zaehlt rohe Planen fuer 5 Cent und zahlt Planenballen voll', m3.junkRaw && m3.junkSold, m3.junkRaw + ' ' + m3.junkSell],
     ['Jedes Geraeusch klingt und uebersteuert nicht, jede Bauteilart hat ihren Klang', m3.soundsOk, m3.sounds],
+    ['Musik: beide Stuecke liegen im Repo und sind abspielbar', m3.musicOk, m3.music],
     ['Sortierer ohne Weiterweg meldet die falsche Sorte, mit Weiterweg laeuft sie ab', m3.deadSort === 'Falsche Sorte, kein Weiterweg' && m3.deadSortFixed, m3.deadSort + ' ' + m3.deadSortFixed],
     ['Volle Sorte laeuft nur weiter, wo sie abgenommen wird, sonst wartet sie am Sortierer', m3.overflowHolds && m3.overflowFlows, m3.overflowDetail],
     ['Sortierer laesst sich auf ein Band versetzen, Rueckgaengig stellt Band und Platz wieder her', m3.moveOnBelt && m3.moveRuns && m3.moveUndo, m3.moveOnBelt + '/' + m3.moveRuns + '/' + m3.moveUndo],
