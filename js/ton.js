@@ -1,13 +1,14 @@
 // Montagmorgen: Ton
-// Geraeusche und Ambiente, alles per Code erzeugt (Web Audio), keine Dateien (E-020). Importiert nur konstanten.js und zustand.js.
+// Geraeusche und Ambiente per Code erzeugt (Web Audio). Nur die Musik kommt aus zwei Dateien in musik/ (E-020). Importiert nur konstanten.js und zustand.js.
 // Ohne Tonkontext (kein Tippen bisher, Testlauf, alter Browser) tut jede Funktion nichts.
 import {VIEW} from './konstanten.js';
 import {cam} from './zustand.js';
 
 const KEY='montagmorgen2-ton',LV=[0,0.3,0.6,1],LN=['aus','leise','mittel','laut'];
 const MS=1.1,MA=0.8; // Grundpegel fuer Geraeusche und Ambiente
-const vol={s:2,a:2}; // Stufen fuer Geraeusche und Ambiente, Index in LV
-try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){if(d.s>=0&&d.s<4)vol.s=d.s|0;if(d.a>=0&&d.a<4)vol.a=d.a|0}}catch(e){}
+const MM=0.55; // Grundpegel der Musik
+const vol={s:2,a:2,m:1}; // Stufen fuer Geraeusche, Ambiente und Musik, Index in LV
+try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d){if(d.s>=0&&d.s<4)vol.s=d.s|0;if(d.a>=0&&d.a<4)vol.a=d.a|0;if(d.m>=0&&d.m<4)vol.m=d.m|0}}catch(e){}
 let ac=null,sG=null,aG=null,nBuf=null,ambOn=false,birdT=3,windT=8;
 const last={};
 
@@ -20,9 +21,9 @@ function setup(ctx,noAmb){ac=ctx;// Weiche Begrenzung statt Kompressor: Der Komp
   sG=ac.createGain();sG.gain.value=LV[vol.s]*MS;sG.connect(pre);aG=ac.createGain();aG.gain.value=LV[vol.a]*MA;aG.connect(pre);
   nBuf=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);const d=nBuf.getChannelData(0);let s=12345;for(let i=0;i<d.length;i++){s=(s*1103515245+12345)&0x7fffffff;d[i]=s/0x3fffffff-1}
   ambOn=!noAmb}
-function setVol(k){vol[k]=(vol[k]+3)%4;try{localStorage.setItem(KEY,JSON.stringify(vol))}catch(e){}if(ac){(k==='s'?sG:aG).gain.setTargetAtTime(LV[vol[k]]*(k==='s'?MS:MA),ac.currentTime,0.05)}if(k==='s')sfx('click')}
+function setVol(k){vol[k]=(vol[k]+3)%4;try{localStorage.setItem(KEY,JSON.stringify(vol))}catch(e){}if(k==='m'){if(mu)mu.volume=LV[vol.m]*MM;if(!vol.m&&mu)mu.pause();sfx('click');return}if(ac){(k==='s'?sG:aG).gain.setTargetAtTime(LV[vol[k]]*(k==='s'?MS:MA),ac.currentTime,0.05)}if(k==='s')sfx('click')}
 const volName=k=>LN[vol[k]];
-function pause(on){if(!ac||!ac.suspend)return;try{if(on)ac.suspend();else ac.resume()}catch(e){}}
+function pause(on){if(mu&&on)mu.pause();if(!ac||!ac.suspend)return;try{if(on)ac.suspend();else ac.resume()}catch(e){}}
 
 // Bausteine: Ton mit Tonhoehenverlauf und Rauschen durch einen Filter, beide mit kurzer Huellkurve
 // Huellkurve: kurzer Anstieg, dann faellt der Ton bis zum Ende auf ein Zwanzigstel und blendet in 20 ms aus. Ein Abfall auf fast null klingt nur wie ein Klick.
@@ -82,6 +83,17 @@ function bird(){const n=2+(Math.random()*4|0),base=2600+Math.random()*1800,pan=M
 // dt in Sekunden. work und quiet werden derzeit nicht gebraucht, die Schleife uebergibt sie weiter
 function amb(dt,work,quiet){if(off()||!ambOn)return;
   windT-=dt;if(windT<=0){windT=14+Math.random()*26;if(vol.a)try{gust()}catch(e){}}
-  birdT-=dt;if(birdT<=0){birdT=1.5+Math.random()*6;if(vol.a)try{bird()}catch(e){}}}
+  birdT-=dt;if(birdT<=0){birdT=1.5+Math.random()*6;if(vol.a)try{bird()}catch(e){}}music(dt)}
 
-export {FX,SEL,amb,pause,setVol,setup,sfx,volName,wake};
+// Musik: zwei gemeinfreie Stuecke im Wechsel (Till, 25.11.2026), dazwischen ein bis zwei Minuten ohne Musik. Quellen in musik/LIZENZ.md.
+// Ein Audio-Element statt Web Audio: Es laedt im Hintergrund nach und haelt das Stueck nicht entpackt im Speicher.
+const MUSIC=[['musik/etirwer.mp3','Etirwer'],['musik/apple-cider.mp3','Apple Cider']];
+let mu=null,muI=0,muT=12,muGo=false;
+function music(dt){if(!vol.m||typeof Audio==='undefined')return;
+  if(muGo){if(mu.paused&&!mu.ended)mu.play().catch(()=>{});return} // nach Pause oder stumm geschaltet: weiter, wo es war
+  muT-=dt;if(muT>0)return;
+  try{if(!mu){mu=new Audio();mu.preload='auto';mu.addEventListener('ended',()=>{muGo=false;muI=(muI+1)%MUSIC.length;muT=60+Math.random()*60});mu.addEventListener('error',()=>{muGo=false;muT=120})}
+    mu.src=MUSIC[muI][0];mu.volume=LV[vol.m]*MM;muGo=true;mu.play().catch(()=>{})}catch(e){muGo=false;muT=120}}
+const musicNow=()=>muGo&&mu&&!mu.paused?MUSIC[muI][1]:'';
+
+export {MUSIC,musicNow,FX,SEL,amb,pause,setVol,setup,sfx,volName,wake};

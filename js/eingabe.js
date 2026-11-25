@@ -4,7 +4,7 @@ import {PROFIT,DX,DY,HOT,MH,MW,RAW,T,TOOLS,VIEW,WH,WW} from './konstanten.js';
 import {cam,isOpen,nSort,nextSort,resetState,st,ui} from './zustand.js';
 import {AUTO,belts,blds,blocked,cells,findPath,foot,genWorld,grid,los,removeItem} from './welt.js';
 import {jam,msg,tryPush,update} from './logik.js';
-import {FX,SEL,amb,pause,setup,sfx,wake} from './ton.js';
+import {FX,MUSIC,SEL,amb,musicNow,pause,setup,sfx,wake} from './ton.js';
 import {beltSwap,build,buildPlan,buyUp,crossOver,demolish,load,moveTo,planBelt,planEnds,rec,save,setBelt,stepBegin,stepEnd,undo,widen} from './bauen.js';
 import {MM,S,movePos,btns,buildGround,buildItemLayer,buildMini,buildSprites,cv,draw,dropItemLayer,ghostPos,groundL,offX,offY,panelRect,ptr,resize,spr,toW} from './grafik.js';
 
@@ -65,7 +65,7 @@ let last=0,saveT=0;function frame(t){const dt=Math.min(0.05,(t-last)/1000||0);la
   draw();{let n=0;const hw=VIEW.w/2/cam.z+64,hh=VIEW.h/2/cam.z+64;for(const b of blds)if(b.t>=0&&Math.abs((b.x+1)*T-cam.x)<hw&&Math.abs((b.y+1)*T-cam.y)<hh)n++;amb(dt,n,ui.menu||st.done)}saveT+=dt;if(saveT>15){saveT=0;save()}requestAnimationFrame(frame)}
 start(false);ui.start=!navigator.webdriver; // Startbildschirm, im Testlauf uebersprungen
 requestAnimationFrame(frame);
-window.__G={PROFIT,ton:{FX,SEL,setup,sfx,wake},widen,draw,nSort,nextSort,get foot(){return foot},get st(){return st},get ui(){return ui},crossOver,beltSwap,save,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,isOpen,los,findPath,
+window.__G={PROFIT,ton:{FX,MUSIC,SEL,amb,musicNow,setup,sfx,wake},widen,draw,nSort,nextSort,get foot(){return foot},get st(){return st},get ui(){return ui},crossOver,beltSwap,save,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,isOpen,los,findPath,
   step(sec,dt){dt=dt||1/60;for(let t=0;t<sec;t+=dt)update(dt)},build,setBelt,demolish,buyUp,tryPush,undo,moveTo,jam,planBelt,buildPlan,setTool(t){ui.tool=t},setRot(r){ui.rot=r},
   clear(x0,y0,x1,y1){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)for(const it of cells[y*MW+x].slice())removeItem(it)}};
 
