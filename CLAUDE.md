@@ -1,8 +1,10 @@
-# Festivalhangover (Arbeitstitel des Spiels: Montagmorgen)
+# Festivalhangover
 
 Inkrementell-Spiel mit Fabrikbau: Am Montagmorgen nach einem Festival wird ein
 Campingplatz voller Pfandgut leergeraeumt, erst von Hand, spaeter mit Baendern,
-Sortierern und Pressen. Auftraggeber und Tester ist Till.
+Sortierern und Pressen. Auftraggeber und Tester ist Till. Das Spiel heisst seit dem
+25.11.2026 auch im Spiel Festivalhangover (vorher Montagmorgen). Der Schluessel des
+Spielstands behaelt den alten Namen.
 
 `BRIEFING.md` ist die Uebergabe aus der Prototyp-Phase und die Referenz fuer
 Spielregeln, Zahlen, bekannte Schwaechen und Meilensteine (M0 bis M5). Vor
@@ -105,7 +107,7 @@ bewusst und nach Freigabe aendern.
   das quer wegfuehrt (`sideOuts`, `straightOut` in `logik.js`). `topo()` zeichnet dem Band dafuer einen Zulauf.
 - Sorten am Sortierer: `sorts()` in `zustand.js`. Rohware immer, mit freier Dosenpresse auch Dosenballen, mit freier PET-Presse auch PET-Ballen,
   damit sich Ballen von Pressen draussen aus dem gemischten Band holen lassen.
-- `beltSwap(k,x,y)` setzt Verteiler oder Sortierer direkt auf ein Bandfeld, wie `crossOver`.
+- `beltSwap(k,x,y)` setzt Verteiler oder Sortierer direkt auf ein Bandfeld, wie `crossOver`. Auch `moveTo()` (Versetzen) darf beide auf ein Bandfeld setzen.
 - Zelte als Sperrmuell (E-019): Der Abbautrupp (`ab`) ist eine Station mit anderem Ziel, `isSt(b)` in `zustand.js` gilt fuer beide.
   Seine zwei Arbeiter (`h.ab`) suchen mit `nearTent()` das naechste Zelt auf der ganzen Wiese (`abR()` ist seit Version 28 unbegrenzt, von Till nach T-014 so gewuenscht), bauen es in `TENT_TIME` ab (`setTentGone`)
   und bringen `TENT_LOAD` als Ladung zurueck. Sorten 8 (Planen) und 9 (Gestaenge) sind Rohware (`JUNK`), 10 und 11 ihre Ballen
@@ -137,6 +139,10 @@ bewusst und nach Freigabe aendern.
   Saubere Wiese: `fresh` haelt je Feld 0 bis 1 (Feld und Nachbarn leer, kein Weg, kein Hof), `updFresh()` laeuft alle 0,6 Sekunden mit der Minikarte.
   `freshL` ist ein Bild mit einem Pixel je Feld und wird weich hochskaliert ueber den Boden gelegt. Blumen malt `paintFlowers()` einmalig in die Bodenebene,
   `flP` merkt sich die bemalten Felder, `buildGround` loescht die Merker. Blumen je Bild einzeln zu zeichnen war gemessen zu teuer.
+- Rahmen und Leben (E-020, Version 35): `drawStart()` zeigt den Startbildschirm, solange `ui.start` gilt. Das Spiel steht dann wie im Menue.
+  Im Testlauf (`navigator.webdriver`) wird er uebersprungen. `drawEnd()` zeichnet Medaille, Konfetti und Bestzeit (`festivalhangover-best` in `localStorage`,
+  gesetzt in der Spielschleife). `drawTruck()`: Der Lkw unter der Annahme fuellt sich mit gepresster Ware (`ui.trk` in Cent aus `accept()`), faehrt bei
+  `TRUCK_CAP` Stellplaetzen ab und kommt leer zurueck. Reine Anzeige, nicht im Spielstand. Maschinen: Luefter, Dampf nach jedem Stueck (`b.puT`), Ware springt heraus.
 - Letzte Stuecke: Liegen hoechstens `LAST_N` Stueck auf der Wiese, markiert `lastItems()` in `grafik.js` sie
   blinkend auf Karte und Minikarte.
 - Kamera: `clampCam()` laesst oben und unten Luft ueber den Wiesenrand hinaus, damit Zielanzeige,

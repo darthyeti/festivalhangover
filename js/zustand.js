@@ -4,7 +4,7 @@ import {OPEN,T,WH} from './konstanten.js';
 
 let st;
 function resetState(){st=newState()}
-const ui={falls:[],tool:'walk',rot:0,sel:null,topoDirty:true,orderDirty:true,mmT:0,resetArm:0,undo:[],step:null,undoing:false,move:null,planA:null,plan:null,menu:false,saved:false,groundDirty:false,planCross:true,toast:null,newT:-9,goalMin:false,busyT:0};
+const ui={start:false,trk:0,trkS:null,endT:0,best:0,newBest:false,falls:[],tool:'walk',rot:0,sel:null,topoDirty:true,orderDirty:true,mmT:0,resetArm:0,undo:[],step:null,undoing:false,move:null,planA:null,plan:null,menu:false,saved:false,groundDirty:false,planCross:true,toast:null,newT:-9,goalMin:false,busyT:0};
 const cam={x:300,y:WH/2,z:1,follow:true};
 function newState(){return{money:0,earned:0,t:0,done:false,up:{bag:0,shoe:0,crew:0,range:0,belt:0},ph:0,viaBelt:0,rest:null,left:[0,0,0,0],total:0,tl:0,tt:0,sold:[0,0,0,0,0,0,0,0,0,0,0,0],
   player:{x:5*T,y:26.5*T,tx:5*T,ty:26.5*T,bag:[],cool:0,ucool:0,ph:0,dir:0,walk:false},fly:[],pops:[],hint:0,lastMsg:-9}}

@@ -14,7 +14,7 @@ const TY=[{n:'Dosen',val:25,col:'#c9d2d8'},{n:'PET',val:25,col:'#7fc4e8'},{n:'Gl
  {n:'Planen',val:5,col:'#3fa392'},{n:'Gestänge',val:10,col:'#b9c2c8'},{n:'Planenballen',val:400,col:'#58b8a6'},{n:'Schrottbündel',val:600,col:'#9aa4aa'}];
 // Sperrmuell aus Zelten: zaehlt in der Annahme wie Rohware (Warteschlange), bringt ungepresst fast nichts
 const JUNK=t=>t===8||t===9,TENT_LOAD={tent:[8,8,8,9,9],pav:[8,8,9,9,9,9]},TENT_TIME=6,LAST_TENTS=12;
-const VERSION=34,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
+const VERSION=35,WORLD_SEED=11; // VERSION bei jeder Auslieferung erhoehen, auch in index.html
 const RAW=4,TENT_COST=500,MORE=1.2; // MORE: jede weitere Maschine derselben Art kostet so viel mal mehr (E-014, gesenkt mit E-015) // Zelt oder Pavillon abbauen, in Cent
 const BT={
  belt:{name:'Band',cost:50,w:1,h:1,info:['Ziehen legt eine Strecke.']},
@@ -57,9 +57,10 @@ const GOALS=[
 ];
 // Zeitwertung am Ende, Grenzen in Minuten
 const MEDALS=[{m:38,n:'Gold',col:'#ffd23e'},{m:45,n:'Silber',col:'#cfd8dc'},{m:60,n:'Bronze',col:'#d08a4a'}]; // E-017, aus vier Partien von Till (39:00 bis 45:15)
+const TRUCK_SLOT=6750,TRUCK_CAP=6; // Lkw an der Annahme: je 67,50 € gepresster Ware ein Stellplatz, bei sechs faehrt er ab
 const WIDE_COST=100; // Aufpreis je Bandfeld fuer die zweite Spur (E-015), in Cent
 const OPEN={wide:3,belt:1,station:1,sort:2,pd:2,pp:3,split:3,cross:3,kp:4,pal:5,ab:5,pl:5,sc:5};
 const euro=c=>(c/100).toFixed(2).replace('.',',')+' €';
 function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 
-export {HOT,HOTKEY,JUNK,LAST_TENTS,TENT_LOAD,TENT_TIME,AUTO_CAP,AUTO_RATE,MEDALS,MORE,BT,DX,DY,FONT,H,LS,MH,MW,N_CRATES,N_ITEMS,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,WIDE_COST,TY,UPS,VERSION,VIEW,W,WH,WORLD_SEED,WW,euro,rng};
+export {TRUCK_CAP,TRUCK_SLOT,HOT,HOTKEY,JUNK,LAST_TENTS,TENT_LOAD,TENT_TIME,AUTO_CAP,AUTO_RATE,MEDALS,MORE,BT,DX,DY,FONT,H,LS,MH,MW,N_CRATES,N_ITEMS,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,WIDE_COST,TY,UPS,VERSION,VIEW,W,WH,WORLD_SEED,WW,euro,rng};

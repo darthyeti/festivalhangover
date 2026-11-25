@@ -213,6 +213,7 @@ Geräusche und Ambiente entstehen per Code im Browser, ohne Dateien: Aufsammeln,
 - Zeltabbau: Das Zelt sackt in 0,7 Sekunden zusammen, die Plane bleibt kurz liegen, Staub steigt auf.
 - Tageslicht: Die Partie beginnt in kühlem Morgenlicht mit warmer Sonne von links und ist nach 22 Minuten taghell.
 - Saubere Wiese: Wo ein Feld und seine Nachbarn leer sind, wird das Gras heller und Blumen kommen.
+- Seit Version 35: Startbildschirm mit Titel, Endbildschirm mit Medaille, Konfetti und Bestzeit, Lkw an der Annahme, der sich mit gepresster Ware füllt und abfährt, Lüfter und Dampf an den Maschinen. Das Spiel heißt jetzt auch im Spiel Festivalhangover.
 
 ## 9. Ideen für nach der Alpha
 

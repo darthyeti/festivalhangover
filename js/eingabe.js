@@ -24,7 +24,7 @@ cv.addEventListener('pointerdown',e=>{e.preventDefault();wake();const p=toL(e);p
   if(pts.size===2){act=null;stepEnd();const a=[...pts.values()];gest={cx:(a[0].x+a[1].x)/2,cy:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),camx:cam.x,camy:cam.y,z:cam.z};cam.follow=false;return}
   if(e.button===1||e.button===2){act={type:'pan',x:p.x,y:p.y,camx:cam.x,camy:cam.y};cam.follow=false;return}
   for(let k=btns.length-1;k>=0;k--){const b=btns[k];if(p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y&&p.y<=b.y+b.h){if(b.on){sfx('click');b.cb()}return}}
-  if(ui.menu)return;
+  if(ui.menu||ui.start)return;
   if(inRect(p,MM)){act={type:'mini'};miniTo(p);return}
   if(inRect(p,panelRect)||!ptr.inView||st.done)return;
   const w=toW(p.x,p.y),tx=Math.floor(w.x/T),ty=Math.floor(w.y/T),o=tx>=0&&ty>=0&&tx<MW&&ty<MH?grid[ty*MW+tx]:null;ptr.wx=w.x;ptr.wy=w.y;
@@ -52,15 +52,19 @@ function pUp(e){const had=pts.has(e.pointerId);pts.delete(e.pointerId);if(pts.si
   stepEnd();if(e.pointerType!=='mouse')ptr.inView=false}
 cv.addEventListener('pointerup',pUp);cv.addEventListener('pointercancel',pUp);cv.addEventListener('contextmenu',e=>e.preventDefault());
 cv.addEventListener('wheel',e=>{e.preventDefault();const p=toL(e),w0=toW(p.x,p.y);cam.z=Math.max(0.4,Math.min(2.2,cam.z*(e.deltaY<0?1.12:1/1.12)));const w1=toW(p.x,p.y);cam.x+=w0.x-w1.x;cam.y+=w0.y-w1.y;cam.follow=false},{passive:false});
-const keys={};window.addEventListener('keydown',e=>{wake();const k=e.key.toLowerCase();keys[k]=true;if(k==='escape'&&ui.menu){ui.menu=false;ui.resetArm=0}else if(k==='r')ui.rot=(ui.rot+1)%4;else if(k==='escape'){ui.tool='walk';ui.move=null}else if(k==='z')undo();else if(HOT[k]&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&isOpen(HOT[k])){ui.tool=HOT[k];ui.sel=null;ui.move=null}});
+const keys={};window.addEventListener('keydown',e=>{wake();const k=e.key.toLowerCase();keys[k]=true;if(ui.start){if(k==='enter'||k===' ')ui.start=false;return}if(k==='escape'&&ui.menu){ui.menu=false;ui.resetArm=0}else if(k==='r')ui.rot=(ui.rot+1)%4;else if(k==='escape'){ui.tool='walk';ui.move=null}else if(k==='z')undo();else if(HOT[k]&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&isOpen(HOT[k])){ui.tool=HOT[k];ui.sel=null;ui.move=null}});
 window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(resize,120)});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();pause(document.hidden)});
-function start(fresh){resetState();dropItemLayer();ui.tool='walk';ui.falls=[];ui.sel=null;ui.undo=[];ui.step=null;ui.move=null;ui.planA=null;ui.plan=null;ui.menu=false;ui.resetArm=0;ui.toast=null;ui.newT=-9;genWorld();if(!fresh)load();st.tt=foot.length;st.tl=foot.filter(f=>!f.o.gone).length;ui.busyT=st.t;cam.x=st.player.x+200;cam.y=st.player.y;cam.follow=true;resize();if(!spr.length)buildSprites();ui.groundDirty=false;buildGround();buildItemLayer();buildMini();ui.topoDirty=ui.orderDirty=true}
+const BEST_KEY='festivalhangover-best';
+function start(fresh){ui.trk=0;ui.trkS=null;ui.endT=0;ui.newBest=false;resetState();dropItemLayer();ui.tool='walk';ui.falls=[];ui.sel=null;ui.undo=[];ui.step=null;ui.move=null;ui.planA=null;ui.plan=null;ui.menu=false;ui.resetArm=0;ui.toast=null;ui.newT=-9;genWorld();if(!fresh)load();st.tt=foot.length;st.tl=foot.filter(f=>!f.o.gone).length;ui.busyT=st.t;cam.x=st.player.x+200;cam.y=st.player.y;cam.follow=true;resize();if(!spr.length)buildSprites();ui.groundDirty=false;buildGround();buildItemLayer();buildMini();ui.topoDirty=ui.orderDirty=true}
 let last=0,saveT=0;function frame(t){const dt=Math.min(0.05,(t-last)/1000||0);last=t;
   const pv=260*dt/cam.z;if(keys.a||keys.arrowleft){cam.x-=pv;cam.follow=false}if(keys.d||keys.arrowright){cam.x+=pv;cam.follow=false}if(keys.w||keys.arrowup){cam.y-=pv;cam.follow=false}if(keys.s||keys.arrowdown){cam.y+=pv;cam.follow=false}
-  if(!ui.menu)update(dt);draw();{let n=0;const hw=VIEW.w/2/cam.z+64,hh=VIEW.h/2/cam.z+64;for(const b of blds)if(b.t>=0&&Math.abs((b.x+1)*T-cam.x)<hw&&Math.abs((b.y+1)*T-cam.y)<hh)n++;amb(dt,n,ui.menu||st.done)}saveT+=dt;if(saveT>15){saveT=0;save()}requestAnimationFrame(frame)}
-start(false);requestAnimationFrame(frame);
+  if(!ui.menu&&!ui.start)update(dt);
+  if(st.done&&!ui.endT){ui.endT=performance.now();try{const b=+localStorage.getItem(BEST_KEY)||0;ui.newBest=!b||st.t<b;ui.best=ui.newBest?st.t:b;if(ui.newBest)localStorage.setItem(BEST_KEY,String(st.t))}catch(e){ui.best=st.t}} // Bestzeit, einmal je Partie
+  draw();{let n=0;const hw=VIEW.w/2/cam.z+64,hh=VIEW.h/2/cam.z+64;for(const b of blds)if(b.t>=0&&Math.abs((b.x+1)*T-cam.x)<hw&&Math.abs((b.y+1)*T-cam.y)<hh)n++;amb(dt,n,ui.menu||st.done)}saveT+=dt;if(saveT>15){saveT=0;save()}requestAnimationFrame(frame)}
+start(false);ui.start=!navigator.webdriver; // Startbildschirm, im Testlauf uebersprungen
+requestAnimationFrame(frame);
 window.__G={ton:{FX,SEL,setup,sfx,wake},widen,draw,nSort,nextSort,get foot(){return foot},get st(){return st},get ui(){return ui},crossOver,beltSwap,save,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,isOpen,los,findPath,
   step(sec,dt){dt=dt||1/60;for(let t=0;t<sec;t+=dt)update(dt)},build,setBelt,demolish,buyUp,tryPush,undo,moveTo,jam,planBelt,buildPlan,setTool(t){ui.tool=t},setRot(r){ui.rot=r},
   clear(x0,y0,x1,y1){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)for(const it of cells[y*MW+x].slice())removeItem(it)}};
