@@ -51,7 +51,8 @@ function calcBlocked(){blocked.fill(0);for(const f of foot){if(f.o.gone)continue
 function tentAt(tx,ty){let best=null,bd=1e9;const px=tx*T+16,py=ty*T+16;for(const f of foot){if(f.o.gone)continue;const dx=px-f.x,dy=py-f.y;if(!covers(f,tx,ty)&&!(Math.abs(dx)<30&&dy>-36&&dy<18))continue;const d=Math.hypot(dx,dy+8);if(d<bd){bd=d;best=f}}return best}
 function tentTiles(f){const r=[];const x0=Math.max(0,((f.x-f.r)/T)|0),x1=Math.min(MW-1,((f.x+f.r)/T)|0),y0=Math.max(0,((f.y-f.r)/T)|0),y1=Math.min(MH-1,((f.y+f.r)/T)|0);
   for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++)if(covers(f,tx,ty))r.push(ty*MW+tx);return r}
-function setTentGone(f,gone){f.o.gone=gone;calcBlocked();const R={x:Math.floor((f.x-60)/4)*4,y:Math.floor((f.y-52)/4)*4,w:120,h:92};ui.groundDirty=ui.groundDirty?true:R} // Vielfache von 4: bei Ebenenfaktor 1,25 liegen die Kanten auf ganzen Pixeln
+function setTentGone(f,gone){f.o.gone=gone;if(gone){ui.falls.push({o:f.o,t:performance.now()});if(ui.falls.length>30)ui.falls.shift()}else ui.falls=ui.falls.filter(e=>e.o!==f.o); // die Grafik laesst das Zelt zusammenfallen
+  calcBlocked();const R={x:Math.floor((f.x-60)/4)*4,y:Math.floor((f.y-52)/4)*4,w:120,h:92};ui.groundDirty=ui.groundDirty?true:R} // Vielfache von 4: bei Ebenenfaktor 1,25 liegen die Kanten auf ganzen Pixeln
 // Zelte fuer den Abbautrupp (E-019): wie viele stehen noch, und das naechste freie im Umkreis R um cx,cy
 function tentsLeft(){let n=0;for(const f of foot)if(!f.o.gone)n++;return n}
 function nearTent(x,y,cx,cy,R){let best=null,bd=1e9;for(const f of foot){if(f.o.gone||f.cl||Math.hypot(f.x-cx,f.y-cy)>R)continue;const d=Math.hypot(f.x-x,f.y-y);if(d<bd){bd=d;best=f}}return best}

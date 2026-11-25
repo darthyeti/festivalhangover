@@ -61,7 +61,32 @@ const sp=(m,v,r)=>spr[m][(v||0)%spr[m].length][(r||0)%spr[m][0].length];
 function blit(it){itemG.drawImage(sp(it.m,it.v,it.rot),Math.round((it.x-15)*LS),Math.round((it.y-15)*LS),30*LS,30*LS)}
 function eraseItem(it){if(!itemG)return;const x0=Math.floor((it.x-16)*LS),y0=Math.floor((it.y-16)*LS),w=Math.ceil(32*LS);
   itemG.save();itemG.beginPath();itemG.rect(x0,y0,w,w);itemG.clip();itemG.clearRect(x0,y0,w,w);const l=[];near(it.x,it.y,36,o=>l.push(o));l.sort((a,b)=>a.i-b.i);l.forEach(blit);itemG.restore()}
-function buildItemLayer(){itemL=mk(WW*LS,WH*LS);itemG=itemL.getContext('2d');for(const it of items)if(it.alive)blit(it)}
+function buildItemLayer(){itemL=mk(WW*LS,WH*LS);itemG=itemL.getContext('2d');for(const it of items)if(it.alive)blit(it);updFresh(true)}
+// Saubere Wiese (E-020): Wo ein Feld und seine Nachbarn leer sind, erholt sich das Gras. fresh haelt je Feld 0 bis 1 und waechst langsam,
+// freshL ist ein Bild mit einem Pixel je Feld. Weich hochskaliert ergibt es einen hellgruenen Schimmer ohne harte Kanten.
+const fresh=new Float32Array(MW*MH);let freshL=null,freshD=null;
+function updFresh(now){if(!freshL){freshL=mk(MW,MH);freshD=freshL.getContext('2d').createImageData(MW,MH)}const d=freshD.data,dirty=i=>cells[i].length>0||blocked[i];
+  for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const i=y*MW+x;let t=1;if(dirty(i)||(x>0&&dirty(i-1))||(x<MW-1&&dirty(i+1))||(y>0&&dirty(i-MW))||(y<MH-1&&dirty(i+MW)))t=0;
+    else if(pathDist(x*T+16,y*T+16)<22||(x<10&&y>20&&y<32))t=0; // Wege und Betriebshof bleiben, wie sie sind
+    fresh[i]=now?t:fresh[i]+(t-fresh[i])*(t>fresh[i]?0.12:0.5);const p=i*4;d[p]=170;d[p+1]=235;d[p+2]=95;d[p+3]=Math.round(fresh[i]*58)}
+  freshL.getContext('2d').putImageData(freshD,0,0);paintFlowers(now?1e9:60)}
+function drawFresh(x0,y0,x1,y1){if(!freshL)return;const a=Math.max(0,((x0/T)|0)-1),b=Math.max(0,((y0/T)|0)-1),c=Math.min(MW,((x1/T)|0)+2),e=Math.min(MH,((y1/T)|0)+2);
+  ctx.imageSmoothingEnabled=true;ctx.drawImage(freshL,a,b,c-a,e-b,a*T,b*T,(c-a)*T,(e-b)*T)} // nur der sichtbare Ausschnitt
+// Blumen auf erholten Feldern werden einmal in die Bodenebene gemalt und kosten danach nichts mehr je Bild. flP merkt sich die bemalten Felder.
+// Nach einem Neuaufbau des Bodens (ganz oder im Rechteck) sind sie dort weg, buildGround loescht dafuer die Merker.
+const FLW=['#f6f3e3','#f2d34a','#f0a0c0','#ffffff'],flP=new Uint8Array(MW*MH);
+function paintFlowers(max){if(!groundL)return;let g=null,n=0;for(let i=0;i<MW*MH&&n<max;i++){if(flP[i]||fresh[i]<0.8||grid[i])continue;flP[i]=1;let h=(i*2654435761)>>>0;const k=h%4;if(k>2)continue;n++;
+    if(!g){g=groundL.getContext('2d');g.setTransform(LS,0,0,LS,0,0);g.globalAlpha=1}const tx=i%MW,ty=(i/MW)|0;
+    for(let q=0;q<=k%2;q++){h=(h*1103515245+12345)>>>0;const x=tx*T+4+(h>>>8)%24,y=ty*T+5+(h>>>16)%22;g.fillStyle='rgba(40,90,30,.55)';g.fillRect(x-0.4,y,0.8,2.8);g.fillStyle=FLW[(h>>>24)%4];g.beginPath();g.arc(x,y,1.5,0,6.3);g.fill();g.fillStyle='rgba(150,110,20,.7)';g.fillRect(x-0.4,y-0.4,0.8,0.8)}}}
+// Zeltabbau (E-020): Das Zelt sackt in 0,7 Sekunden zusammen, die Plane bleibt kurz liegen, Staub steigt auf. Die Eintraege kommen aus setTentGone.
+function drawFalls(){const F=ui.falls;if(!F.length)return;const now=performance.now();for(let i=F.length-1;i>=0;i--){const e=F[i],k=(now-e.t)/700;if(k>=1.6||k<0){F.splice(i,1);continue}const o=e.o,by=o.y+10;
+    if(k<1){const q=k*k;ctx.save();ctx.translate(o.x,by);ctx.rotate((o.flip?-1:1)*0.1*q);ctx.scale(1+0.22*q,1-0.86*q);ctx.translate(-o.x,-by);if(o.t==='pav')drawPav(ctx,o);else drawTent(ctx,o);ctx.restore()}
+    else{ctx.globalAlpha=1-(k-1)/0.6;ctx.fillStyle=shade(o.col,-0.2);ctx.beginPath();ctx.ellipse(o.x,by-2,34*(o.s||1),7,0,0,6.3);ctx.fill();ctx.globalAlpha=1}
+    if(k>0.5){const a=(1.6-k)/1.1*0.4,r=16+(k-0.5)*40;ctx.fillStyle='rgba(236,226,200,'+a.toFixed(3)+')';for(let j=0;j<6;j++){const g=j*1.05+o.x;ctx.beginPath();ctx.arc(o.x+Math.cos(g)*r*1.3,by+Math.sin(g)*r*0.45,5+(k-0.5)*9,0,6.3);ctx.fill()}}}}
+// Tageslicht (E-020): Die Partie beginnt in kuehlem Morgenlicht mit tiefer Sonne von links und ist nach 22 Minuten taghell
+// Ein einziger Verlauf: links das warme Licht ueber dem Blau, rechts nur das Blau. Zwei Flaechen uebereinander kosten auf dem Tablet doppelt.
+function drawLight(){const k=Math.max(0,1-st.t/1320),q=k*k*(3-2*k);if(q<0.01)return;const a1=0.25*q,a2=0.24*q,A=a2+a1*(1-a2),m=(c1,c2)=>Math.round((c1*a1*(1-a2)+c2*a2)/A);
+  const g=ctx.createLinearGradient(VIEW.x,0,VIEW.x+VIEW.w,0);g.addColorStop(0,'rgba('+m(22,255)+','+m(42,170)+','+m(96,90)+','+A.toFixed(3)+')');g.addColorStop(0.65,'rgba(22,42,96,'+a1.toFixed(3)+')');ctx.fillStyle=g;ctx.fillRect(VIEW.x,VIEW.y,VIEW.w,VIEW.h)}
 
 function drawTent(g,o){g.save();g.translate(o.x,o.y);g.scale(o.s*(o.flip?-1:1),o.s);
   g.fillStyle='rgba(20,40,12,.28)';g.beginPath();g.ellipse(7,7,33,15,0,0,6.3);g.fill();
@@ -110,7 +135,8 @@ function buildGround(R){if(!groundL)groundL=mk(WW*LS,WH*LS);const g=groundL.getC
   for(let k=0;k<2600;k++){const x=r()*(yx-10),y=y0+r()*(y1-y0);const sh=(r()-0.5)*0.5;if(!inR(x,y,3))continue;g.fillStyle=shade('#9a968b',sh);g.globalAlpha=x>yx-70?0.4:1;g.fillRect(x,y,1.7,1.3)}g.globalAlpha=1;
   const objs=[];camps.forEach(c=>c.objs.forEach(o=>objs.push(o)));objs.sort((a,b)=>a.y-b.y);
   for(const o of objs){if(o.gone)continue;if(!inR(o.x,o.y,80)){if(o.t!=='tent'&&o.t!=='pav'&&o.t!=='chair'&&o.t!=='grill')for(let k=0;k<9;k++)r();continue}if(o.t==='tent')drawTent(g,o);else if(o.t==='pav')drawPav(g,o);else if(o.t==='chair')drawChair(g,o);else if(o.t==='grill')drawGrill(g,o);else drawFire(g,o,r)}
-  const li=g.createLinearGradient(0,0,WW*0.7,WH);li.addColorStop(0,'rgba(255,226,150,.18)');li.addColorStop(0.6,'rgba(255,226,150,0)');li.addColorStop(1,'rgba(20,40,70,.16)');g.fillStyle=li;g.fillRect(0,0,WW,WH);g.restore()}
+  const li=g.createLinearGradient(0,0,WW*0.7,WH);li.addColorStop(0,'rgba(255,226,150,.18)');li.addColorStop(0.6,'rgba(255,226,150,0)');li.addColorStop(1,'rgba(20,40,70,.16)');g.fillStyle=li;g.fillRect(0,0,WW,WH);g.restore();
+  if(R){for(let ty=Math.max(0,(R.y/T)|0);ty<=Math.min(MH-1,((R.y+R.h)/T)|0);ty++)for(let tx=Math.max(0,(R.x/T)|0);tx<=Math.min(MW-1,((R.x+R.w)/T)|0);tx++)flP[ty*MW+tx]=0}else flP.fill(0)} // Blumen muessen dort neu gemalt werden
 function buildMini(){if(!mmL)mmL=mk(MW*2,MH*2);const g=mmL.getContext('2d');
   for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const i=y*MW+x,o=grid[i],n=cells[i].length;
     g.fillStyle=o?(o.k==='belt'?'#1c2124':o.k==='auto'?'#57d06a':'#f0c21c'):blocked[i]?'#b9b4a4':n?(n>3?'#6e5f52':n>1?'#77705a':'#738552'):'#7fb04c';g.fillRect(x*2,y*2,2,2)}}
@@ -233,7 +259,7 @@ function clampCam(){const hw=VIEW.w/2/cam.z,hh=VIEW.h/2/cam.z;cam.x=Math.max(Mat
 function drawWorld(){ctx.save();ctx.beginPath();ctx.rect(VIEW.x,VIEW.y,VIEW.w,VIEW.h);ctx.clip();ctx.fillStyle='#1b2420';ctx.fillRect(VIEW.x,VIEW.y,VIEW.w,VIEW.h);
   ctx.translate(VIEW.x+VIEW.w/2,VIEW.y+VIEW.h/2);ctx.scale(cam.z,cam.z);ctx.translate(-cam.x,-cam.y);
   const hw=VIEW.w/2/cam.z,hh=VIEW.h/2/cam.z,x0=Math.max(0,cam.x-hw),y0=Math.max(0,cam.y-hh),x1=Math.min(WW,cam.x+hw),y1=Math.min(WH,cam.y+hh);
-  if(x1>x0&&y1>y0){ctx.drawImage(groundL,x0*LS,y0*LS,(x1-x0)*LS,(y1-y0)*LS,x0,y0,x1-x0,y1-y0);ctx.drawImage(itemL,x0*LS,y0*LS,(x1-x0)*LS,(y1-y0)*LS,x0,y0,x1-x0,y1-y0)}
+  if(x1>x0&&y1>y0){ctx.drawImage(groundL,x0*LS,y0*LS,(x1-x0)*LS,(y1-y0)*LS,x0,y0,x1-x0,y1-y0);drawFresh(x0,y0,x1,y1);ctx.drawImage(itemL,x0*LS,y0*LS,(x1-x0)*LS,(y1-y0)*LS,x0,y0,x1-x0,y1-y0);drawFalls()}
   const vis=(x,y,m)=>x>x0-m&&x<x1+m&&y>y0-m&&y<y1+m,building=ui.tool!=='walk'||!!ui.move;
   if(building&&cam.z>=0.6){ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=1/cam.z;ctx.beginPath();for(let x=Math.ceil(x0/T)*T;x<=x1;x+=T){ctx.moveTo(x,y0);ctx.lineTo(x,y1)}for(let y=Math.ceil(y0/T)*T;y<=y1;y+=T){ctx.moveTo(x0,y);ctx.lineTo(x1,y)}ctx.stroke();
     ctx.fillStyle='rgba(255,70,50,.16)';for(let ty=Math.max(0,(y0/T)|0);ty<=Math.min(MH-1,(y1/T)|0);ty++)for(let tx=Math.max(0,(x0/T)|0);tx<=Math.min(MW-1,(x1/T)|0);tx++){const i=ty*MW+tx;if(!grid[i]&&(blocked[i]||cells[i].length))ctx.fillRect(tx*T,ty*T,T,T)}}
@@ -362,10 +388,10 @@ function drawMenu(){if(!ui.menu)return;btns=[];ctx.fillStyle='rgba(10,16,14,.72)
 function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#161b1a';ctx.fillRect(0,0,cv.width,cv.height);ctx.setTransform(S*DPR,0,0,S*DPR,offX*DPR,offY*DPR);btns=[];
   if(ui.tool!=='belt'&&(ui.planA||ui.plan)){ui.planA=null;ui.plan=null}
   if(ui.groundDirty){const R=ui.groundDirty;ui.groundDirty=false;buildGround(R===true?null:R)}
-  if(ui.topoDirty)topo();if(st.t-ui.mmT>0.6||st.t<ui.mmT){ui.mmT=st.t;buildMini()}
+  if(ui.topoDirty)topo();if(st.t-ui.mmT>0.6||st.t<ui.mmT){ui.mmT=st.t;buildMini();updFresh(false)}
   if(cam.follow&&ui.tool==='walk'){cam.x+=(st.player.x-cam.x)*0.08;cam.y+=(st.player.y-cam.y)*0.08}clampCam();
   const w=toW(ptr.x,ptr.y);ptr.wx=w.x;ptr.wy=w.y;
-  drawWorld();
+  drawWorld();drawLight();
   drawGoal();
   if(ui.move||ui.tool!=='walk'){const tip=ui.move?'Neuen Platz antippen · Laufen oder Esc bricht ab':ui.tool==='belt'?(ui.plan?'Vorschlag prüfen · anderes Ziel ändert ihn':ui.planA?'Ziel antippen · Start nochmal: Einzelfeld':'Start antippen, dann Ziel · Ziehen legt direkt'):ui.tool==='demo'?'Tippen oder ziehen reißt ab · Zelt antippen baut es für '+euro(TENT_COST)+' ab':ui.tool==='sort'?'Tippen setzt, auch direkt auf ein Band · auf vorhandenen Sortierer tippen wechselt die Sorte, mit den Pressen auch Ballen, mit dem Abbautrupp Planen und Gestänge':ui.tool==='ab'?'Tippen setzt · der Trupp baut Zelte auf der ganzen Wiese ab, nahe zuerst · ein Band führt Planen und Gestänge zu den Pressen':ui.tool==='split'?'Tippen setzt, auch direkt auf ein Band':ui.tool==='wide'?'Über vorhandene Bänder tippen oder ziehen: zweite Spur, doppelte Menge':'Tippen setzt · Karte mit zwei Fingern, rechter Maustaste oder WASD verschieben';
     ctx.font='11px '+FONT;const tw=ctx.measureText(tip).width+24;rr(ctx,20,VIEW.y+VIEW.h-32,tw,22,11);ctx.fillStyle='rgba(16,22,20,.8)';ctx.fill();txt(tip,32,VIEW.y+VIEW.h-17,11,'#cfd8dc')}
