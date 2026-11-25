@@ -204,11 +204,15 @@ function drawMachine(b){const D=BT[b.k],x=b.x*T,y=b.y*T,work=b.t>=0,pr=work?b.t/
   rr(ctx,x+16,y+42,40,4,2);ctx.fillStyle='#14181a';ctx.fill();if(pr>0){rr(ctx,x+16,y+42,40*pr,4,2);ctx.fillStyle='#57d06a';ctx.fill()}
   // Leben (E-020): Luefter dreht sich im Betrieb, nach jedem fertigen Stueck steigt Dampf auf und die Ware springt heraus
   {const now=performance.now();if(b.gm==null)b.gm=b.made;else if(b.gm!==b.made){b.gm=b.made;b.puT=now}const fx=x+9.3,fy=Y+13,pk=b.puT?(now-b.puT)/900:9;
-    ctx.fillStyle='#14181a';ctx.beginPath();ctx.arc(fx,fy,3.9,0,6.3);ctx.fill();ctx.strokeStyle=work?'#cfd8dc':'#6f7a80';ctx.lineWidth=1.3;ctx.lineCap='butt';for(let q=0;q<3;q++){const a=(work?b.anim*9:0.4)+q*2.094;ctx.beginPath();ctx.moveTo(fx,fy);ctx.lineTo(fx+Math.cos(a)*3.4,fy+Math.sin(a)*3.4);ctx.stroke()}
-    if(pk<1){for(let q=0;q<3;q++){const kk=Math.min(1,pk+q*0.12);ctx.fillStyle='rgba(240,244,246,'+(0.5*(1-kk)).toFixed(3)+')';ctx.beginPath();ctx.arc(fx+Math.sin(kk*5+q*2)*4,fy-4-kk*24-q*3,3+kk*7,0,6.3);ctx.fill()}}
+    ctx.fillStyle='#14181a';ctx.beginPath();ctx.arc(fx,fy,4.6,0,6.3);ctx.fill();ctx.strokeStyle=work?'#f0c21c':'#6f7a80';ctx.lineWidth=1.7;ctx.lineCap='butt';for(let q=0;q<3;q++){const a=(work?b.anim*12:0.4)+q*2.094;ctx.beginPath();ctx.moveTo(fx,fy);ctx.lineTo(fx+Math.cos(a)*4.1,fy+Math.sin(a)*4.1);ctx.stroke()}
     if(b.out>0){const k=Math.min(1,pk*900/280);mini(D.out,x+54,y+50-Math.sin(k*Math.PI)*7,0.75*(0.55+0.45*k),0,0)}}
   if(cam.z>=0.7){let i=0;const ks=Object.keys(D.inp),tw=ks.length*34;for(const q of ks){const px=x+32-tw/2+i*34;rr(ctx,px,Y-15,32,12,4);ctx.fillStyle='rgba(16,20,22,.82)';ctx.fill();mini(+q,px+7,Y-9,0.42,1,0);
-      txt(b.buf[q]+'/'+D.inp[q],px+30,Y-5.5,8,b.buf[q]>=D.inp[q]?'#9be28a':'#e6ecef','right',true);i++}}}
+      txt(b.buf[q]+'/'+D.inp[q],px+30,Y-5.5,8,b.buf[q]>=D.inp[q]?'#9be28a':'#e6ecef','right',true);i++}}
+  // Dampf zuletzt, damit er ueber den Zaehlern liegt. Im Betrieb zieht ein duenner Faden aus dem Luefter, nach jedem fertigen Stueck kommt eine dicke Wolke.
+  // Die erste Fassung (Version 35) war so klein und blass, dass Till sie gar nicht bemerkt hat.
+  {const now=performance.now(),fx=x+9.3,fy=Y+9,pk=b.puT?(now-b.puT)/1500:9;
+    if(work)for(let q=0;q<3;q++){const kk=((b.anim*0.7+q/3)%1);ctx.fillStyle='rgba(240,244,246,'+(0.42*(1-kk)).toFixed(3)+')';ctx.beginPath();ctx.arc(fx-kk*7+Math.sin(kk*6+q)*2,fy-kk*26,2.5+kk*5,0,6.3);ctx.fill()}
+    if(pk<1)for(let q=0;q<6;q++){const kk=Math.min(1,pk*1.25+q*0.07);if(kk>=1)continue;ctx.fillStyle='rgba(246,248,250,'+(0.85*(1-kk)*(1-kk)).toFixed(3)+')';ctx.beginPath();ctx.arc(fx+10+Math.sin(q*2.4)*13-kk*10,fy-6-kk*(38+q*5),6+kk*15,0,6.3);ctx.fill()}}}
 function drawStation(b){const x=b.x*T,y=b.y*T,cx=x+32,cy=y+32,ab=b.k==='ab';
   ctx.fillStyle='rgba(10,20,8,.3)';rr(ctx,x+6,y+10,60,58,6);ctx.fill();
   rr(ctx,x+2,y+6,60,56,4);ctx.fillStyle='#a37a48';ctx.fill();ctx.strokeStyle='#5a3d20';ctx.lineWidth=1;ctx.stroke();ctx.strokeStyle='rgba(60,40,20,.5)';for(let q=1;q<6;q++){ctx.beginPath();ctx.moveTo(x+2,y+6+q*9.3);ctx.lineTo(x+62,y+6+q*9.3);ctx.stroke()}
