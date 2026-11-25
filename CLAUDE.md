@@ -132,6 +132,11 @@ bewusst und nach Freigabe aendern.
 - Optik: Bauteile haben einen Koerper (Deckflaeche nach oben versetzt, dunklere Vorderwand, Schlagschatten
   nach rechts unten). Maschinen unterscheiden sich durch Farbe und Sichtfenster, nicht durch Aufbauten
   (von Till am 20.11.2026 so gewuenscht).
+- Grafikdurchgang (E-020, Version 34): `drawFalls()` laesst abgebaute Zelte zusammenfallen (Eintraege in `ui.falls` aus `setTentGone`).
+  `drawLight()` legt in den ersten 22 Minuten kuehles Morgenlicht mit warmer Sonne von links ueber die Karte, als ein einziger Verlauf.
+  Saubere Wiese: `fresh` haelt je Feld 0 bis 1 (Feld und Nachbarn leer, kein Weg, kein Hof), `updFresh()` laeuft alle 0,6 Sekunden mit der Minikarte.
+  `freshL` ist ein Bild mit einem Pixel je Feld und wird weich hochskaliert ueber den Boden gelegt. Blumen malt `paintFlowers()` einmalig in die Bodenebene,
+  `flP` merkt sich die bemalten Felder, `buildGround` loescht die Merker. Blumen je Bild einzeln zu zeichnen war gemessen zu teuer.
 - Letzte Stuecke: Liegen hoechstens `LAST_N` Stueck auf der Wiese, markiert `lastItems()` in `grafik.js` sie
   blinkend auf Karte und Minikarte.
 - Kamera: `clampCam()` laesst oben und unten Luft ueber den Wiesenrand hinaus, damit Zielanzeige,

@@ -208,6 +208,12 @@ Geordnet nach Dringlichkeit für eine Alpha.
 
 Geräusche und Ambiente entstehen per Code im Browser, ohne Dateien: Aufsammeln, Verkauf, Presse, Bauen, Abriss, Zeltabbau, Ziel, Warnton bei neuem Stau, dazu ein eigener Klang je Bauteilart beim Antippen. Ambiente: einzelne Windböen und Vögel, dazwischen Stille. Brummen der Anlage und durchgehendes Windrauschen sind gestrichen (Versionen 32 und 33), Till empfand sie als störend. Lautstärke in vier Stufen im Menü, getrennt für Geräusche und Ambiente. Musik folgt später als Datei mit freier Lizenz. Die Klänge sind vom Lead Dev nur gemessen, nicht gehört, und werden nach Tills Urteil nachgestellt.
 
+### Grafikdurchgang (seit Version 34, Entscheidung E-020)
+
+- Zeltabbau: Das Zelt sackt in 0,7 Sekunden zusammen, die Plane bleibt kurz liegen, Staub steigt auf.
+- Tageslicht: Die Partie beginnt in kühlem Morgenlicht mit warmer Sonne von links und ist nach 22 Minuten taghell.
+- Saubere Wiese: Wo ein Feld und seine Nachbarn leer sind, wird das Gras heller und Blumen kommen.
+
 ## 9. Ideen für nach der Alpha
 
 Nicht beauftragt, nur festgehalten.
