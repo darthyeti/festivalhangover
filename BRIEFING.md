@@ -208,6 +208,10 @@ Geordnet nach Dringlichkeit für eine Alpha.
 
 Geräusche und Ambiente entstehen per Code im Browser, ohne Dateien: Aufsammeln, Verkauf, Presse, Bauen, Abriss, Zeltabbau, Ziel, Warnton bei neuem Stau, dazu ein eigener Klang je Bauteilart beim Antippen. Ambiente: einzelne Windböen und Vögel, dazwischen Stille. Brummen der Anlage und durchgehendes Windrauschen sind gestrichen (Versionen 32 und 33), Till empfand sie als störend. Lautstärke in vier Stufen im Menü, getrennt für Geräusche und Ambiente. Musik folgt später als Datei mit freier Lizenz. Die Klänge sind vom Lead Dev nur gemessen, nicht gehört, und werden nach Tills Urteil nachgestellt.
 
+### Gewinnwertung (seit Version 37, Entscheidung E-021)
+
+Neben der Zeit wertet das Spiel am Ende den Gewinn, also das Geld in der Kasse: Bronze ab 1.000 €, Silber ab 1.750 €, Gold ab 2.500 €. Hintergrund: Mit wachsender Übung blieb immer wieder Geld übrig, höhere Preise oder neue Bauteile halfen nur kurz. Die Wertung macht das übrige Geld zum Ziel. Tills Partien bis dahin: 100 bis 500 € oder rund 2.100 € übrig. Die Grenzen sind Startwerte.
+
 ### Grafikdurchgang (seit Version 34, Entscheidung E-020)
 
 - Zeltabbau: Das Zelt sackt in 0,7 Sekunden zusammen, die Plane bleibt kurz liegen, Staub steigt auf.

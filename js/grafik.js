@@ -1,6 +1,6 @@
 // Montagmorgen: Grafik
 // Vorgerenderte Ebenen, Sprites, Zeichenfunktionen, Oberflaeche.
-import {TRUCK_CAP,TRUCK_SLOT,HOTKEY,LAST_TENTS,TENT_TIME,AUTO_CAP,AUTO_RATE,MEDALS,BT,DX,DY,FONT,H,LS,MH,MW,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WIDE_COST,WW,euro,rng} from './konstanten.js';
+import {PROFIT,TRUCK_CAP,TRUCK_SLOT,HOTKEY,LAST_TENTS,TENT_TIME,AUTO_CAP,AUTO_RATE,MEDALS,BT,DX,DY,FONT,H,LS,MH,MW,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WIDE_COST,WW,euro,rng} from './konstanten.js';
 import {bspd,cam,isOpen,isSt,nextSort,st,stR,toast,ui,upPrice} from './zustand.js';
 import {belts,blds,blocked,camps,cells,foot,grid,items,near,pathDist,pathX,pathY} from './welt.js';
 import {buyUp,canBuild,canMove,confirmPlan,demolish,freeTile,price,save,toggleCross,topo,undo} from './bauen.js';
@@ -414,15 +414,19 @@ function medalIcon(x,y,md){ctx.save();ctx.translate(x,y);ctx.fillStyle='#b23a2e'
   const c=md?md.col:'#6f7a80';ctx.beginPath();ctx.arc(0,10,27,0,6.3);ctx.fillStyle=lg(ctx,-22,-14,22,34,[shade(c,0.45),c,shade(c,-0.4)]);ctx.fill();ctx.strokeStyle=shade(c,-0.55);ctx.lineWidth=2;ctx.stroke();ctx.beginPath();ctx.arc(0,10,20,0,6.3);ctx.strokeStyle=shade(c,0.5);ctx.lineWidth=1.5;ctx.stroke();
   if(md){ctx.fillStyle=shade(c,-0.5);ctx.beginPath();for(let k=0;k<10;k++){const a=-Math.PI/2+k*Math.PI/5,r=k%2?6:14;ctx.lineTo(Math.cos(a)*r,10+Math.sin(a)*r)}ctx.closePath();ctx.fill()}else{ctx.strokeStyle='#3c454b';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-9,10);ctx.lineTo(9,10);ctx.stroke()}ctx.restore()}
 const tm=t=>{const m=Math.floor(t/60),s=Math.floor(t%60);return m+':'+(s<10?'0':'')+s};
-function drawEnd(){if(!st.done)return;const a=(performance.now()-ui.endT)/1000,md=MEDALS.find(q=>st.t<=q.m*60),w=600,h=400,x=W/2-w/2,y=H/2-h/2;ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);
-  if(md&&a<9){const C=['#ffd23e','#ff7a6b','#7fd0e2','#9be28a','#f0a0c0','#ffffff'];for(let k=0;k<90;k++){const sd=(k*2654435761)>>>0,px=(sd%1280),sp=90+(sd>>>8)%140,py=((a*sp+(sd>>>16)%800)%900)-50,r=a*3+k;ctx.save();ctx.translate(px+Math.sin(a*2+k)*18,py);ctx.rotate(r);ctx.globalAlpha=a>7?(9-a)/2:1;ctx.fillStyle=C[k%6];ctx.fillRect(-4,-2.2,8,4.4);ctx.restore()}ctx.globalAlpha=1}
-  rr(ctx,x,y,w,h,18);ctx.fillStyle='#22302a';ctx.fill();ctx.strokeStyle=md?md.col:'#a4c964';ctx.lineWidth=2.5;ctx.stroke();
-  medalIcon(W/2,y+70,md);txt('Die Wiese ist besenrein.',W/2,y+148,30,'#f3efe2','center',true);txt(md?md.n+'medaille':'Ohne Medaille',W/2,y+176,17,md?md.col:'#8f9aa0','center',true);
-  txt(tm(st.t),W/2,y+222,40,'#f3efe2','center',true);txt(ui.newBest?'Neue Bestzeit':'Bestzeit '+tm(ui.best||st.t),W/2,y+244,12.5,ui.newBest?'#ffd23e':'#8f9aa0','center',true);
-  txt('eingenommen '+euro(st.earned)+'   ·   übrig '+euro(st.money),W/2,y+272,14.5,'#cfd8cf','center');
-  txt('Paletten '+st.sold[7]+' · Ballen '+(st.sold[4]+st.sold[5])+' · volle Kästen '+st.sold[6]+' · Planenballen '+st.sold[10]+' · Schrottbündel '+st.sold[11],W/2,y+296,12.5,'#9be28a','center');
-  if(st.rest&&st.rest.n)txt('Reste in der Anlage: '+st.rest.n+' Stück, '+euro(st.rest.v)+' gutgeschrieben',W/2,y+316,11.5,'#aeb7bc','center');
-  rr(ctx,W/2-100,y+334,200,48,10);ctx.fillStyle='#58b765';ctx.fill();txt('Nochmal',W/2,y+365,17,'#fff','center',true);button(W/2-100,y+334,200,48,()=>{try{localStorage.removeItem(SAVE_KEY)}catch(e){}start(true)})}
+// Zwei Wertungen (E-021): links die Zeit mit Medaille, rechts der Gewinn (Geld in der Kasse) mit Muenze. Beide haben Gold, Silber, Bronze.
+function coinIcon(x,y,pf){const c=pf?pf.col:'#6f7a80';ctx.save();ctx.translate(x,y);ctx.beginPath();ctx.ellipse(0,14,27,27,0,0,6.3);ctx.fillStyle=shade(c,-0.5);ctx.fill();ctx.beginPath();ctx.arc(0,10,27,0,6.3);ctx.fillStyle=lg(ctx,-22,-14,22,34,[shade(c,0.45),c,shade(c,-0.4)]);ctx.fill();ctx.strokeStyle=shade(c,-0.55);ctx.lineWidth=2;ctx.stroke();
+  ctx.setLineDash([3,3]);ctx.beginPath();ctx.arc(0,10,21,0,6.3);ctx.strokeStyle=shade(c,-0.3);ctx.lineWidth=1.3;ctx.stroke();ctx.setLineDash([]);txt('€',0,21,30,pf?shade(c,-0.55):'#3c454b','center',true);ctx.restore()}
+function drawEnd(){if(!st.done)return;const a=(performance.now()-ui.endT)/1000,md=MEDALS.find(q=>st.t<=q.m*60),pf=PROFIT.find(q=>st.money>=q.e),w=640,h=420,x=W/2-w/2,y=H/2-h/2,L=W/2-150,R=W/2+150;ctx.fillStyle='rgba(10,16,14,.72)';ctx.fillRect(0,0,W,H);
+  if((md||pf)&&a<9){const C=['#ffd23e','#ff7a6b','#7fd0e2','#9be28a','#f0a0c0','#ffffff'];for(let k=0;k<90;k++){const sd=(k*2654435761)>>>0,px=(sd%1280),sp=90+(sd>>>8)%140,py=((a*sp+(sd>>>16)%800)%900)-50,r=a*3+k;ctx.save();ctx.translate(px+Math.sin(a*2+k)*18,py);ctx.rotate(r);ctx.globalAlpha=a>7?(9-a)/2:1;ctx.fillStyle=C[k%6];ctx.fillRect(-4,-2.2,8,4.4);ctx.restore()}ctx.globalAlpha=1}
+  rr(ctx,x,y,w,h,18);ctx.fillStyle='#22302a';ctx.fill();ctx.strokeStyle=md?md.col:pf?pf.col:'#a4c964';ctx.lineWidth=2.5;ctx.stroke();
+  txt('Die Wiese ist besenrein.',W/2,y+50,28,'#f3efe2','center',true);ctx.fillStyle='rgba(255,255,255,.08)';ctx.fillRect(W/2-0.5,y+78,1,170);
+  medalIcon(L,y+128,md);txt('ZEIT',L,y+186,10.5,'#8f9aa0','center',true);txt(tm(st.t),L,y+222,36,'#f3efe2','center',true);txt(md?md.n:'ohne Medaille',L,y+244,15,md?md.col:'#8f9aa0','center',true);txt(ui.newBest?'Neue Bestzeit':'Bestzeit '+tm(ui.best||st.t),L,y+262,11.5,ui.newBest?'#ffd23e':'#8f9aa0','center',true);
+  coinIcon(R,y+118,pf);txt('GEWINN',R,y+186,10.5,'#8f9aa0','center',true);txt(euro(st.money),R,y+222,32,'#f3efe2','center',true);txt(pf?pf.n:'unter '+euro(PROFIT[PROFIT.length-1].e),R,y+244,15,pf?pf.col:'#8f9aa0','center',true);txt(ui.newBestM?'Neuer Bestwert':'Bestwert '+euro(ui.bestM||st.money),R,y+262,11.5,ui.newBestM?'#ffd23e':'#8f9aa0','center',true);
+  if(md&&pf&&md.n==='Gold'&&pf.n==='Gold')txt('Gold in beiden Wertungen. Besser geht es nicht.',W/2,y+290,13,'#ffd23e','center',true);else txt('Tempo kostet Gewinn, Gewinn kostet Tempo. Gold in beiden ist die Königsdisziplin.',W/2,y+290,11.5,'#8f9aa0','center');
+  txt('eingenommen '+euro(st.earned)+'  ·  Paletten '+st.sold[7]+' · Ballen '+(st.sold[4]+st.sold[5])+' · volle Kästen '+st.sold[6]+' · Planenballen '+st.sold[10]+' · Schrottbündel '+st.sold[11],W/2,y+314,11.5,'#9be28a','center');
+  if(st.rest&&st.rest.n)txt('Reste in der Anlage: '+st.rest.n+' Stück, '+euro(st.rest.v)+' gutgeschrieben',W/2,y+332,11,'#aeb7bc','center');
+  rr(ctx,W/2-100,y+352,200,48,10);ctx.fillStyle='#58b765';ctx.fill();txt('Nochmal',W/2,y+383,17,'#fff','center',true);button(W/2-100,y+352,200,48,()=>{try{localStorage.removeItem(SAVE_KEY)}catch(e){}start(true)})}
 // Startbildschirm (E-020): Titel, Sonnenaufgang, Zelte. Haelt das Spiel an, bis ein Knopf getippt wird (ui.start).
 function drawStart(){if(!ui.start)return;btns=[];const w=720,h=470,x=W/2-w/2,y=H/2-h/2,has=st.t>1,now=performance.now();ctx.fillStyle='rgba(8,14,12,.78)';ctx.fillRect(0,0,W,H);
   ctx.save();rr(ctx,x,y,w,h,20);ctx.clip();ctx.fillStyle=lg(ctx,0,y,0,y+h,['#1d2b4a','#3f4f7a','#e89a5a','#f4c56a']);ctx.fillRect(x,y,w,h);

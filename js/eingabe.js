@@ -1,6 +1,6 @@
 // Montagmorgen: Eingabe und Schleife
 // Einstiegspunkt: Zeigerereignisse, Tastatur, Spielschleife, Testzugang window.__G.
-import {DX,DY,HOT,MH,MW,RAW,T,TOOLS,VIEW,WH,WW} from './konstanten.js';
+import {PROFIT,DX,DY,HOT,MH,MW,RAW,T,TOOLS,VIEW,WH,WW} from './konstanten.js';
 import {cam,isOpen,nSort,nextSort,resetState,st,ui} from './zustand.js';
 import {AUTO,belts,blds,blocked,cells,findPath,foot,genWorld,grid,los,removeItem} from './welt.js';
 import {jam,msg,tryPush,update} from './logik.js';
@@ -57,15 +57,15 @@ window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
 let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(resize,120)});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save();pause(document.hidden)});
 const BEST_KEY='festivalhangover-best';
-function start(fresh){ui.trk=0;ui.trkS=null;ui.endT=0;ui.newBest=false;resetState();dropItemLayer();ui.tool='walk';ui.falls=[];ui.sel=null;ui.undo=[];ui.step=null;ui.move=null;ui.planA=null;ui.plan=null;ui.menu=false;ui.resetArm=0;ui.toast=null;ui.newT=-9;genWorld();if(!fresh)load();st.tt=foot.length;st.tl=foot.filter(f=>!f.o.gone).length;ui.busyT=st.t;cam.x=st.player.x+200;cam.y=st.player.y;cam.follow=true;resize();if(!spr.length)buildSprites();ui.groundDirty=false;buildGround();buildItemLayer();buildMini();ui.topoDirty=ui.orderDirty=true}
+function start(fresh){ui.trk=0;ui.trkS=null;ui.endT=0;ui.newBest=false;ui.newBestM=false;resetState();dropItemLayer();ui.tool='walk';ui.falls=[];ui.sel=null;ui.undo=[];ui.step=null;ui.move=null;ui.planA=null;ui.plan=null;ui.menu=false;ui.resetArm=0;ui.toast=null;ui.newT=-9;genWorld();if(!fresh)load();st.tt=foot.length;st.tl=foot.filter(f=>!f.o.gone).length;ui.busyT=st.t;cam.x=st.player.x+200;cam.y=st.player.y;cam.follow=true;resize();if(!spr.length)buildSprites();ui.groundDirty=false;buildGround();buildItemLayer();buildMini();ui.topoDirty=ui.orderDirty=true}
 let last=0,saveT=0;function frame(t){const dt=Math.min(0.05,(t-last)/1000||0);last=t;
   const pv=260*dt/cam.z;if(keys.a||keys.arrowleft){cam.x-=pv;cam.follow=false}if(keys.d||keys.arrowright){cam.x+=pv;cam.follow=false}if(keys.w||keys.arrowup){cam.y-=pv;cam.follow=false}if(keys.s||keys.arrowdown){cam.y+=pv;cam.follow=false}
   if(!ui.menu&&!ui.start)update(dt);
-  if(st.done&&!ui.endT){ui.endT=performance.now();try{const b=+localStorage.getItem(BEST_KEY)||0;ui.newBest=!b||st.t<b;ui.best=ui.newBest?st.t:b;if(ui.newBest)localStorage.setItem(BEST_KEY,String(st.t))}catch(e){ui.best=st.t}} // Bestzeit, einmal je Partie
+  if(st.done&&!ui.endT){ui.endT=performance.now();try{const b=+localStorage.getItem(BEST_KEY)||0;ui.newBest=!b||st.t<b;ui.best=ui.newBest?st.t:b;if(ui.newBest)localStorage.setItem(BEST_KEY,String(st.t));const m=+localStorage.getItem(BEST_KEY+'-geld')||0;ui.newBestM=st.money>m;ui.bestM=Math.max(m,st.money);if(ui.newBestM)localStorage.setItem(BEST_KEY+'-geld',String(st.money))}catch(e){ui.best=st.t;ui.bestM=st.money}} // Bestzeit, einmal je Partie
   draw();{let n=0;const hw=VIEW.w/2/cam.z+64,hh=VIEW.h/2/cam.z+64;for(const b of blds)if(b.t>=0&&Math.abs((b.x+1)*T-cam.x)<hw&&Math.abs((b.y+1)*T-cam.y)<hh)n++;amb(dt,n,ui.menu||st.done)}saveT+=dt;if(saveT>15){saveT=0;save()}requestAnimationFrame(frame)}
 start(false);ui.start=!navigator.webdriver; // Startbildschirm, im Testlauf uebersprungen
 requestAnimationFrame(frame);
-window.__G={ton:{FX,SEL,setup,sfx,wake},widen,draw,nSort,nextSort,get foot(){return foot},get st(){return st},get ui(){return ui},crossOver,beltSwap,save,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,isOpen,los,findPath,
+window.__G={PROFIT,ton:{FX,SEL,setup,sfx,wake},widen,draw,nSort,nextSort,get foot(){return foot},get st(){return st},get ui(){return ui},crossOver,beltSwap,save,get blds(){return blds},get belts(){return belts},get grid(){return grid},get cells(){return cells},get AUTO(){return AUTO},get blocked(){return blocked},cam,MW,MH,T,isOpen,los,findPath,
   step(sec,dt){dt=dt||1/60;for(let t=0;t<sec;t+=dt)update(dt)},build,setBelt,demolish,buyUp,tryPush,undo,moveTo,jam,planBelt,buildPlan,setTool(t){ui.tool=t},setRot(r){ui.rot=r},
   clear(x0,y0,x1,y1){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)for(const it of cells[y*MW+x].slice())removeItem(it)}};
 
