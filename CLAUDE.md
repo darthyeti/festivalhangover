@@ -141,8 +141,9 @@ bewusst und nach Freigabe aendern.
   `flP` merkt sich die bemalten Felder, `buildGround` loescht die Merker. Blumen je Bild einzeln zu zeichnen war gemessen zu teuer.
 - Rahmen und Leben (E-020, Version 35): `drawStart()` zeigt den Startbildschirm, solange `ui.start` gilt. Das Spiel steht dann wie im Menue.
   Im Testlauf (`navigator.webdriver`) wird er uebersprungen. `drawEnd()` zeichnet zwei Wertungen (E-021): Zeit mit Medaille (`MEDALS`) und Gewinn, also das Geld in der Kasse, mit Muenze (`PROFIT`),
-  dazu Konfetti und die Bestwerte (`festivalhangover-best` und `festivalhangover-best-geld` in `localStorage`, gesetzt in der Spielschleife). `drawTruck()`: Der Lkw unter der Annahme fuellt sich mit gepresster Ware (`ui.trk` in Cent aus `accept()`), faehrt bei
-  `TRUCK_CAP` Stellplaetzen ab und kommt leer zurueck. Reine Anzeige, nicht im Spielstand. Maschinen: Luefter, Dampf nach jedem Stueck (`b.puT`), Ware springt heraus.
+  dazu Konfetti und die Bestwerte (`festivalhangover-best` und `festivalhangover-best-geld` in `localStorage`, gesetzt in der Spielschleife). Maschinen: Luefter, Dampf nach jedem Stueck (`b.puT`), Ware springt heraus.
+- Kein Lkw: Version 35 und 36 hatten einen Lkw als Kulisse an der Annahme. Till verstand seinen Sinn nicht und liess ihn am 25.11.2026 entfernen.
+  Kulisse, die wie eine Spielmechanik aussieht, aber keine ist, verwirrt. Nicht wieder einbauen, ohne ihm eine echte Aufgabe zu geben.
 - Letzte Stuecke: Liegen hoechstens `LAST_N` Stueck auf der Wiese, markiert `lastItems()` in `grafik.js` sie
   blinkend auf Karte und Minikarte.
 - Kamera: `clampCam()` laesst oben und unten Luft ueber den Wiesenrand hinaus, damit Zielanzeige,

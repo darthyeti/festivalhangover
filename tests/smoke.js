@@ -421,10 +421,10 @@ function serve() {
       for (const p of [[4, 20], [5, 20], [6, 20], [7, 20], [8, 20], [6, 22]]) G.demolish(p[0], p[1]); G.st.player.bag.length = 0; G.st.money = m1; for (let i = 0; i < bl.length; i++) G.blocked[i] = bl[i]; }
     // Zeichnen darf bei keinem Ziel und mit keinem Werkzeug abstuerzen (Absturz in Version 19 bei Ziel 3).
     { let bad = ''; const ph0 = G.st.ph, t0 = G.ui.tool; for (let p = 0; p < 8; p++) for (const tl of ['walk', 'belt', 'wide', 'sort', 'demo', 'ab', 'pl']) { G.st.ph = p; G.ui.tool = tl; try { G.draw(); } catch (e) { bad += p + '/' + tl + ': ' + e.message + ' '; } } G.st.ph = ph0; G.ui.tool = t0;
-      // Startbildschirm, Endbildschirm mit und ohne Medaille, Lkw in jeder Phase
-      for (const f of [() => { G.ui.start = true; }, () => { G.ui.start = false; G.st.done = true; G.ui.endT = performance.now() - 1000; }, () => { const t = G.st.t; G.st.t = 99999; G.draw(); G.st.t = t; }, () => { G.st.done = false; G.ui.trk = 1e6; G.cam.x = 300; G.cam.y = 900; }, () => { G.ui.trkS.t -= 3000; }, () => { G.ui.trkS.t -= 3000; }, () => { G.ui.trkS.t -= 3000; }]) { try { f(); G.draw(); } catch (e) { bad += 'Bildschirm: ' + e.message + ' '; } }
+      // Startbildschirm, Endbildschirm mit und ohne Medaille
+      for (const f of [() => { G.ui.start = true; }, () => { G.ui.start = false; G.st.done = true; G.ui.endT = performance.now() - 1000; }, () => { const t = G.st.t; G.st.t = 99999; G.draw(); G.st.t = t; }, () => { G.st.done = false; }]) { try { f(); G.draw(); } catch (e) { bad += 'Bildschirm: ' + e.message + ' '; } }
       { const pf = c => { const q = G.PROFIT.find(t => c >= t.e); return q ? q.n : '-'; }; o.profit = [10552, 99999, 100000, 212082, 250000].map(pf).join('/'); }
-      o.startHolds = !G.ui.start && navigator.webdriver === true; G.ui.trk = 0; o.drawAll = bad; }
+      o.startHolds = !G.ui.start && navigator.webdriver === true; o.drawAll = bad; }
 
     // Alter Spielstand: ohne Zielstand ist alles frei, die Verbesserung der Annahme wird erstattet.
     G.save();
@@ -515,7 +515,7 @@ function serve() {
     ['Sortierer laesst sich auf ein Band versetzen, Rueckgaengig stellt Band und Platz wieder her', m3.moveOnBelt && m3.moveRuns && m3.moveUndo, m3.moveOnBelt + '/' + m3.moveRuns + '/' + m3.moveUndo],
     ['Gewinnwertung: Bronze ab 1.000, Silber ab 1.750, Gold ab 2.500 Euro', m3.profit === '-/-/Bronze/Silber/Gold', m3.profit],
     ['Tasten waehlen alle Werkzeuge, gesperrte nicht', m3.hotkeys === 'belt/pal/ab/pl/sc/demo walk', m3.hotkeys],
-    ['Zeichnen laeuft bei jedem Ziel und Werkzeug ohne Fehler, auch Start, Ende und Lkw', m3.drawAll === '', m3.drawAll],
+    ['Zeichnen laeuft bei jedem Ziel und Werkzeug ohne Fehler, auch Start und Ende', m3.drawAll === '', m3.drawAll],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
     ['Alter Spielstand: alles frei, Ausbau der Annahme und gestrichene Bandstufen erstattet', oldSave.ph === 7 && oldSave.money === 2300 + 37500 + 93750 && oldSave.up.belt === 2 && oldSave.up.auto === undefined && oldSave.up.range === 0, JSON.stringify(oldSave)],
     ['Versionsnummer in index.html und konstanten.js stimmt ueberein', versionOk, String(version)],

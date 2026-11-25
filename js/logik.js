@@ -18,7 +18,7 @@ function tryPush(x,y,ty,dir,pref){if(x<0||y<0||x>=MW||y>=MH)return false;const o
 // Reissverschluss: Kam das letzte Stueck aus derselben Richtung und wartet ein anderes Band fertig am Feld, ist das zuerst dran
 function rival(o,dir){for(let d=0;d<4;d++){if(d===dir)continue;const x=o.x-DX[d],y=o.y-DY[d];if(x<0||y<0||x>=MW||y>=MH)continue;const n=grid[y*MW+x];if(n&&n.k==='belt'&&n.dir===d&&((n.item>=0&&n.prog>=1)||(n.b&&n.b.item>=0&&n.b.prog>=1)))return true}return false}
 function accept(b,ty,dir){
-  if(b.k==='auto'){if(ty>=RAW&&!JUNK(ty)){sfx(ty===7?'pal':'sale',b.x*T+32,b.y*T+48);ui.trk+=TY[ty].val;st.viaBelt++;st.sold[ty]++;pay(TY[ty].val,b.x*T+50,b.y*T+20,'#ffd23e',true);return true}if(b.q.length<AUTO_CAP){st.viaBelt++;b.q.push(ty);return true}return false}
+  if(b.k==='auto'){if(ty>=RAW&&!JUNK(ty)){sfx(ty===7?'pal':'sale',b.x*T+32,b.y*T+48);st.viaBelt++;st.sold[ty]++;pay(TY[ty].val,b.x*T+50,b.y*T+20,'#ffd23e',true);return true}if(b.q.length<AUTO_CAP){st.viaBelt++;b.q.push(ty);return true}return false}
   if(b.k==='cross'){const a=dir%2;if(b.it[a]>=0)return false;b.it[a]=ty;b.dr[a]=dir;b.wt[a]=0.45/bspd();return true}
   if(b.k==='split'||b.k==='sort'){if(b.item>=0)return false;b.item=ty;b.wait=0.45/bspd();b.from=dir;return true}
   const R=BT[b.k].inp;if(R&&R[ty]!=null&&b.buf[ty]<R[ty]*2){b.buf[ty]++;return true}return false}

@@ -37,7 +37,7 @@ function noise(ftype,f0,f1,q,dur,v,o){o=o||{};const t=ac.currentTime+(o.d||0),sr
 function at(x,y){if(x==null)return{v:1,pan:0};const sx=(x-cam.x)*cam.z/(VIEW.w/2),sy=(y-cam.y)*cam.z/(VIEW.h/2);if(Math.abs(sx)>1.25||Math.abs(sy)>1.25)return null;return{v:Math.max(0.35,Math.min(1,cam.z)),pan:Math.max(-1,Math.min(1,sx))*0.6}}
 
 // Kleinster Abstand zwischen zwei gleichen Geraeuschen in Millisekunden. Hunderte Verkaeufe duerfen kein Laerm werden.
-const GAP={truck:1500,pick:45,coin:110,sale:140,pal:300,press:160,belt:35,build:60,demo:60,tent:120,err:350,click:40,sel:60,warn:6000,buy:100,goal:500,win:500};
+const GAP={pick:45,coin:110,sale:140,pal:300,press:160,belt:35,build:60,demo:60,tent:120,err:350,click:40,sel:60,warn:6000,buy:100,goal:500,win:500};
 // Antippen: jede Bauteilart hat ihren eigenen Klang
 const SEL={
   auto:o=>{tone('square',1320,1320,0.07,0.1,o);tone('square',1760,1760,0.16,0.1,{d:0.08})}, // Kasse
@@ -66,7 +66,6 @@ const FX={
   click:o=>tone('square',820,820,0.02,0.05,o),
   buy:o=>{tone('triangle',660,660,0.08,0.2,o);tone('triangle',990,990,0.14,0.2,{d:0.08})},
   warn:o=>{tone('sine',740,740,0.14,0.22,o);tone('sine',554,554,0.22,0.22,{d:0.16})},
-  truck:o=>{tone('square',311,311,0.28,0.1,o);tone('square',392,392,0.28,0.1,o);tone('sawtooth',70,48,0.9,0.16,{d:0.3,pan:o.pan,att:0.08})}, // Hupe, dann faehrt er an
   goal:o=>[523,659,784,1047].forEach((f,i)=>tone('triangle',f,f,i===3?0.5:0.16,0.3,{d:i*0.11})),
   win:o=>{[523,659,784,1047,1319].forEach((f,i)=>tone('triangle',f,f,i===4?1.2:0.2,0.17,{d:i*0.13}));[262,392,523].forEach(f=>tone('sine',f,f,1.6,0.1,{d:0.52}))}};
 // name: Schluessel aus FX, oder 'sel' mit der Bauteilart in k. x,y in Weltkoordinaten, ohne Ort klingt es ueberall.

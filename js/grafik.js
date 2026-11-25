@@ -1,11 +1,11 @@
 // Montagmorgen: Grafik
 // Vorgerenderte Ebenen, Sprites, Zeichenfunktionen, Oberflaeche.
-import {PROFIT,TRUCK_CAP,TRUCK_SLOT,HOTKEY,LAST_TENTS,TENT_TIME,AUTO_CAP,AUTO_RATE,MEDALS,BT,DX,DY,FONT,H,LS,MH,MW,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WIDE_COST,WW,euro,rng} from './konstanten.js';
+import {PROFIT,HOTKEY,LAST_TENTS,TENT_TIME,AUTO_CAP,AUTO_RATE,MEDALS,BT,DX,DY,FONT,H,LS,MH,MW,GOALS,OPEN,PS,RAW,SAVE_KEY,ST_CAP,T,TENT_COST,TOOLS,TY,UPS,VERSION,VIEW,W,WH,WIDE_COST,WW,euro,rng} from './konstanten.js';
 import {bspd,cam,isOpen,isSt,nextSort,st,stR,toast,ui,upPrice} from './zustand.js';
 import {belts,blds,blocked,camps,cells,foot,grid,items,near,pathDist,pathX,pathY} from './welt.js';
 import {buyUp,canBuild,canMove,confirmPlan,demolish,freeTile,price,save,toggleCross,topo,undo} from './bauen.js';
 import {jam} from './logik.js';
-import {setVol,sfx,volName} from './ton.js';
+import {setVol,volName} from './ton.js';
 import {start} from './eingabe.js';
 
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
@@ -78,24 +78,6 @@ const FLW=['#f6f3e3','#f2d34a','#f0a0c0','#ffffff'],flP=new Uint8Array(MW*MH);
 function paintFlowers(max){if(!groundL)return;let g=null,n=0;for(let i=0;i<MW*MH&&n<max;i++){if(flP[i]||fresh[i]<0.8||grid[i])continue;flP[i]=1;let h=(i*2654435761)>>>0;const k=h%4;if(k>2)continue;n++;
     if(!g){g=groundL.getContext('2d');g.setTransform(LS,0,0,LS,0,0);g.globalAlpha=1}const tx=i%MW,ty=(i/MW)|0;
     for(let q=0;q<=k%2;q++){h=(h*1103515245+12345)>>>0;const x=tx*T+4+(h>>>8)%24,y=ty*T+5+(h>>>16)%22;g.fillStyle='rgba(40,90,30,.55)';g.fillRect(x-0.4,y,0.8,2.8);g.fillStyle=FLW[(h>>>24)%4];g.beginPath();g.arc(x,y,1.5,0,6.3);g.fill();g.fillStyle='rgba(150,110,20,.7)';g.fillRect(x-0.4,y-0.4,0.8,0.8)}}}
-// Lkw an der Annahme (E-020): Gepresste Ware fuellt seine Ladeflaeche (ui.trk in Cent, aus logik). Ist sie voll, hupt er, faehrt nach links
-// aus dem Bild und kommt leer zurueck. Reine Anzeige, nicht im Spielstand. Wird er ueberbaut, steht er eben unter dem Band.
-function drawTruck(){const now=performance.now(),s=ui.trkS||(ui.trkS={ph:0,t:now}),cap=TRUCK_CAP*TRUCK_SLOT;let dx=0,n=Math.min(TRUCK_CAP,Math.floor(ui.trk/TRUCK_SLOT));
-  if(s.ph===0&&ui.trk>=cap&&!st.done){s.ph=1;s.t=now;ui.trk-=cap;sfx('truck',70,930)}
-  if(s.ph===1){const k=(now-s.t)/2400;n=TRUCK_CAP;dx=-k*k*330;if(k>=1){s.ph=2;s.t=now}}
-  if(s.ph===2){if(now-s.t>2600){s.ph=3;s.t=now}else return}
-  if(s.ph===3){const k=Math.min(1,(now-s.t)/2000);n=0;dx=-(1-k)*(1-k)*330;if(k>=1)s.ph=0}
-  const x=10+dx,y=908,bob=s.ph===1||s.ph===3?Math.sin(now/45)*0.5:0;ctx.save();ctx.translate(x,y+bob);
-  ctx.fillStyle='rgba(10,20,8,.28)';ctx.beginPath();ctx.moveTo(4,50);ctx.lineTo(118,50);ctx.lineTo(126,44);ctx.lineTo(126,12);ctx.lineTo(116,6);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#1b1f21';[[12,40],[58,40],[96,40]].forEach(q=>{rr(ctx,q[0],q[1],15,8,3);ctx.fill()});
-  rr(ctx,36,2,82,40,3);ctx.fillStyle=lg(ctx,0,2,0,42,['#8f989c','#6d777d']);ctx.fill();ctx.strokeStyle='#3a4246';ctx.lineWidth=1.2;ctx.stroke();ctx.strokeStyle='rgba(0,0,0,.18)';ctx.lineWidth=0.8;for(let q=1;q<6;q++){ctx.beginPath();ctx.moveTo(36+q*13.7,3);ctx.lineTo(36+q*13.7,41);ctx.stroke()}
-  rr(ctx,36,34,82,8,2);ctx.fillStyle='#4b5459';ctx.fill();
-  for(let q=0;q<n;q++)mini(7,50+((q/2)|0)*24,11+(q%2)*17,0.62,0,0);
-  rr(ctx,2,4,32,38,5);ctx.fillStyle=lg(ctx,0,4,0,42,['#e8793a','#c2532a','#8f3a1c']);ctx.fill();ctx.strokeStyle='#5a2410';ctx.lineWidth=1.2;ctx.stroke();
-  rr(ctx,5,8,9,24,2.5);ctx.fillStyle=lg(ctx,5,8,14,32,['#bfe2f2','#5f8fa8']);ctx.fill();ctx.fillStyle='rgba(255,255,255,.3)';ctx.fillRect(4,5.4,28,1.2);
-  ctx.fillStyle='#ffe9a8';ctx.fillRect(1.2,9,1.8,5);ctx.fillRect(1.2,31,1.8,5);ctx.fillStyle='#8f3a1c';rr(ctx,2,34,32,8,3);ctx.fill();
-  if(s.ph===0&&cam.z>=0.7){rr(ctx,58,-11,38,11,4);ctx.fillStyle='rgba(16,20,22,.82)';ctx.fill();txt(n+'/'+TRUCK_CAP,77,-2.5,8,n>=TRUCK_CAP?'#9be28a':'#e6ecef','center',true)}
-  ctx.restore()}
 // Zeltabbau (E-020): Das Zelt sackt in 0,7 Sekunden zusammen, die Plane bleibt kurz liegen, Staub steigt auf. Die Eintraege kommen aus setTentGone.
 function drawFalls(){const F=ui.falls;if(!F.length)return;const now=performance.now();for(let i=F.length-1;i>=0;i--){const e=F[i],k=(now-e.t)/700;if(k>=1.6||k<0){F.splice(i,1);continue}const o=e.o,by=o.y+10;
     if(k<1){const q=k*k;ctx.save();ctx.translate(o.x,by);ctx.rotate((o.flip?-1:1)*0.1*q);ctx.scale(1+0.22*q,1-0.86*q);ctx.translate(-o.x,-by);if(o.t==='pav')drawPav(ctx,o);else drawTent(ctx,o);ctx.restore()}
@@ -289,7 +271,6 @@ function drawWorld(){ctx.save();ctx.beginPath();ctx.rect(VIEW.x,VIEW.y,VIEW.w,VI
   for(const t of belts)if(vis(t.x*T,t.y*T,40))beltHalves(t,(hx,hz)=>{const e=t.b?4:0;if(hz){ctx.fillStyle='#4b5459';ctx.fillRect(hx,t.y*T+26+e,16,3.5);ctx.fillStyle='#262c2f';ctx.fillRect(hx,t.y*T+28.6+e,16,0.9)}});
   for(const t of belts)if(vis(t.x*T,t.y*T,40))drawBelt(t);
   for(const t of belts)if(vis(t.x*T,t.y*T,40)){if(t.item>=0)beltItem(t,t);if(t.b&&t.b.item>=0)beltItem(t,t.b)}
-  if(vis(60,930,400))drawTruck();
   const ents=[];for(const b of blds){if(!vis(b.x*T,b.y*T,360))continue;ents.push([(b.y+b.h)*T-6,0,b]);if(isSt(b))for(const h of b.helpers)ents.push([h.y,1,h])}
   ents.push([st.player.y,2,null]);ents.sort((a,b)=>a[0]-b[0]);
   for(const e of ents){if(e[1]===1)drawHelper(e[2]);else if(e[1]===2)drawPlayer();else{const b=e[2];if(b.k==='cross')drawCross(b);else if(b.k==='split'||b.k==='sort')drawSmall(b);else if(isSt(b))drawStation(b);else if(b.k==='auto')drawAuto(b);else drawMachine(b)}}
