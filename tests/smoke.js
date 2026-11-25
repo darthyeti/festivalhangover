@@ -423,6 +423,7 @@ function serve() {
     { let bad = ''; const ph0 = G.st.ph, t0 = G.ui.tool; for (let p = 0; p < 8; p++) for (const tl of ['walk', 'belt', 'wide', 'sort', 'demo', 'ab', 'pl']) { G.st.ph = p; G.ui.tool = tl; try { G.draw(); } catch (e) { bad += p + '/' + tl + ': ' + e.message + ' '; } } G.st.ph = ph0; G.ui.tool = t0;
       // Startbildschirm, Endbildschirm mit und ohne Medaille, Lkw in jeder Phase
       for (const f of [() => { G.ui.start = true; }, () => { G.ui.start = false; G.st.done = true; G.ui.endT = performance.now() - 1000; }, () => { const t = G.st.t; G.st.t = 99999; G.draw(); G.st.t = t; }, () => { G.st.done = false; G.ui.trk = 1e6; G.cam.x = 300; G.cam.y = 900; }, () => { G.ui.trkS.t -= 3000; }, () => { G.ui.trkS.t -= 3000; }, () => { G.ui.trkS.t -= 3000; }]) { try { f(); G.draw(); } catch (e) { bad += 'Bildschirm: ' + e.message + ' '; } }
+      { const pf = c => { const q = G.PROFIT.find(t => c >= t.e); return q ? q.n : '-'; }; o.profit = [10552, 99999, 100000, 212082, 250000].map(pf).join('/'); }
       o.startHolds = !G.ui.start && navigator.webdriver === true; G.ui.trk = 0; o.drawAll = bad; }
 
     // Alter Spielstand: ohne Zielstand ist alles frei, die Verbesserung der Annahme wird erstattet.
@@ -512,6 +513,7 @@ function serve() {
     ['Sortierer ohne Weiterweg meldet die falsche Sorte, mit Weiterweg laeuft sie ab', m3.deadSort === 'Falsche Sorte, kein Weiterweg' && m3.deadSortFixed, m3.deadSort + ' ' + m3.deadSortFixed],
     ['Volle Sorte laeuft nur weiter, wo sie abgenommen wird, sonst wartet sie am Sortierer', m3.overflowHolds && m3.overflowFlows, m3.overflowDetail],
     ['Sortierer laesst sich auf ein Band versetzen, Rueckgaengig stellt Band und Platz wieder her', m3.moveOnBelt && m3.moveRuns && m3.moveUndo, m3.moveOnBelt + '/' + m3.moveRuns + '/' + m3.moveUndo],
+    ['Gewinnwertung: Bronze ab 1.000, Silber ab 1.750, Gold ab 2.500 Euro', m3.profit === '-/-/Bronze/Silber/Gold', m3.profit],
     ['Tasten waehlen alle Werkzeuge, gesperrte nicht', m3.hotkeys === 'belt/pal/ab/pl/sc/demo walk', m3.hotkeys],
     ['Zeichnen laeuft bei jedem Ziel und Werkzeug ohne Fehler, auch Start, Ende und Lkw', m3.drawAll === '', m3.drawAll],
     ['Spielstand merkt sich das Ziel', m3.savedPhase && newSave.ph === 2, `${m3.savedPhase}/${newSave.ph}`],
