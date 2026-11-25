@@ -146,7 +146,8 @@ bewusst und nach Freigabe aendern.
 - Letzte Stuecke: Liegen hoechstens `LAST_N` Stueck auf der Wiese, markiert `lastItems()` in `grafik.js` sie
   blinkend auf Karte und Minikarte.
 - Kamera: `clampCam()` laesst oben und unten Luft ueber den Wiesenrand hinaus, damit Zielanzeige,
-  Minikarte und Planleiste keinen Teil der Wiese dauerhaft verdecken.
+  Minikarte und Planleiste keinen Teil der Wiese dauerhaft verdecken. Solange das Auswahlfenster offen ist (`ui.sel`),
+  gibt es auch rechts Luft in Fensterbreite. Das Fenster hat oben rechts einen Knopf zum Schliessen.
 - Texte im Spiel auf Deutsch, keine Gedankenstriche als Satzzeichen.
 - Tablet und Desktop gleichwertig, Zielgroesse ab 1180 x 820.
 - Der Code ist sehr dicht geschrieben (lange Zeilen, kurze Namen). Beim Aendern
